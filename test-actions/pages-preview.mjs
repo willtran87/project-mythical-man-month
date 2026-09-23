@@ -44,6 +44,7 @@ try {
   await page.keyboard.press('Enter');
   assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'route');
   assert.ok(artwork.size >= 25, `expected generated artwork to load, got ${artwork.size} assets`);
+  assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.png$/.test(asset)).length, 8, 'all eight skill illustrations should load');
   assert.deepEqual(errors, []);
   fs.mkdirSync('output/pages-preview', { recursive: true });
   await page.locator('#game').screenshot({ path: 'output/pages-preview/route.png' });

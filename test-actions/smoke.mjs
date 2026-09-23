@@ -30,7 +30,7 @@ async function autopilot(seed, shots = false) {
   await fresh(seed);
   await page.keyboard.press('3');
   await page.keyboard.press('Enter');
-  let steps = 0, bossShots = 0, rewardShots = 0, relicShot = false;
+  let steps = 0, bossShots = 0, rewardShots = 0, relicShot = false, signatureShot = false;
   const capturedFoes = new Set();
   while ((await state()).mode !== 'end' && steps++ < 2000) {
     const s = await state();
@@ -62,6 +62,10 @@ async function autopilot(seed, shots = false) {
         capturedFoes.add(enemy.name);
         await canvas.screenshot({ path: `${out}/${enemy.name.toLowerCase().replaceAll(' ', '-')}.png` });
       }
+    }
+    if (shots && !signatureShot && s.hand.some(card => ['critical', 'rollback', 'sprint', 'signal'].includes(card.id))) {
+      signatureShot = true;
+      await canvas.screenshot({ path: `${out}/illustrated-skill-hand.png` });
     }
     const readyCharm = s.trinkets.findIndex(t => t.ready);
     if (readyCharm >= 0) { await page.keyboard.press(['z', 'x'][readyCharm]); continue; }

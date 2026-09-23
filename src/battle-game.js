@@ -12,27 +12,27 @@ export const ROLES = {
 };
 
 export const CARDS = {
-  patch: { name: 'Patch', cost: 1, type: 'attack', detail: 'Deal 7 damage.', rarity: 'basic' },
-  review: { name: 'Review', cost: 1, type: 'skill', detail: 'Gain 7 Block.', rarity: 'basic' },
-  pair: { name: 'Pair Debug', cost: 1, type: 'attack', detail: 'Deal 5 damage. Draw 1.', rarity: 'common' },
-  refactor: { name: 'Refactor', cost: 1, type: 'attack', detail: 'Deal 6. Apply 1 Weak.', rarity: 'common' },
-  panic: { name: 'Panic Fix', cost: 0, type: 'attack', detail: 'Deal 4. Gain 1 Burnout.', rarity: 'basic' },
-  memo: { name: 'Decision Memo', cost: 1, type: 'skill', detail: 'Gain 5 Block. Draw 1.', rarity: 'common' },
-  sweep: { name: 'Test Sweep', cost: 2, type: 'attack', detail: 'Deal 7 to ALL foes.', rarity: 'uncommon' },
-  guardrail: { name: 'Guardrail', cost: 2, type: 'skill', detail: 'Gain 13 Block. Apply 1 Weak.', rarity: 'uncommon' },
-  rollback: { name: 'Rollback', cost: 1, type: 'skill', detail: 'Heal 5. Gain 3 Block.', rarity: 'uncommon' },
-  critical: { name: 'Critical Path', cost: 2, type: 'attack', detail: 'Deal 17 damage.', rarity: 'rare' },
-  overclock: { name: 'Overclock', cost: 0, type: 'skill', detail: 'Gain 2 SP. Lose 4 HP.', rarity: 'rare' },
-  blueprint: { name: 'Clean Design', cost: 2, type: 'skill', detail: 'Gain 10 Block. Draw 2.', rarity: 'rare' },
-  rootcause: { name: 'Root Cause', cost: 1, type: 'attack', detail: 'Deal 9. +6 vs Weak foes.', rarity: 'uncommon' },
-  scopelock: { name: 'Scope Lock', cost: 1, type: 'attack', detail: 'Deal 5. Apply 2 Vulnerable.', rarity: 'uncommon' },
-  automation: { name: 'Automation', cost: 1, type: 'skill', detail: 'Gain 5 Block. At 2 Flow, gain 1 SP.', rarity: 'uncommon' },
-  handoffmap: { name: 'Handoff Map', cost: 0, type: 'skill', detail: 'Draw 2. Gain 1 Burnout.', rarity: 'common' },
-  incident: { name: 'Incident Room', cost: 2, type: 'attack', detail: 'Deal 8 to all. +2 per Flow.', rarity: 'rare' },
-  triage: { name: 'Triage', cost: 1, type: 'skill', detail: 'Heal 3. Gain 5 Block.', rarity: 'common' },
-  signal: { name: 'Signal Boost', cost: 1, type: 'skill', detail: 'Apply 1 Weak to all foes. Draw 1.', rarity: 'uncommon' },
-  sprint: { name: 'Sprint Burst', cost: 1, type: 'attack', detail: 'Deal 6. +4 per trinket used this fight.', rarity: 'uncommon' },
-  backlog: { name: 'Backlog Cut', cost: 2, type: 'attack', detail: 'Deal 13. Gain 1 SP if foe is Vulnerable.', rarity: 'rare' }
+  patch: { name: 'Patch', cost: 1, type: 'attack', detail: 'Deal 7 damage.', rarity: 'basic', art: 'patch' },
+  review: { name: 'Review', cost: 1, type: 'skill', detail: 'Gain 7 Block.', rarity: 'basic', art: 'review' },
+  pair: { name: 'Pair Debug', cost: 1, type: 'attack', detail: 'Deal 5 damage. Draw 1.', rarity: 'common', art: 'pair' },
+  refactor: { name: 'Refactor', cost: 1, type: 'attack', detail: 'Deal 6. Apply 1 Weak.', rarity: 'common', art: 'pair' },
+  panic: { name: 'Panic Fix', cost: 0, type: 'attack', detail: 'Deal 4. Gain 1 Burnout.', rarity: 'basic', art: 'sprint' },
+  memo: { name: 'Decision Memo', cost: 1, type: 'skill', detail: 'Gain 5 Block. Draw 1.', rarity: 'common', art: 'blueprint' },
+  sweep: { name: 'Test Sweep', cost: 2, type: 'attack', detail: 'Deal 7 to ALL foes.', rarity: 'uncommon', art: 'signal' },
+  guardrail: { name: 'Guardrail', cost: 2, type: 'skill', detail: 'Gain 13 Block. Apply 1 Weak.', rarity: 'uncommon', art: 'review' },
+  rollback: { name: 'Rollback', cost: 1, type: 'skill', detail: 'Heal 5. Gain 3 Block.', rarity: 'uncommon', art: 'rollback' },
+  critical: { name: 'Critical Path', cost: 2, type: 'attack', detail: 'Deal 17 damage.', rarity: 'rare', art: 'critical' },
+  overclock: { name: 'Overclock', cost: 0, type: 'skill', detail: 'Gain 2 SP. Lose 4 HP.', rarity: 'rare', art: 'sprint' },
+  blueprint: { name: 'Clean Design', cost: 2, type: 'skill', detail: 'Gain 10 Block. Draw 2.', rarity: 'rare', art: 'blueprint' },
+  rootcause: { name: 'Root Cause', cost: 1, type: 'attack', detail: 'Deal 9. +6 vs Weak foes.', rarity: 'uncommon', art: 'pair' },
+  scopelock: { name: 'Scope Lock', cost: 1, type: 'attack', detail: 'Deal 5. Apply 2 Vulnerable.', rarity: 'uncommon', art: 'critical' },
+  automation: { name: 'Automation', cost: 1, type: 'skill', detail: 'Gain 5 Block. At 2 Flow, gain 1 SP.', rarity: 'uncommon', art: 'signal' },
+  handoffmap: { name: 'Handoff Map', cost: 0, type: 'skill', detail: 'Draw 2. Gain 1 Burnout.', rarity: 'common', art: 'blueprint' },
+  incident: { name: 'Incident Room', cost: 2, type: 'attack', detail: 'Deal 8 to all. +2 per Flow.', rarity: 'rare', art: 'critical' },
+  triage: { name: 'Triage', cost: 1, type: 'skill', detail: 'Heal 3. Gain 5 Block.', rarity: 'common', art: 'rollback' },
+  signal: { name: 'Signal Boost', cost: 1, type: 'skill', detail: 'Apply 1 Weak to all foes. Draw 1.', rarity: 'uncommon', art: 'signal' },
+  sprint: { name: 'Sprint Burst', cost: 1, type: 'attack', detail: 'Deal 6. +4 per trinket used this fight.', rarity: 'uncommon', art: 'sprint' },
+  backlog: { name: 'Backlog Cut', cost: 2, type: 'attack', detail: 'Deal 13. Gain 1 SP if foe is Vulnerable.', rarity: 'rare', art: 'critical' }
 };
 export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog'];
 

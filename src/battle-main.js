@@ -20,6 +20,10 @@ const art = {};
 for (const [id, path] of Object.entries(artPaths)) {
   const img = new Image(); img.src = `${import.meta.env.BASE_URL}${path.slice(1)}`; img.onload = () => render(); art[id] = img;
 }
+const cardArt = {};
+for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
+  const img = new Image(); img.src = `${import.meta.env.BASE_URL}assets/cards/${key}.png`; img.onload = () => render(); cardArt[key] = img;
+}
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
@@ -59,6 +63,16 @@ function imageContain(img, x, y, w, h) {
   const scale = Math.min(w / img.width, h / img.height);
   const iw = img.width * scale, ih = img.height * scale;
   ctx.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+}
+function imageCover(img, x, y, w, h, radius = 0) {
+  if (!img?.complete || !img.naturalWidth) return false;
+  const scale = Math.max(w / img.width, h / img.height);
+  const sw = w / scale, sh = h / scale;
+  ctx.save();
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.clip();
+  ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, x, y, w, h);
+  ctx.restore();
+  return true;
 }
 function background() {
   const bossArena = state.mode === 'combat' && state.enemies.some(e => e.boss);
@@ -189,9 +203,12 @@ function shopOffer(offer, i) {
   const name = offer.kind === 'card' ? CARDS[offer.id].name : offer.kind === 'item' ? ITEMS[offer.id].name : offer.id ? RELICS[offer.id].name : 'Sold out';
   const detail = offer.kind === 'card' ? CARDS[offer.id].detail : offer.kind === 'item' ? ITEMS[offer.id].detail : offer.id ? RELICS[offer.id].detail : 'No more relics remain.';
   label(offer.kind.toUpperCase(), x + 15, y + 22, 12, teal, 'bold', 'left', 'Arial');
-  icon(offer.kind === 'card' ? CARDS[offer.id].type === 'attack' ? 'sword' : 'shield' : offer.kind === 'item' ? 'heart' : RELICS[offer.id]?.icon || 'relic', x + w / 2, y + 72, 45, offer.kind === 'card' && CARDS[offer.id].type === 'attack' ? coral : gold);
-  label(name, x + w / 2, y + 120, 17, ink, 'bold', 'center');
-  wrap(detail, x + 16, y + 143, w - 32, 13, '#657377', 17, 'Arial');
+  if (offer.kind === 'card') {
+    rect(x + 13, y + 39, w - 26, 79, '#263e48', 8);
+    imageCover(cardArt[CARDS[offer.id].art], x + 16, y + 42, w - 32, 73, 6);
+  } else icon(offer.kind === 'item' ? 'heart' : RELICS[offer.id]?.icon || 'relic', x + w / 2, y + 72, 45, gold);
+  label(name, x + w / 2, y + 129, 17, ink, 'bold', 'center');
+  wrap(detail, x + 16, y + 148, w - 32, 13, '#657377', 17, 'Arial');
   button(offer.sold ? 'SOLD' : `${i + 1} · ${offer.price} CREDITS`, x + 32, y + 188, w - 64, 38, () => buyShop(state, i), { disabled: !available, size: 14 });
 }
 function shopService(offer, i, x) {
@@ -272,23 +289,27 @@ function combat() {
     ctx.fillStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${alpha * .23})` : `rgba(238,189,93,${alpha * .2})`;
     ctx.fillRect(25, 158, 1150, 333);
   }
-  rect(25, 503, 1150, 75, 'rgba(19,47,58,.95)', 13);
+  rect(25, 503, 1150, 66, 'rgba(19,47,58,.95)', 13);
   label('BATTLE LOG', 43, 523, 13, gold, 'bold', 'left', 'Arial');
   label(state.log[0] || '', 43, 551, 17, cream);
   label(`TURN ${state.turn}  ·  FLOW ${state.flow}  ·  TARGET: ${state.enemies[state.target]?.name || 'NONE'}`, 1156, 523, 13, '#d9e9dd', 'bold', 'right', 'Arial');
   label(`DRAW ${state.drawPile.length}  ·  DISCARD ${state.discardPile.length}`, 1154, 588, 12, cream, 'bold', 'right', 'Arial');
   state.hand.forEach((id, i) => {
-    const card = CARDS[id], x = 26 + i * 190, y = 597, available = state.sp >= card.cost;
-    const hot = pointer.x >= x && pointer.x <= x + 180 && pointer.y >= y && pointer.y <= y + 140;
-    rect(x, y + 4, 180, 137, ink, 12);
-    rect(x, y - (hot ? 5 : 0), 180, 137, available ? '#fff6e5' : '#d7dad4', 12, card.type === 'attack' ? coral : teal, 2);
-    rect(x + 10, y + 9 - (hot ? 5 : 0), 29, 29, card.type === 'attack' ? coral : teal, 15);
-    label(card.cost, x + 24, y + 25 - (hot ? 5 : 0), 17, cream, 'bold', 'center', 'Arial');
-    icon(card.type === 'attack' ? 'sword' : 'shield', x + 156, y + 27 - (hot ? 5 : 0), 20, card.type === 'attack' ? coral : teal);
-    label(`${i + 1}. ${card.name}`, x + 14, y + 56 - (hot ? 5 : 0), 16, available ? ink : '#788985', 'bold', 'left', 'Arial');
-    wrap(card.detail, x + 14, y + 79 - (hot ? 5 : 0), 154, 14, available ? '#5d6c72' : '#899692', 20, 'Arial');
-    label(card.rarity.toUpperCase(), x + 164, y + 119 - (hot ? 5 : 0), 11, card.type === 'attack' ? coral : teal, 'bold', 'right', 'Arial');
-    if (available) hitboxes.push({ x, y: y - 5, w: 180, h: 143, action: () => playFromUI(i) });
+    const card = CARDS[id], x = 26 + i * 190, y = 577, available = state.sp >= card.cost;
+    const hot = pointer.x >= x && pointer.x <= x + 180 && pointer.y >= y && pointer.y <= y + 160;
+    const top = y - (hot ? 6 : 0), color = card.type === 'attack' ? coral : teal;
+    rect(x, y + 4, 180, 160, ink, 12);
+    rect(x, top, 180, 160, available ? '#fff6e5' : '#d7dad4', 12, card.rarity === 'rare' ? gold : color, card.rarity === 'rare' ? 3 : 2);
+    rect(x + 6, top + 6, 168, 82, '#263e48', 8);
+    imageCover(cardArt[card.art], x + 8, top + 8, 164, 78, 6);
+    if (!available) rect(x + 8, top + 8, 164, 78, 'rgba(221,227,220,.5)', 6);
+    rect(x + 12, top + 12, 30, 30, color, 15, cream, 1);
+    label(card.cost, x + 27, top + 27, 17, cream, 'bold', 'center', 'Arial');
+    rect(x + 138, top + 12, 30, 30, 'rgba(18,45,57,.88)', 15);
+    icon(card.type === 'attack' ? 'sword' : 'shield', x + 153, top + 27, 18, cream);
+    label(`${i + 1}. ${card.name}`, x + 12, top + 107, 15, available ? ink : '#788985', 'bold', 'left', 'Arial');
+    wrap(card.detail, x + 12, top + 124, 156, 13, available ? '#5d6c72' : '#899692', 15, 'Arial');
+    if (available) hitboxes.push({ x, y: y - 6, w: 180, h: 166, action: () => playFromUI(i) });
   });
   button('END TURN  SPACE', 993, 612, 181, 111, () => endFromUI(), { fill: coral, size: 18 });
   rect(25, 749, 1150, 40, 'rgba(19,47,58,.96)', 10);
@@ -326,7 +347,7 @@ function reward() {
       icon(RELICS[choice.id].icon, x + w / 2, y + 131, 74, gold);
     }
     else if (choice.type === 'heal') imageContain(art.pizza, x + 78, y + 60, 140, 140);
-    else icon(choice.type === 'card' && CARDS[choice.id].type === 'attack' ? 'sword' : 'shield', x + w / 2, y + 132, 92, choice.type === 'card' && CARDS[choice.id].type === 'attack' ? coral : gold);
+    else imageCover(cardArt[CARDS[choice.id].art], x + 34, y + 58, w - 68, 145, 9);
     label(name, x + w / 2, y + 235, 20, ink, 'bold', 'center');
     wrap(detail, x + 27, y + 262, w - 54, 15, '#607078', 20, 'Arial');
     button('TAKE REWARD', x + 47, 662, 201, 52, () => chooseReward(state, i), { size: 17 });
