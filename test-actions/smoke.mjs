@@ -87,6 +87,10 @@ async function autopilot(seed, shots = false) {
     if (shots && boss >= 0 && !bossProblemShot && !s.enemies[boss].problem.resolved && s.sp >= 2) {
       bossProblemShot = true;
       await canvas.screenshot({ path: `${out}/boss-problem-open.png` });
+      await page.keyboard.press('i');
+      assert.equal((await state()).battleNotesOpen, true);
+      await canvas.screenshot({ path: `${out}/boss-details.png` });
+      await page.keyboard.press('i');
       await page.keyboard.press('b');
       assert.equal((await state()).enemies[boss].problem.resolved, true);
       await canvas.screenshot({ path: `${out}/boss-problem-solved.png` });
@@ -129,6 +133,15 @@ assert.equal(s.enemies.length, 1);
 assert.equal(s.hand.length, 5);
 const openingSp = s.sp;
 await canvas.screenshot({ path: `${out}/first-battle.png` });
+await page.keyboard.press('i');
+assert.equal((await state()).battleNotesOpen, true);
+await canvas.screenshot({ path: `${out}/battle-details.png` });
+await page.keyboard.press('Escape');
+assert.equal((await state()).battleNotesOpen, false);
+await click(760, 517);
+assert.equal((await state()).battleNotesOpen, true);
+await click(915, 285);
+assert.equal((await state()).battleNotesOpen, false);
 const inspectIndex = s.hand.findIndex(card => card.name === 'Patch');
 assert.ok(inspectIndex >= 0);
 await click(26 + inspectIndex * 190 + 153, 643);

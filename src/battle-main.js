@@ -56,7 +56,7 @@ for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
 const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
-let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false;
+let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false, showBattleNotes = false;
 let clock = 0, lastFrame = 0, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
 const battleAudio = new BattleAudio();
 const battleFx = new BattleFx(reducedMotion, fxArt, kind => battleAudio.play(kind));
@@ -78,7 +78,7 @@ function recordRun() {
   for (const [key, values] of [['roles', [state.role]], ['charters', state.charter ? [state.charter] : []], ['bosses', state.defeatedBosses]]) for (const value of values) if (!career[key].includes(value)) career[key].push(value);
   try { localStorage.setItem(careerKey, JSON.stringify(career)); } catch { /* Session progress remains visible. */ }
 }
-function returnToMenu() { state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; }
+function returnToMenu() { state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; showBattleNotes = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; }
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rect(x, y, w, h, fill, radius = 0, stroke = null, line = 1) {
@@ -168,10 +168,9 @@ function icon(kind, x, y, size = 20, color = gold) {
 }
 function runHeader() {
   rect(28, 22, 1144, 121, 'rgba(17,47,60,.97)', 17, '#f4e7c6', 2);
-  label('DEADLINE DISASTER', 51, 57, 31, cream, 'bold');
-  label(`CRISIS RUN  ·  ${ACTS[actIndex(state)].toUpperCase()} ACT  ·  ENCOUNTER ${encounterNumber(state)}/${TOTAL_FIGHTS}  ·  RUN ${state.seed}`, 52, 91, 13, gold, 'bold', 'left', 'Arial');
-  label(`${ROLES[state.role].name.toUpperCase()}  ·  FLOW ${state.flow}`, 52, 116, 12, '#d7e4de', 'bold', 'left', 'Arial');
-  label(`DEBT ${state.projectDebt}/12  ·  PRESSURE TIER ${debtTier(state)}`, 626, 133, 11, state.projectDebt >= 8 ? coral : gold, 'bold', 'left', 'Arial');
+  label('DEADLINE DISASTER', 51, 57, 27, cream, 'bold');
+  label(`${ACTS[actIndex(state)].toUpperCase()}  ·  ENCOUNTER ${encounterNumber(state)}/${TOTAL_FIGHTS}  ·  RUN #${state.seed}`, 52, 91, 13, gold, 'bold', 'left', 'Arial');
+  label(ROLES[state.role].name.toUpperCase(), 52, 116, 12, '#d7e4de', 'bold', 'left', 'Arial');
   for (let i = 0; i < TOTAL_FIGHTS; i++) {
     const x = 307 + i * 35, boss = i % 3 === 2, current = i === state.floor;
     ctx.beginPath(); ctx.arc(x, 115, boss ? 8 : 6, 0, Math.PI * 2);
@@ -189,7 +188,7 @@ function runHeader() {
   meter(775, 72, 184, 13, state.hp, state.maxHp, coral);
   label(`SP ${state.sp}/${state.maxSp}`, 991, 54, 18, cream, 'bold', 'left', 'Arial');
   meter(990, 72, 145, 13, state.sp, state.maxSp, gold);
-  label(`BLK ${state.block}  ·  DECK ${state.deck.length}  ·  TOOLS ${state.inventory.length}  ·  TRINKETS ${state.trinkets.length}/2  ·  RELICS ${state.relics.length}`, 776, 111, 12, '#d7e4de', 'bold', 'left', 'Arial');
+  label(`PROJECT DEBT ${state.projectDebt}/12  ·  PRESSURE ${debtTier(state)}`, 776, 111, 12, state.projectDebt >= 8 ? coral : '#d7e4de', 'bold', 'left', 'Arial');
 }
 function intro() {
   background();
@@ -267,9 +266,8 @@ function route() {
     else if (choice.kind === 'shop') imageContain(art.archivist, x + 32, 352, w - 64, 198);
     else choiceArtwork(choice.ids, x + 33, 352, w - 66, 198);
     const names = choice.ids.map(id => ENEMIES[id].name).join(' + ');
-    label(choice.kind === 'event' ? 'Unknown story · then ' + names : choice.kind === 'shop' ? 'Shop · then ' + names : names, x + w / 2, 579, 15, ink, 'bold', 'center', 'Arial');
-    label(choice.detail, x + w / 2, 599, 13, '#617179', 'normal', 'center', 'Arial');
-    if (choice.crisis) label(`${CRISES[choice.crisis].name}: ${CRISES[choice.crisis].detail}`, x + w / 2, 617, 12, '#a05a42', 'bold', 'center', 'Arial', w - 38);
+    label(choice.kind === 'event' ? 'Unknown story · then ' + names : choice.kind === 'shop' ? 'Shop · then ' + names : names, x + w / 2, 576, 15, ink, 'bold', 'center', 'Arial', w - 42);
+    if (choice.crisis) wrap(`${CRISES[choice.crisis].name}: ${CRISES[choice.crisis].detail}`, x + 25, 589, w - 50, 13, '#a05a42', 15, 'Arial');
     rect(x + 25, 628, w - 50, 25, accent, 7);
     label(badge, x + w / 2, 641, 12, cream, 'bold', 'center', 'Arial', w - 58);
     button(choice.kind === 'event' ? 'EXPLORE' : choice.kind === 'shop' ? 'VISIT SHOP' : 'ENTER BATTLE', x + (w - 230) / 2, 667, 230, 51, () => chooseRoute(state, i), { fill: choice.boss ? coral : gold, size: 17 });
@@ -404,7 +402,6 @@ function shop() {
   shopService(state.shopStock[4], 4, 573);
   shopService(state.shopStock[5], 5, 846);
   button('LEAVE FOR BATTLE  ·  ENTER', 826, 697, 277, 33, () => leaveShop(state), { fill: coral, size: 13 });
-  icon('coin', 192, 708, 19, gold); label(`${state.credits} CREDITS`, 211, 708, 14, teal, 'bold', 'left', 'Arial');
 }
 function combatEnemyCard(enemy, i, x, w) {
   const selected = state.target === i;
@@ -441,7 +438,7 @@ function combatEnemyCard(enemy, i, x, w) {
   ailments.forEach(([name, count, color], j) => statusPill(`${name} ${count}`, x + 22 + j * (pillWidth + 4), enemy.boss ? y + 214 : y + 184, pillWidth, true, color));
   label(enemy.name, x + w / 2, enemy.boss ? y + 258 : y + 239, enemy.boss ? 24 : 18, ink, 'bold', 'center');
   meter(x + 18, enemy.boss ? y + 280 : y + 263, w - 36, 11, enemy.hp, enemy.maxHp, coral);
-  label(`${enemy.hp}/${enemy.maxHp} HP   ·   ${enemy.block} BLOCK${enemy.weak ? `   ·   ${enemy.weak} WEAK` : ''}${enemy.vulnerable ? `   ·   ${enemy.vulnerable} VULN` : ''}${enemy.mark ? `   ·   ${enemy.mark} MARK` : ''}`, x + w / 2, enemy.boss ? y + 304 : y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial', w - 20);
+  label(`${enemy.hp}/${enemy.maxHp} HP${enemy.block ? `   ·   ${enemy.block} BLOCK` : ''}`, x + w / 2, enemy.boss ? y + 304 : y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial', w - 20);
   hitboxes.push({ x, y, w, h, action: () => selectTarget(state, i) });
 }
 const heroAnchor = { x: 179, y: 319 };
@@ -575,9 +572,8 @@ function combat() {
   label(`${state.hp}/${state.maxHp} HP`, 62, 420, 17, ink, 'bold', 'left', 'Arial');
   label(`BANK ${state.reserveBlock}${state.nextSp ? ` · NEXT SP +${state.nextSp}` : ''}`, 296, 420, 12, teal, 'bold', 'right', 'Arial', 150);
   meter(62, 436, 235, 12, state.hp, state.maxHp, coral);
-  statusPill(`BLK ${state.block}`, 53, 455, 79, state.block > 0, teal);
-  statusPill(`VULN ${state.vulnerable}`, 137, 455, 79, state.vulnerable > 0, coral);
-  statusPill(`BURN ${state.burnout}`, 221, 455, 84, state.burnout > 0, '#a45b55');
+  const conditions = [state.block && [`BLK ${state.block}`, teal], state.vulnerable && [`VULN ${state.vulnerable}`, coral], state.burnout && [`BURN ${state.burnout}`, '#a45b55']].filter(Boolean);
+  conditions.forEach(([name, color], i) => statusPill(name, 53 + i * 84, 455, 79, true, color));
   const count = state.enemies.length;
   if (count === 1) {
     const boss = state.enemies[0].boss, enemyX = boss ? 410 : 480;
@@ -590,20 +586,15 @@ function combat() {
   rect(25, 503, 1150, 66, 'rgba(19,47,58,.95)', 13);
   const brief = state.objective;
   label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 518, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
-  const plans = [
-    state.enemies.some(enemy => enemy.boss) ? `READINESS ${state.readiness}/6` : `RELEASE ${state.readiness}/6 · SHIP: HALF PAY + DEBT`,
-    ...(state.crisis ? [CRISES[state.crisis].name.toUpperCase()] : []),
-    ...(state.architecture ? [ARCHITECTURES[state.architecture].name.toUpperCase()] : []),
-    ...state.enemies.filter(enemy => enemy.boss && !enemy.problemResolved).map(enemy => `${BOSS_PROBLEMS[enemy.id].name.toUpperCase()}: ${BOSS_PROBLEMS[enemy.id].detail.replace('Unresolved: ', '')}${enemy.id === 'dragon' ? ` ${enemy.problemClock}/3` : ''}`),
-    ...(state.contract ? [`CONTRACT: ${CONTRACTS[state.contract.id].name}${state.contract.failed ? ' MISSED' : state.contract.id === 'briefs' ? ` ${state.contract.progress}/2` : ''}`] : []),
-    ...state.initiatives.map(p => `${CARDS[p.id].name} ${p.remaining}T`), ...state.activeInitiatives.map(id => `${CARDS[id].name} ACTIVE`)
-  ];
-  if (plans.length) label(plans.join('  ·  '), 43, 536, 11, '#a9ddd2', 'bold', 'left', 'Arial', 640);
+  const bossProblem = state.enemies.find(enemy => enemy.boss && !enemy.problemResolved);
+  const liveNote = bossProblem ? `BOSS PROBLEM · ${BOSS_PROBLEMS[bossProblem.id].name}` : state.crisis ? `CRISIS · ${CRISES[state.crisis].name}` : state.initiatives.length ? `PLAN · ${CARDS[state.initiatives[0].id].name} ${state.initiatives[0].remaining}T` : '';
+  label(`READINESS ${state.readiness}/6${liveNote ? `   ·   ${liveNote}` : ''}`, 43, 536, 11, '#a9ddd2', 'bold', 'left', 'Arial', 625);
   label(state.log[0] || '', 43, 554, 14, cream, 'normal', 'left', 'Georgia', 645);
-  label(`TURN ${state.turn}  ·  FLOW ${state.flow}  ·  TARGET: ${state.enemies[state.target]?.name || 'NONE'}`, 1156, 523, 13, '#d9e9dd', 'bold', 'right', 'Arial');
+  button('I · DETAILS', 704, 506, 120, 22, () => { showBattleNotes = true; }, { size: 11, fill: '#d8e6da' });
+  label(`TURN ${state.turn}  ·  TARGET: ${state.enemies[state.target]?.name || 'NONE'}`, 1156, 523, 13, '#d9e9dd', 'bold', 'right', 'Arial');
   const abilityReady = !state.abilityUsed && (state.role !== 'architect' || (state.block > 0 && state.reserveBlock < 12));
-  button(`A · ${ROLES[state.role].ability.toUpperCase()} ${state.abilityUsed ? 'USED' : abilityReady ? 'READY' : 'NEED BLOCK'}`, 711, 536, 211, 29, () => abilityFromUI(), { disabled: !abilityReady, size: 10, fill: '#a9ddd2' });
-  button(state.specialist ? `S · ${SPECIALISTS[state.specialist].action.toUpperCase()} ${state.specialistUsed ? 'USED' : 'READY'}` : 'S · NO SPECIALIST', 929, 536, 225, 29, () => specialistFromUI(), { disabled: !state.specialist || state.specialistUsed, size: 10, fill: '#f0d698' });
+  button(`A · ${ROLES[state.role].ability.toUpperCase()}${state.abilityUsed ? ' · USED' : abilityReady ? '' : ' · NEED BLOCK'}`, 711, 536, 211, 29, () => abilityFromUI(), { disabled: !abilityReady, size: 11, fill: '#a9ddd2' });
+  button(state.specialist ? `S · ${SPECIALISTS[state.specialist].action.toUpperCase()}${state.specialistUsed ? ' · USED' : ''}` : 'S · NO SPECIALIST', 929, 536, 225, 29, () => specialistFromUI(), { disabled: !state.specialist || state.specialistUsed, size: 11, fill: '#f0d698' });
   label(`DRAW ${state.drawPile.length}  ·  DISCARD ${state.discardPile.length}`, 1154, 740, 12, cream, 'bold', 'right', 'Arial');
   state.hand.forEach((id, i) => {
     const card = cardInfo(id), x = 26 + i * 190, y = 577, available = state.sp >= card.cost && !(cardBase(id) === 'escalate' && state.projectDebt > 10);
@@ -649,6 +640,31 @@ function combat() {
     label(`${['Z', 'X'][i]}  ${charm.name}`, x + 34, 769, 11, used ? '#607476' : ink, 'bold', 'left', 'Arial');
     if (!used) hitboxes.push({ x, y: 754, w: 199, h: 30, action: () => trinketFromUI(i) });
   });
+}
+function battleNotes() {
+  const brief = state.objective;
+  const notes = [
+    ['SPRINT BRIEF', brief ? `${OBJECTIVES[brief.id].name}: ${brief.done ? 'Complete' : brief.failed ? 'Missed' : OBJECTIVES[brief.id].detail}` : 'No active brief.'],
+    ['RELEASE READINESS', state.enemies.some(enemy => enemy.boss) ? `${state.readiness}/6. Boss fights require a full victory; spend 2 SP to solve the active problem.` : `${state.readiness}/6. After surviving a turn, ship early for half pay and one Debt per unresolved foe.`],
+    ...(state.crisis ? [['CRISIS CONDITION', `${CRISES[state.crisis].name}: ${CRISES[state.crisis].detail}`]] : []),
+    ...(state.contract ? [['CLIENT CONTRACT', `${CONTRACTS[state.contract.id].name}: ${CONTRACTS[state.contract.id].detail}${state.contract.failed ? ' · Missed' : ''}`]] : []),
+    ...state.enemies.filter(enemy => enemy.boss && !enemy.problemResolved).map(enemy => ['BOSS PROBLEM', `${BOSS_PROBLEMS[enemy.id].name}: ${BOSS_PROBLEMS[enemy.id].detail}${enemy.id === 'dragon' ? ` · Clock ${enemy.problemClock}/3` : ''}`]),
+    ...(state.architecture ? [['ARCHITECTURE', `${ARCHITECTURES[state.architecture].name}: ${ARCHITECTURES[state.architecture].detail}`]] : []),
+    ...(state.initiatives.length || state.activeInitiatives.length ? [['INITIATIVES', [...state.initiatives.map(p => `${CARDS[p.id].name} ${p.remaining} turns`), ...state.activeInitiatives.map(id => `${CARDS[id].name} active`)].join(' · ')]] : []),
+    ['PROJECT DEBT', `${state.projectDebt}/12 · Pressure tier ${debtTier(state)}. Debt at 4 and 8 adds defects and tougher foes.`]
+  ];
+  const rows = Math.ceil(notes.length / 2), panelHeight = 223 + (rows - 1) * 102, top = (H - panelHeight) / 2;
+  rect(0, 0, W, H, 'rgba(10,29,39,.8)');
+  rect(178, top, 844, panelHeight, '#fff8e9', 20, gold, 3);
+  label('BATTLE DETAILS', 210, top + 46, 31, ink, 'bold');
+  label('Current conditions and optional goals', 210, top + 77, 15, teal, 'normal', 'left', 'Arial');
+  button('CLOSE · I', 841, top + 28, 151, 42, () => { showBattleNotes = false; }, { size: 14 });
+  const note = (x, y, [title, detail]) => {
+    rect(x, y, 391, 91, '#f5ecdc', 11, '#d8c7a9', 1);
+    label(title, x + 16, y + 22, 12, teal, 'bold', 'left', 'Arial');
+    wrap(detail, x + 16, y + 41, 359, 13, ink, 17, 'Arial');
+  };
+  notes.slice(0, 8).forEach((entry, i) => note(i % 2 ? 607 : 202, top + 107 + Math.floor(i / 2) * 102, entry));
 }
 function hoveredCardIndex() {
   if (!hoverPreviewEnabled || state.mode !== 'combat') return -1;
@@ -786,15 +802,15 @@ function loadout() {
   imageContain(roleArt[state.role], 216, 132, 201, 207);
   label(ROLES[state.role].name.toUpperCase(), 540, 149, 17, teal, 'bold', 'left', 'Arial');
   label(`${state.deck.length} skills · ${state.relics.length} relics · ${state.trinkets.length}/2 trinkets`, 540, 188, 20, ink, 'bold');
-  wrap(`${ROLES[state.role].ability}: ${ROLES[state.role].abilityDetail} Trinkets refresh each battle. Support skills build Flow for stronger attacks.`, 540, 221, 500, 17, '#53676a', 24);
+  wrap(`${ROLES[state.role].ability}: ${ROLES[state.role].abilityDetail}`, 540, 221, 500, 17, '#53676a', 24);
   if (state.specialist) {
-    imageContain(specialistArt[state.specialist], 540, 286, 43, 45);
-    label(`${SPECIALISTS[state.specialist].name} · ${SPECIALISTS[state.specialist].action}`, 592, 307, 14, teal, 'bold', 'left', 'Arial');
-  } else label('SPECIALIST SLOT EMPTY · Recruit from the route screen', 540, 309, 13, teal, 'bold', 'left', 'Arial');
-  label(`PROJECT DEBT ${state.projectDebt}/12 · PRESSURE TIER ${debtTier(state)}`, 540, 329, 12, state.projectDebt >= 8 ? coral : teal, 'bold', 'left', 'Arial');
-  label(`${state.charter ? CHARTERS[state.charter].name.toUpperCase() : 'NO CHARTER'}  ·  ${CHALLENGES[state.challenge].name.toUpperCase()}  ·  ESC ${state.escalation}`, 540, 347, 11, teal, 'bold', 'left', 'Arial', 520);
-  label(`ARCHITECTURE: ${state.architecture ? ARCHITECTURES[state.architecture].name : 'None yet'}  ·  Debt 4/8 adds defects and pressure`, 540, 362, 10, '#647779', 'bold', 'left', 'Arial', 520);
-  rect(126, 370, 948, 2, '#d3bd9a');
+    imageContain(specialistArt[state.specialist], 540, 274, 38, 38);
+    label(`${SPECIALISTS[state.specialist].name} · ${SPECIALISTS[state.specialist].action}`, 586, 293, 13, teal, 'bold', 'left', 'Arial');
+  } else label('NO SPECIALIST · Recruit from the route screen', 540, 293, 13, teal, 'bold', 'left', 'Arial');
+  rect(540, 318, 502, 50, '#edf0e5', 9, '#d7d8c7', 1);
+  label(`CHARTER ${state.charter ? CHARTERS[state.charter].name : 'None'}  ·  ${CHALLENGES[state.challenge].name}  ·  ESC ${state.escalation}`, 553, 332, 11, ink, 'bold', 'left', 'Arial', 476);
+  label(`ARCH ${state.architecture ? ARCHITECTURES[state.architecture].name : 'None'}  ·  DEBT ${state.projectDebt}/12  ·  PRESSURE ${debtTier(state)}`, 553, 353, 11, state.projectDebt >= 8 ? coral : '#52686b', 'bold', 'left', 'Arial', 476);
+  rect(126, 379, 948, 2, '#d3bd9a');
   label('DECK', 137, 402, 17, teal, 'bold', 'left', 'Arial');
   label('RELICS', 455, 402, 17, teal, 'bold', 'left', 'Arial');
   label('TRINKETS & TOOLS', 773, 402, 17, teal, 'bold', 'left', 'Arial');
@@ -906,7 +922,7 @@ function menuConfirm() {
 }
 function render() {
   hitboxes = []; ctx.clearRect(0, 0, W, H);
-  if (state.mode !== 'combat') battleFx.effects.length = 0;
+  if (state.mode !== 'combat') { battleFx.effects.length = 0; showBattleNotes = false; }
   if (state.mode === 'intro') intro();
   else if (state.mode === 'challenge') challenge();
   else if (state.mode === 'route') route();
@@ -925,6 +941,7 @@ function render() {
   if (showLoadout) { hitboxes = []; loadout(); }
   else if (previewCardIndex !== null && state.mode === 'combat') { hitboxes = []; cardPreview(previewCardIndex, true); }
   else if (state.mode === 'combat') { const hovered = hoveredCardIndex(); if (hovered >= 0) cardPreview(hovered); }
+  if (showBattleNotes && state.mode === 'combat') { hitboxes = []; battleNotes(); }
   if (showArchive) { hitboxes = []; archiveOverlay(); }
   if (showMenuConfirm) { hitboxes = []; menuConfirm(); }
 }
@@ -959,6 +976,13 @@ window.addEventListener('keydown', e => {
     else if (e.key === 'Enter' && state.sp >= cardInfo(state.hand[previewCardIndex]).cost) playFromUI(previewCardIndex);
     render(); return;
   }
+  if (showBattleNotes) {
+    if (key === 'escape' || key === 'i') showBattleNotes = false;
+    else if (key === 'c') { showBattleNotes = false; showLoadout = true; }
+    else if (key === 'm') { showBattleNotes = false; showMenuConfirm = true; }
+    render(); return;
+  }
+  if (key === 'i' && state.mode === 'combat' && !showLoadout) { showBattleNotes = true; render(); return; }
   if (key === 'c' && state.mode !== 'intro') { showLoadout = !showLoadout; render(); return; }
   if (showLoadout) { if (key === 'escape') { showLoadout = false; render(); } return; }
   if (key === 'm' && !['intro', 'challenge', 'end'].includes(state.mode)) { showMenuConfirm = true; render(); return; }
@@ -1015,7 +1039,7 @@ document.addEventListener('fullscreenchange', resize);
 window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); };
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
-  mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout, archiveOpen: showArchive, menuConfirmOpen: showMenuConfirm, soundEnabled: battleAudio.enabled,
+  mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout, battleNotesOpen: showBattleNotes, archiveOpen: showArchive, menuConfirmOpen: showMenuConfirm, soundEnabled: battleAudio.enabled,
   escalation: state.escalation, escalationUnlocked: Math.min(3, career.wins), career: showArchive ? career : null,
   architecture: state.architecture || null, architectureChoices: state.mode === 'architecture' ? Object.entries(ARCHITECTURES).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
   challenge: state.challenge, challengeRule: state.challengeRule, dailyDate: state.dailyDate,

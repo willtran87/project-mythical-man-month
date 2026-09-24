@@ -37,7 +37,7 @@ The combat jokes draw on Brooks's themes: scope creep, coordination overhead, in
 
 Story detours have event-specific illustrations, and both run endings have dedicated art. The exact prompts for the new scenes are in `public/assets/story/prompts.md`.
 
-All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat uses labeled status badges and Flow markers. Action-specific particles layer with transparent illustrated bursts for strikes, enemy hits, shields, healing, card draws, planning, Mark, Weak, Vulnerable, Burnout, and Project Debt. Each boss has a distinct illustrated phase transition. Trinket uses and several triggered relic effects briefly display their collectible art in combat. Combat visuals respect reduced-motion settings. Quiet synthesized action sounds can be toggled from the title or Playbook; the setting persists on this device. Art prompts are in `public/assets/fx/prompts.md` and `public/assets/collectibles-and-scenes-prompts.md`.
+All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat shows active status badges and Flow markers; Battle Details holds the longer modifier descriptions. Action-specific particles layer with transparent illustrated bursts for strikes, enemy hits, shields, healing, card draws, planning, Mark, Weak, Vulnerable, Burnout, and Project Debt. Each boss has a distinct illustrated phase transition. Trinket uses and several triggered relic effects briefly display their collectible art in combat. Combat visuals respect reduced-motion settings. Quiet synthesized action sounds can be toggled from the title or Playbook; the setting persists on this device. Art prompts are in `public/assets/fx/prompts.md` and `public/assets/collectibles-and-scenes-prompts.md`.
 
 Route cards use separate visual treatments for steady fights, risky fights, story detours, market stops, and bosses, with clear consequence labels. Skill cards have larger hover and tap-to-inspect views; rare rewards and relics receive special frames and an acquisition toast. The title has a dedicated project-crisis illustration, and the Night Market has illustrated healing and card-retirement services. Combat uses a duel sigil, a larger boss presentation, and short action bursts; the Playbook displays card art and collectible slots. These effects respect reduced-motion settings. The three new illustration prompts are in `public/assets/ui/aesthetic-pass-prompts.md`.
 
@@ -55,6 +55,7 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | M | Open challenge formats on the title screen; open the main menu confirmation during a run |
 | D / J | Cycle unlocked Escalation tiers / open the Run Archive on the title screen |
 | B | Spend 2 SP to resolve a boss phase problem |
+| I | Open or close Battle Details to review current goals and modifiers |
 | R | Ship a ready non-boss incident early; on the ending screen, replay the same lead and format |
 | 1–2 | Choose Force or Flex after selecting a workshop upgrade |
 | 1–4 | Choose a battle reward |
@@ -90,6 +91,7 @@ node test-actions/strategy-visual.mjs
 node test-actions/release-systems.mjs
 node test-actions/release-visual.mjs
 node test-actions/animation-timing.mjs
+node test-actions/layout-visual.mjs
 node test-actions/smoke.mjs
 node test-actions/pages-preview.mjs
 ```
