@@ -1,7 +1,7 @@
 import './style.css';
 import { BattleFx } from './battle-fx.js';
 import { BattleAudio } from './battle-audio.js';
-import { ACTS, ACT_LORE, ROLES, MASTERY_KITS, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, PRACTICES, MISSIONS, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, chooseContract, setEscalation, chooseArchitecture, choosePractice, resolveBossProblem, resolveMission, projectEndTurn, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
+import { ACTS, ACT_LORE, ROLES, MASTERY_KITS, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, PRACTICES, MISSIONS, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, upgradeBranchDetail, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, setEscalation, chooseArchitecture, choosePractice, resolveBossProblem, resolveMission, projectEndTurn, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, chooseCombatOption, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
@@ -93,6 +93,7 @@ function persistRun() {
 function continueRun() {
   if (!validSavedRun(savedRun)) return false;
   state = JSON.parse(JSON.stringify(savedRun.state));
+  state.setAside ||= []; state.exhausted ||= []; state.pendingChoice ||= null; state.sprintCommit ||= 0;
   showLoadout = showArchive = showMenuConfirm = showBattleNotes = false;
   forecastDirty = true;
   return true;
@@ -534,6 +535,14 @@ function combatEnemyCard(enemy, i, x, w) {
     rect(x + w / 2 - 143, portraitY + 8, 286, 25, 'rgba(18,45,57,.89)', 6);
     label(`${ENEMIES[enemy.id].phaseNames?.[enemy.phase - 1] || 'FINAL REVIEW'} · PHASE ${enemy.phase}/3`, x + w / 2, portraitY + 21, 12, gold, 'bold', 'center', 'Arial');
   }
+  if (enemy.reactions?.length) {
+    const counts = enemy.reactions.reduce((result, reaction) => { result[reaction.kind] = (result[reaction.kind] || 0) + 1; return result; }, {});
+    Object.entries(counts).forEach(([kind, count], j) => {
+      const badgeX = x + 20 + j * 85, badgeY = portraitY + (enemy.boss ? 42 : 10);
+      rect(badgeX, badgeY, 78, 22, 'rgba(18,45,57,.9)', 6, '#9be0d4', 1);
+      label(`${kind.toUpperCase()}${count > 1 ? ` ${count}` : ''}`, badgeX + 39, badgeY + 11, 10, '#b8f0e6', 'bold', 'center', 'Arial');
+    });
+  }
   if (enemy.mark && !reducedMotion) {
     ctx.save(); ctx.strokeStyle = `rgba(82,200,205,${.45 + Math.sin(clock * 3) * .15})`; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(x + w / 2, portraitY + portraitH / 2, enemy.boss ? 95 : 77, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
@@ -601,7 +610,7 @@ function fxSnapshot() {
     hp: state.hp, block: state.block, sp: state.sp, vulnerable: state.vulnerable, burnout: state.burnout, debt: state.projectDebt, hand: state.hand.length,
     firstAttack: state.firstAttack, firstSkillTurn: state.firstSkillTurn, redlineUsed: state.redlineUsed, notebookTurn: state.notebookTurn, flow: state.flow, reserveBlock: state.reserveBlock,
     teamwork: state.teamworkUsed, initiatives: state.initiatives.length, active: state.activeInitiatives.length,
-    enemies: state.enemies.map(enemy => ({ ref: enemy, hp: enemy.hp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark, phase: enemy.phase, intent: intentFor(enemy), redirected: enemy.redirected, stalled: enemy.stalled }))
+    enemies: state.enemies.map(enemy => ({ ref: enemy, hp: enemy.hp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark, phase: enemy.phase, intent: intentFor(enemy), redirected: enemy.redirected, stalled: enemy.stalled, reactions: (enemy.reactions || []).map(reaction => reaction.kind) }))
   };
 }
 function emitActionFx(before, id = '', playedCard = false) {
@@ -649,9 +658,19 @@ function playFromUI(index) {
   if (playCard(state, index, state.target)) {
     if (state.mode === 'combat') {
       emitActionFx(before, id, true);
-      const targeted = card.type === 'attack' || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect'].includes(id);
+      const targeted = card.type === 'attack' || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice'].includes(id);
       cueCard(card, index, targeted ? target : heroAnchor);
     }
+  }
+}
+function choiceFromUI(index) {
+  if (state.mode !== 'combat' || !state.pendingChoice) return;
+  const kind = state.pendingChoice.kind;
+  const before = fxSnapshot();
+  if (chooseCombatOption(state, index) && state.mode === 'combat') {
+    emitActionFx(before);
+    if (kind === 'grooming') battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
+    if (kind === 'archiveticket') battleFx.emit('interrupt', heroAnchor.x, heroAnchor.y, clock);
   }
 }
 function itemFromUI(index) {
@@ -707,6 +726,8 @@ function endFromUI() {
   if (before.enemies.some(enemy => enemy.intent.kind === 'attack' && enemy.intent.vulnerable && !enemy.redirected && !enemy.stalled)) battleFx.emit('expose', heroAnchor.x, heroAnchor.y, clock);
   before.enemies.forEach((enemy, index) => {
     const at = enemyAnchor(before.enemies.map(entry => entry.ref), index);
+    if (enemy.reactions.includes('freeze') && ['attack', 'erode', 'audit'].includes(enemy.intent.kind) && !enemy.redirected) battleFx.emit('shield', heroAnchor.x, heroAnchor.y, clock);
+    if (enemy.reactions.includes('pager') && enemy.ref.weak > enemy.weak) battleFx.emit('weak', at.x, at.y, clock);
     if (enemy.ref.block > enemy.block) battleFx.emit('shield', at.x, at.y, clock);
     if (enemy.ref.hp > enemy.hp) battleFx.emit('heal', at.x, at.y, clock);
     if (enemy.ref.phase > enemy.phase) battleFx.emit('phase', at.x, at.y, clock, at.x, at.y, `boss-${enemy.ref.id}`);
@@ -753,7 +774,8 @@ function combat() {
   const brief = state.objective;
   label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 518, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
   const bossProblem = state.enemies.find(enemy => enemy.boss && !enemy.problemResolved);
-  const liveNote = bossProblem ? `BOSS PROBLEM · ${BOSS_PROBLEMS[bossProblem.id].name}` : state.mission && !state.mission.resolved && !state.mission.failed ? `MISSION · ${MISSIONS[state.mission.id].name}${state.mission.id === 'handoff' ? ` ${state.mission.countdown}T` : ''}` : state.crisis ? `CRISIS · ${CRISES[state.crisis].name}` : state.initiatives.length ? `PLAN · ${CARDS[state.initiatives[0].id].name} ${state.initiatives[0].remaining}T` : '';
+  const firstPlan = state.initiatives[0];
+  const liveNote = bossProblem ? `BOSS PROBLEM · ${BOSS_PROBLEMS[bossProblem.id].name}` : state.sprintCommit ? `PROMISE · PLAY ${state.sprintCommit} MORE ATTACK${state.sprintCommit === 1 ? '' : 'S'} THIS TURN` : firstPlan ? `PLAN · ${CARDS[firstPlan.id].name}${firstPlan.goal ? ` ${firstPlan.progress}/${firstPlan.goal}` : ''} · ${firstPlan.remaining}T` : state.setAside?.length ? `SET ASIDE · ${state.setAside.map(id => cardInfo(id).name).join(', ')}` : state.mission && !state.mission.resolved && !state.mission.failed ? `MISSION · ${MISSIONS[state.mission.id].name}${state.mission.id === 'handoff' ? ` ${state.mission.countdown}T` : ''}` : state.crisis ? `CRISIS · ${CRISES[state.crisis].name}` : '';
   label(`READINESS ${state.readiness}/6${liveNote ? `   ·   ${liveNote}` : ''}`, 43, 536, 11, '#a9ddd2', 'bold', 'left', 'Arial', 625);
   label(state.log[0] || '', 43, 554, 14, cream, 'normal', 'left', 'Georgia', 645);
   button('I · DETAILS', 704, 506, 120, 22, () => { showBattleNotes = true; }, { size: 11, fill: '#d8e6da' });
@@ -794,8 +816,8 @@ function combat() {
   button('END TURN · SPACE', 993, 612, 181, 56, () => endFromUI(), { fill: coral, size: 15 });
   const projected = currentForecast();
   rect(993, 675, 181, 48, projected?.lethal ? '#f6d6cd' : '#e5efe6', 8, projected?.lethal ? coral : teal, 1);
-  label(projected?.lethal ? 'LETHAL IF ENDED' : projected?.outcome !== 'combat' ? 'INCIDENT CLEARS' : `PREVIEW · HP ${projected?.hp ?? state.hp}`, 1083, 691, 11, projected?.lethal ? '#9b4135' : teal, 'bold', 'center', 'Arial');
-  label(projected ? `${projected.damage} dmg · ${projected.debtAdded > 0 ? `+${projected.debtAdded} Debt` : projected.nextSp === null ? 'reward ahead' : `next ${projected.nextSp} SP`}` : 'No active threats', 1083, 710, 11, ink, 'bold', 'center', 'Arial');
+  label(state.pendingChoice ? 'CHOOSE TO CONTINUE' : projected?.lethal ? 'LETHAL IF ENDED' : projected && projected.outcome !== 'combat' ? 'INCIDENT CLEARS' : `PREVIEW · HP ${projected?.hp ?? state.hp}`, 1083, 691, 11, projected?.lethal ? '#9b4135' : teal, 'bold', 'center', 'Arial');
+  label(projected ? `${projected.damage} dmg · ${projected.debtAdded > 0 ? `+${projected.debtAdded} Debt` : projected.nextSp === null ? 'reward ahead' : `next ${projected.nextSp} SP`}` : state.pendingChoice ? 'End turn paused' : 'No active threats', 1083, 710, 11, ink, 'bold', 'center', 'Arial');
   rect(25, 749, 1150, 40, 'rgba(19,47,58,.96)', 10);
   label('TOOLS', 39, 769, 13, gold, 'bold', 'left', 'Arial');
   state.inventory.forEach((id, i) => {
@@ -829,7 +851,8 @@ function battleNotes() {
     ...state.enemies.filter(enemy => enemy.boss && !enemy.problemResolved).map(enemy => ['BOSS PROBLEM', `${BOSS_PROBLEMS[enemy.id].name}: ${BOSS_PROBLEMS[enemy.id].detail}${enemy.id === 'dragon' ? ` · Clock ${enemy.problemClock}/3` : ''}`]),
     ...(state.architecture ? [['ARCHITECTURE', `${ARCHITECTURES[state.architecture].name}: ${ARCHITECTURES[state.architecture].detail}`]] : []),
     ...(state.practice ? [['WORKING PRACTICE', `${PRACTICES[state.practice].name}: ${PRACTICES[state.practice].detail}`]] : []),
-    ...(state.initiatives.length || state.activeInitiatives.length ? [['INITIATIVES', [...state.initiatives.map(p => `${CARDS[p.id].name} ${p.remaining} turns`), ...state.activeInitiatives.map(id => `${CARDS[id].name} active`)].join(' · ')]] : []),
+    ...(state.initiatives.length || state.activeInitiatives.length ? [['INITIATIVES', [...state.initiatives.map(p => `${CARDS[p.id].name}${p.goal ? ` ${p.progress}/${p.goal}` : ''}, ${p.remaining} turns`), ...state.activeInitiatives.map(id => `${CARDS[id].name} active`)].join(' · ')]] : []),
+    ...(state.setAside?.length || state.exhausted?.length || state.sprintCommit ? [['HAND PLAN', `${state.setAside?.length ? `Set aside: ${state.setAside.map(id => cardInfo(id).name).join(', ')}. ` : ''}${state.exhausted?.length ? `${state.exhausted.length} card(s) archived this fight. ` : ''}${state.sprintCommit ? `${state.sprintCommit} promised attack(s) remain this turn.` : ''}`]] : []),
     ['PROJECT DEBT', `${state.projectDebt}/12 · Pressure tier ${debtTier(state)}. Debt at 4 and 8 adds defects and tougher foes.`]
   ];
   const rows = Math.ceil(Math.min(10, notes.length) / 2), panelHeight = 223 + (rows - 1) * 102, top = (H - panelHeight) / 2;
@@ -868,6 +891,45 @@ function cardPreview(index, modal = false) {
     button('CLOSE  ·  ESC', x + 26, y + 524, 215, 49, () => { previewCardIndex = null; }, { size: 15, fill: '#dfd8c5' });
     button('PLAY THIS CARD', x + 271, y + 524, 226, 49, () => playFromUI(index), { size: 15, disabled: state.sp < card.cost });
   } else label('Tap the lens to inspect · click card to play', x + w / 2, y + h - 22, 11, teal, 'bold', 'center', 'Arial');
+}
+function combatChoice() {
+  const choice = state.pendingChoice;
+  if (!choice) return;
+  rect(0, 0, W, H, 'rgba(10,29,39,.82)');
+  rect(116, 166, 968, 450, '#fff8e9', 20, gold, 3);
+  const title = choice.kind === 'scopechoice' ? 'CHOOSE THE SCOPE' : choice.kind === 'grooming' ? 'SET ASIDE A SKILL' : 'ARCHIVE A SKILL';
+  const subtitle = choice.kind === 'scopechoice' ? `Make the call against ${state.enemies[choice.target]?.name || 'the target'}.` : choice.kind === 'grooming' ? 'The chosen card returns to your hand next turn.' : 'The chosen card leaves this fight. A costly card refunds 1 SP; a Defect also clears 1 Debt.';
+  label(title, 600, 211, 33, ink, 'bold', 'center');
+  label(subtitle, 600, 251, 15, teal, 'normal', 'center', 'Arial', 885);
+  if (choice.kind === 'scopechoice') {
+    const choices = [
+      { name: 'PROTECT THE TEAM', detail: `Gain ${choice.id.endsWith('*') ? 15 : 10} Block now.`, color: teal, symbol: 'shield' },
+      { name: 'CUT THROUGH', detail: `Deal ${choice.id.endsWith('+') ? 16 : 11} to the target. Gain 1 Debt.`, color: coral, symbol: 'sword' }
+    ];
+    choices.forEach((option, i) => {
+      const x = 202 + i * 415;
+      rect(x, 285, 381, 290, '#f6ecdc', 13, option.color, 3);
+      rect(x + 15, 299, 351, 143, '#263e48', 9);
+      imageCover(cardArt[CARDS.scopechoice.art], x + 20, 304, 341, 133, 6);
+      rect(x + 22, 312, 40, 40, option.color, 20, cream, 1);
+      icon(option.symbol, x + 42, 332, 23, cream);
+      label(option.name, x + 190, 470, 19, ink, 'bold', 'center', 'Arial');
+      label(option.detail, x + 190, 502, 14, '#52676a', 'normal', 'center', 'Arial', 345);
+      button(`${i + 1} · CHOOSE`, x + 85, 526, 211, 42, () => choiceFromUI(i), { size: 15, fill: i ? coral : '#b6ddd0' });
+    });
+  } else {
+    const cards = state.hand, width = 166, gap = 12, left = (W - cards.length * width - (cards.length - 1) * gap) / 2;
+    cards.forEach((id, i) => {
+      const card = cardInfo(id), x = left + i * (width + gap);
+      rect(x, 296, width, 274, '#f6ecdc', 11, rarityColors[card.rarity], 2);
+      rect(x + 8, 304, width - 16, 125, '#263e48', 6);
+      imageCover(cardArt[card.art], x + 11, 307, width - 22, 119, 5);
+      label(card.name, x + width / 2, 454, 15, ink, 'bold', 'center', 'Arial', width - 12);
+      label(`${card.cost} SP · ${card.rarity.toUpperCase()}`, x + width / 2, 482, 11, teal, 'bold', 'center', 'Arial');
+      button(`${i + 1} · ${choice.kind === 'grooming' ? 'SET ASIDE' : 'ARCHIVE'}`, x + 8, 520, width - 16, 39, () => choiceFromUI(i), { size: 12, fill: choice.kind === 'grooming' ? '#b6ddd0' : gold });
+    });
+  }
+  label('Select a numbered option to continue the turn', 600, 590, 12, '#6b7d7d', 'normal', 'center', 'Arial');
 }
 function takeRewardFromUI(index) {
   const choice = state.rewardChoices[index];
@@ -955,17 +1017,17 @@ function tune() {
 function upgrade() {
   background(); runHeader();
   rect(70, 165, 1060, 579, 'rgba(255,247,232,.98)', 20, ink, 3);
-  const base = cardInfo(state.upgradePending.id), attack = base.type === 'attack';
+  const base = cardInfo(state.upgradePending.id);
   label(`CHOOSE A PATH FOR ${base.name.toUpperCase()}`, 600, 215, 31, ink, 'bold', 'center');
   label('Both paths keep the same SP cost. Choose the effect your deck needs.', 600, 253, 16, teal, 'normal', 'center');
   button('BACK TO WORKSHOP', 925, 668, 180, 52, () => cancelUpgrade(state), { size: 12, fill: '#e0d3bc' });
-  [['force', 'FORCE', attack ? '+3 damage on each play.' : '+3 Block on each play.'], ['flex', 'FLEX', attack ? 'Gain 3 Block after each play.' : 'Draw 1 after each play.']].forEach(([branch, title, detail], i) => {
+  [['force', 'FORCE', upgradeBranchDetail(state.upgradePending.id, 'force')], ['flex', 'FLEX', upgradeBranchDetail(state.upgradePending.id, 'flex')]].forEach(([branch, title, detail], i) => {
     const x = 238 + i * 380;
     rect(x, 301, 345, 343, '#f6ecdc', 16, i ? teal : coral, 3);
     rect(x + 24, 330, 297, 170, '#263e48', 10); imageCover(cardArt[base.art], x + 29, 335, 287, 160, 7);
     label(`${base.name}${i ? '*' : '+'}`, x + 172, 539, 25, ink, 'bold', 'center');
     label(title, x + 172, 571, 15, i ? teal : coral, 'bold', 'center', 'Arial');
-    label(detail, x + 172, 600, 15, '#556a70', 'normal', 'center', 'Arial');
+    wrap(detail, x + 29, 589, 287, 14, '#556a70', 18, 'Arial');
     button(`TAKE ${title}`, x + 72, 668, 201, 52, () => chooseUpgrade(state, branch), { size: 16, fill: i ? '#b6ddd0' : gold });
   });
 }
@@ -1157,7 +1219,8 @@ function render() {
   else if (state.mode === 'upgrade') upgrade();
   else ending();
   if (rewardToast && state.mode === 'route') drawRewardToast();
-  if (showLoadout) { hitboxes = []; loadout(); }
+  if (state.mode === 'combat' && state.pendingChoice) { hitboxes = []; combatChoice(); }
+  else if (showLoadout) { hitboxes = []; loadout(); }
   else if (previewCardIndex !== null && state.mode === 'combat') { hitboxes = []; cardPreview(previewCardIndex, true); }
   else if (state.mode === 'combat') { const hovered = hoveredCardIndex(); if (hovered >= 0) cardPreview(hovered); }
   if (showBattleNotes && state.mode === 'combat') { hitboxes = []; battleNotes(); }
@@ -1193,6 +1256,10 @@ window.addEventListener('keydown', e => {
   if (previewCardIndex !== null) {
     if (key === 'escape') previewCardIndex = null;
     else if (e.key === 'Enter' && state.sp >= cardInfo(state.hand[previewCardIndex]).cost) playFromUI(previewCardIndex);
+    persistRun(); render(); return;
+  }
+  if (state.mode === 'combat' && state.pendingChoice) {
+    if (['1', '2', '3', '4', '5'].includes(e.key)) choiceFromUI(Number(e.key) - 1);
     persistRun(); render(); return;
   }
   if (showBattleNotes) {
@@ -1284,12 +1351,16 @@ window.render_game_to_text = () => JSON.stringify({
   routeForecast: state.mode === 'route' ? state.routeForecast || [] : [],
   event: state.mode === 'event' ? { title: EVENTS[state.eventId].title, speaker: EVENTS[state.eventId].speaker, text: EVENTS[state.eventId].text, choices: EVENTS[state.eventId].choices.map((c, i) => ({ label: c.label, detail: c.detail, available: canChooseEvent(state, i) })) } : null,
   shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, rarity: o.kind === 'card' ? cardInfo(o.id).rarity : null, power: o.kind === 'card' ? cardInfo(o.id).power : null, sold: o.sold, available: canBuyShop(state, i) })) : [],
-  enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
+  enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, reactions: enemy.reactions || [], boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
   crisis: state.mode === 'combat' ? state.crisis || null : null, mission: state.mode === 'combat' ? state.mission : null, endTurnPreview: state.mode === 'combat' ? currentForecast() : null, readiness: state.mode === 'combat' ? state.readiness : null, canShip: state.mode === 'combat' && state.readiness >= 6 && state.turn >= 2 && !state.enemies.some(enemy => enemy.boss), teamworkUsed: state.mode === 'combat' ? state.teamworkUsed : null,
   fx: state.mode === 'combat' ? battleFx.active(clock) : [],
   motion: state.mode === 'combat' && !reducedMotion ? { hero: battleMotion.hero && clock - battleMotion.hero.at < .38 ? battleMotion.hero.kind : null, enemyPreparing: endTurnHovered() && state.enemies.some(enemy => ['attack', 'erode', 'audit'].includes(intentFor(enemy).kind) && !enemy.redirected && !enemy.stalled), enemyLunges: battleMotion.enemies.filter(entry => entry.kind === 'lunge' && clock - entry.at < .2).length, cardsInFlight: battleMotion.cards.filter(card => clock - card.at < .24).length, drawingHand: !!battleMotion.draw && clock - battleMotion.draw.at < .19 } : null,
-  initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining })) : [],
+  initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining, progress: p.progress || 0, needed: p.goal || null })) : [],
   activeInitiatives: state.mode === 'combat' ? state.activeInitiatives.map(id => CARDS[id].name) : [],
+  pendingChoice: state.mode === 'combat' ? state.pendingChoice : null,
+  setAside: state.mode === 'combat' ? state.setAside.map(id => cardInfo(id).name) : [],
+  exhausted: state.mode === 'combat' ? state.exhausted.map(id => cardInfo(id).name) : [],
+  sprintCommit: state.mode === 'combat' ? state.sprintCommit : 0,
   selectedTarget: state.target,
   hand: state.mode === 'combat' ? state.hand.map((id, i) => ({ index: i, id, name: cardInfo(id).name, cost: cardInfo(id).cost, detail: cardInfo(id).detail, rarity: cardInfo(id).rarity, power: cardInfo(id).power, playable: state.sp >= cardInfo(id).cost && !(cardBase(id) === 'escalate' && state.projectDebt > 10) })) : [],
   deckSize: state.deck.length, drawSize: state.drawPile.length, discardSize: state.discardPile.length,
@@ -1298,7 +1369,7 @@ window.render_game_to_text = () => JSON.stringify({
   relics: state.relics.map(id => RELICS[id].name),
   rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook', rarity: choice.type === 'card' ? cardInfo(choice.id).rarity : null, power: choice.type === 'card' ? cardInfo(choice.id).power : null, source: choice.source || null, fit: choice.fit || 0, family: choice.family || null })) : [],
   tuneChoices: state.mode === 'tune' ? state.tuneChoices.map(choice => ({ type: choice.type, name: choice.type === 'audit' ? 'Technical Audit' : cardInfo(choice.id).name, detail: choice.type === 'upgrade' ? 'Choose Force or Flex' : choice.type === 'audit' ? 'Reduce Debt by 4' : 'Remove one basic card' })) : [],
-  upgradeChoices: state.mode === 'upgrade' ? ['force', 'flex'].map(branch => ({ branch, name: `${cardInfo(state.upgradePending.id).name}${branch === 'force' ? '+' : '*'}`, detail: branch === 'force' ? '+3 damage or Block' : cardInfo(state.upgradePending.id).type === 'attack' ? '+3 Block after playing' : 'Draw 1 after playing' })) : [],
+  upgradeChoices: state.mode === 'upgrade' ? ['force', 'flex'].map(branch => ({ branch, name: `${cardInfo(state.upgradePending.id).name}${branch === 'force' ? '+' : '*'}`, detail: upgradeBranchDetail(state.upgradePending.id, branch) })) : [],
   bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, deathCause: state.deathCause, missionWins: state.missionWins || 0, score: state.mode === 'end' ? runScore(state) : null, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect, lastObjective: state.lastObjective, lastMission: state.lastMission, lastContract: state.lastContract
 });
 resize();

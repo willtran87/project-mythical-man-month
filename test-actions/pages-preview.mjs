@@ -45,7 +45,7 @@ try {
   assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'route');
   assert.ok(artwork.size >= 25, `expected generated artwork to load, got ${artwork.size} assets`);
   assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.png$/.test(asset)).length, 8, 'all eight skill illustrations should load');
-  assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.webp$/.test(asset)).length, 21, 'all twenty-one expanded skill illustrations should load');
+  assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.webp$/.test(asset)).length, 26, 'all twenty-six expanded skill illustrations should load');
   assert.equal([...artwork].filter(asset => /\/assets\/ui\/[^/]+\.webp$/.test(asset)).length, 3, 'title and Night Market service art should load');
   assert.equal([...artwork].filter(asset => /\/assets\/story\/[^/]+\.png$/.test(asset)).length, 7, 'all seven story illustrations should load');
   for (const [folder, count] of [['relics', 14], ['trinkets', 5], ['roles', 3], ['scenes', 6]]) {

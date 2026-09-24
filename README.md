@@ -23,7 +23,9 @@ Play up to five cards from your hand against the selected foe. Cards cost skill 
 
 Each battle now has an optional Sprint Brief. Completing it earns eight credits and pays down one Project Debt. Shortcut cards add Debt on their first use each fight; at four Debt, regular enemies gain health, and at eight they gain more health and attack power. A workshop Technical Audit pays down four Debt. Bosses change phase at 65% and 30% health, immediately telegraphing their new next intent.
 
-Debt also shuffles one or two temporary Open Defect cards into combat at its pressure thresholds. Playing a Defect spends SP to fix it, removes one Debt, and draws a replacement card; fixed Defects leave the fight. New intent-control skills can advance an enemy plan, mitigate its next attack, redirect it, or cancel it at a Debt cost. Test Pipeline, Handoff Protocol, and Staged Rollout are multi-turn initiatives that pay off after their visible countdowns.
+Debt also shuffles one or two temporary Open Defect cards into combat at its pressure thresholds. Playing a Defect spends SP to fix it, removes one Debt, and draws a replacement card; fixed Defects leave the fight. Intent-control skills can advance an enemy plan, mitigate its next attack, redirect it, or cancel it at a Debt cost. Test Pipeline, Handoff Protocol, and Staged Rollout are multi-turn initiatives that pay off after their visible countdowns.
+
+Twelve additional skills make the turn-to-turn decisions more involved. Decision Record and Release Cut spend Flow for defense or damage. Change Freeze and Pager Duty arm a response to a chosen foe's next intent. Backlog Grooming lets you save a selected hand card for next turn; Archive Ticket removes a hand card for the rest of the fight. Migration Plan and Handoff Gate reward playing the right card types before their two-turn deadlines and penalize missed plans. Scope Decision opens a safe-or-risky combat choice. Each lead also gets a new build payoff: Architect spends banked Block with Load-Bearing Fix, Debugger converts Mark into cards and SP with Evidence Chain, and Producer borrows SP through Sprint Commitment while promising attacks. Six of these skills have distinct Force and Flex upgrades. Five new illustrated scenes cover these mechanics; prompts are in `public/assets/cards/skill-depth-prompts.md`.
 
 Each non-boss route now carries a visible crisis condition: Legacy System adds an Open Defect, Executive Demo powers up foes from turn three, and Build Blackout cuts opening SP. Each pays bonus credits. Playing attacks raises Release Readiness by one and skills by two. Once Readiness reaches six and the team has survived a turn, it may ship the incident early. Shipping awards half the normal credits, adds one Debt per unresolved foe, forfeits the Sprint Brief and perfect defense bonus, and lowers the final score. Bosses still require a fight to the finish.
 
@@ -67,7 +69,7 @@ The Run Archive now tracks mastery for each lead. A win unlocks an alternate sta
 | R | Ship a ready non-boss incident early; on the ending screen, replay the same lead and format |
 | 1–2 | Choose Force or Flex after selecting a workshop upgrade |
 | 1–4 | Choose a battle reward |
-| 1–5 | Play a card in combat |
+| 1–5 | Play a card in combat; choose an option when a skill opens a decision |
 | Hover a card or tap its lens | Preview its art and full effect |
 | Shift+1–5 | Inspect a hand card |
 | Enter / Escape in card preview | Play the inspected card / close the preview |
@@ -88,6 +90,8 @@ The Run Archive now tracks mastery for each lead. A win unlocks an alternate sta
 ```powershell
 npm run build
 node test-actions/battle-balance.mjs
+node test-actions/skill-depth.mjs
+node test-actions/skill-depth-browser.mjs
 node test-actions/maturity.mjs
 node test-actions/role-depth.mjs
 node test-actions/build-depth.mjs

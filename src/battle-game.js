@@ -125,9 +125,21 @@ export const CARDS = {
   pipeline: { name: 'Test Pipeline', cost: 2, type: 'skill', detail: 'In 2 turns: gain 5 Block each turn this fight.', rarity: 'uncommon', art: 'signal' },
   protocol: { name: 'Handoff Protocol', cost: 2, type: 'skill', detail: 'In 2 turns: gain 1 SP each turn this fight.', rarity: 'rare', art: 'charter.webp' },
   rollout: { name: 'Staged Rollout', cost: 1, type: 'skill', detail: 'In 3 turns: deal 14 to all foes.', rarity: 'uncommon', art: 'launch.webp' },
+  decisionrecord: { name: 'Decision Record', cost: 1, type: 'skill', detail: '4 Block. Spend up to 2 Flow: +4 each. At 2, draw 1.', rarity: 'uncommon', art: 'decision-record.webp' },
+  releasecut: { name: 'Release Cut', cost: 1, type: 'attack', detail: 'Spend up to 2 Flow. Deal 6 +6 each.', rarity: 'uncommon', art: 'scope-decision.webp' },
+  changefreeze: { name: 'Change Freeze', cost: 1, type: 'skill', detail: '4 Block. Arm foe: attack +8 Block; else next SP +1.', rarity: 'uncommon', art: 'change-freeze.webp' },
+  pagerduty: { name: 'Pager Duty', cost: 1, type: 'skill', detail: 'Arm foe. If it attacks: 2 Weak, next SP +1.', rarity: 'common', art: 'change-freeze.webp' },
+  grooming: { name: 'Backlog Grooming', cost: 1, type: 'skill', detail: 'Draw 2. Set aside 1 hand card for next turn.', rarity: 'common', art: 'backlog-grooming.webp' },
+  archiveticket: { name: 'Archive Ticket', cost: 0, type: 'skill', detail: 'Archive 1 hand card. Costly: +1 SP. Defect: -1 Debt.', rarity: 'uncommon', art: 'backlog-grooming.webp' },
+  migration: { name: 'Migration Plan', cost: 2, type: 'skill', detail: '2 skills/2 turns: 16 ALL, 6 Block. Miss: 1 Debt.', rarity: 'rare', art: 'migration-plan.webp' },
+  handoffgate: { name: 'Handoff Gate', cost: 1, type: 'skill', detail: '2 attacks in 2 turns: 6 Block, next SP +2. Miss: Burnout.', rarity: 'uncommon', art: 'migration-plan.webp' },
+  scopechoice: { name: 'Scope Decision', cost: 1, type: 'skill', detail: 'Choose: 10 Block OR 11 damage and +1 Debt.', rarity: 'common', art: 'scope-decision.webp' },
+  loadbearing: { name: 'Load-Bearing Fix', cost: 1, type: 'attack', detail: 'Spend up to 6 banked Block. Deal 5 +2 each.', rarity: 'uncommon', role: 'architect', art: 'buffer.webp' },
+  evidence: { name: 'Evidence Chain', cost: 1, type: 'skill', detail: 'Spend up to 2 Mark: draw 1 each; at 2, +1 SP.', rarity: 'uncommon', role: 'debugger', art: 'probe.webp' },
+  sprintcommit: { name: 'Sprint Commitment', cost: 0, type: 'skill', detail: '+2 SP. Play 2 attacks this turn or +1 Debt per miss.', rarity: 'rare', role: 'producer', art: 'borrow.webp' },
   defect: { name: 'Open Defect', cost: 1, type: 'skill', detail: 'Fix: pay 1 SP to remove 1 Debt and draw 1.', rarity: 'basic', art: 'risk.webp' }
 };
-export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'pipeline', 'protocol', 'rollout'];
+export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'pipeline', 'protocol', 'rollout', 'decisionrecord', 'releasecut', 'changefreeze', 'pagerduty', 'grooming', 'archiveticket', 'migration', 'handoffgate', 'scopechoice', 'loadbearing', 'evidence', 'sprintcommit'];
 export const CARD_POWER = {
   patch: 2, review: 2, panic: 1, pair: 3, refactor: 3, memo: 3, sweep: 3, guardrail: 4,
   rollback: 4, critical: 4, overclock: 4, blueprint: 5, rootcause: 4, scopelock: 4,
@@ -137,7 +149,8 @@ export const CARD_POWER = {
   reserve: 2, riskmatrix: 3, probe: 3, exploit: 5, burnrate: 4, weekend: 5,
   hardstop: 3, retro: 3, warroom: 4, bufferexchange: 3, contingency: 5,
   triangulate: 4, tracesweep: 4, borrow: 4, reallocate: 4,
-  reprioritize: 3, escalate: 5, mitigate: 3, redirect: 5, pipeline: 4, protocol: 5, rollout: 4, defect: 1
+  reprioritize: 3, escalate: 5, mitigate: 3, redirect: 5, pipeline: 4, protocol: 5, rollout: 4,
+  decisionrecord: 4, releasecut: 4, changefreeze: 4, pagerduty: 3, grooming: 3, archiveticket: 4, migration: 5, handoffgate: 4, scopechoice: 3, loadbearing: 4, evidence: 4, sprintcommit: 5, defect: 1
 };
 export const CARD_FAMILY = {
   patch: 'strike', review: 'block', panic: 'burnout', pair: 'draw', refactor: 'weak', memo: 'draw',
@@ -151,8 +164,29 @@ export const CARD_FAMILY = {
   retro: 'draw', warroom: 'weak', bufferexchange: 'bank', contingency: 'bank',
   triangulate: 'mark', tracesweep: 'mark', borrow: 'burnout', reallocate: 'burnout',
   reprioritize: 'tempo', escalate: 'tempo', mitigate: 'block', redirect: 'weak',
-  pipeline: 'initiative', protocol: 'initiative', rollout: 'initiative', defect: 'debt'
+  pipeline: 'initiative', protocol: 'initiative', rollout: 'initiative',
+  decisionrecord: 'flow', releasecut: 'flow', changefreeze: 'reaction', pagerduty: 'reaction', grooming: 'control', archiveticket: 'control', migration: 'initiative', handoffgate: 'initiative', scopechoice: 'choice', loadbearing: 'bank', evidence: 'mark', sprintcommit: 'burnout', defect: 'debt'
 };
+export const SPECIAL_UPGRADES = {
+  decisionrecord: { force: 'Spend up to 3 Flow; +5 Block per Flow.', flex: 'Draw 1 after spending any Flow.' },
+  changefreeze: { force: 'Gain 6 Block now and 10 if attacked.', flex: 'If the foe does not attack, next SP +2.' },
+  grooming: { force: 'Draw 3 before setting a card aside.', flex: 'Gain 4 Block after setting a card aside.' },
+  migration: { force: 'Only 1 more skill needed to complete.', flex: 'Failure adds no Debt; completion grants 10 Block.' },
+  scopechoice: { force: 'Risky choice deals 16 damage.', flex: 'Safe choice grants 15 Block.' },
+  sprintcommit: { force: 'Gain 3 SP; still requires 2 attacks.', flex: 'Requires only 1 attack this turn.' }
+};
+const SPECIAL_CARD_DETAIL = {
+  decisionrecord: { force: '4 Block. Spend up to 3 Flow: +5 each. At 2, draw 1.', flex: '4 Block. Spend up to 2 Flow: +4 each. Draw 1 if any spent.' },
+  changefreeze: { force: '6 Block. Arm foe: attack +10 Block; else next SP +1.', flex: '4 Block. Arm foe: attack +8 Block; else next SP +2.' },
+  grooming: { force: 'Draw 3. Set aside 1 hand card for next turn.', flex: 'Draw 2. Set aside 1 hand card for next turn. +4 Block.' },
+  migration: { force: '1 skill/2 turns: 16 ALL, 6 Block. Miss: 1 Debt.', flex: '2 skills/2 turns: 16 ALL, 10 Block. Miss: no Debt.' },
+  scopechoice: { force: 'Choose: 10 Block OR 16 damage and +1 Debt.', flex: 'Choose: 15 Block OR 11 damage and +1 Debt.' },
+  sprintcommit: { force: '+3 SP. Play 2 attacks this turn or +1 Debt per miss.', flex: '+2 SP. Play 1 attack this turn or +1 Debt.' }
+};
+export function upgradeBranchDetail(id, branch) {
+  const base = cardBase(id), card = CARDS[base];
+  return SPECIAL_UPGRADES[base]?.[branch] || (branch === 'force' ? card.type === 'attack' ? '+3 damage.' : '+3 Block.' : card.type === 'attack' ? '+3 Block.' : 'Draw 1.');
+}
 export const RARITY_WEIGHTS = [
   { common: 55, uncommon: 35, rare: 10 },
   { common: 40, uncommon: 40, rare: 20 },
@@ -165,7 +199,7 @@ export function cardInfo(id) {
   const power = Math.min(5, CARD_POWER[base] + (upgraded ? 1 : 0));
   const family = CARD_FAMILY[base];
   if (!upgraded) return { ...card, power, family };
-  return { ...card, name: `${card.name}${branch === 'flex' ? '*' : '+'}`, detail: `${card.detail} ${branch === 'flex' ? card.type === 'attack' ? '+3 Block.' : 'Draw 1.' : card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true, branch, power, family };
+  return { ...card, name: `${card.name}${branch === 'flex' ? '*' : '+'}`, detail: SPECIAL_CARD_DETAIL[base]?.[branch] || `${card.detail} ${upgradeBranchDetail(base, branch)}`, upgraded: true, branch, power, family };
 }
 
 export const ITEMS = {
@@ -294,7 +328,7 @@ export function newGame(seed = randomSeed()) {
     mode: 'intro', seed, rng: seed || 0x9e3779b9, floor: 0, turn: 0,
     hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, spTax: 0, nextSp: 0,
     deck: ['patch', 'patch', 'patch', 'patch', 'review', 'review', 'review', 'pair', 'refactor', 'panic'],
-    drawPile: [], discardPile: [], hand: [],
+    drawPile: [], discardPile: [], hand: [], setAside: [], exhausted: [], pendingChoice: null, sprintCommit: 0,
     inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', masteryKit: false, specialist: '', specialistUsed: false, onboardingPending: 0, projectDebt: 0, itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
     charter: '', charterChosen: false, practice: '', practiceRefunded: false, challenge: 'standard', challengeRule: '', dailyDate: '', escalation: 0, architecture: '', architecturesChosen: [], architecturePending: false, contract: null, contractTakenActs: [], contractsCompleted: 0, briefsCompleted: 0, briefsCompletedAct: 0, lastContract: '', earlyDebtActs: [],
     enemies: [], target: 0, itemUsedThisTurn: false, firstAttack: true, firstSkillTurn: true, damageTakenFight: 0, turnBlockUsed: 0, turnBlockShred: 0, lastPayout: 0, lastPerfect: false,
@@ -466,7 +500,7 @@ function drawOne(s) {
   s.hand.push(s.drawPile.pop());
 }
 function handLimit(s) { return Math.max(3, (s.charter === 'surgical' ? 4 : 5) - (s.architecture === 'monolith' ? 1 : 0)); }
-function drawHand(s) { while (s.hand.length < handLimit(s) && (s.drawPile.length || s.discardPile.length)) drawOne(s); }
+function drawHand(s, limit = handLimit(s)) { while (s.hand.length < limit && (s.drawPile.length || s.discardPile.length)) drawOne(s); }
 function rewardCardPools(s) {
   return {
     role: REWARD_CARDS.filter(id => CARDS[id].role === s.role),
@@ -531,6 +565,7 @@ function beginCombat(s, route) {
   s.itemUsedThisTurn = false; s.firstAttack = true; s.firstAttackTurn = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0;
   s.spTax = 0; s.nextSp = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
   s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = []; s.initiatives = []; s.activeInitiatives = []; s.readiness = 0; s.shippedEarly = false; s.skillChain = 0; s.teamworkUsed = false; s.practiceRefunded = false; s.practiceStrikeUsed = false;
+  s.setAside = []; s.exhausted = []; s.pendingChoice = null; s.sprintCommit = 0;
   const objectiveIds = s.specialist ? ['shield', 'flow', 'quick', 'team'] : ['shield', 'flow', 'quick'];
   s.objective = { id: objectiveIds[(s.seed + s.floor * 7) % objectiveIds.length], progress: 0, done: false, failed: false };
   if (s.relics.includes('coffee')) s.hp = Math.min(s.maxHp, s.hp + 4);
@@ -732,12 +767,29 @@ function afterDamage(s) {
   s.target = clamp(s.target, 0, Math.max(0, s.enemies.length - 1));
   if (!s.enemies.length) finishFight(s);
 }
+function advanceCardProjects(s, type, playedId) {
+  let dealtDamage = false;
+  for (const project of [...s.initiatives]) {
+    if (project.id !== 'migration' && project.id !== 'handoffgate') continue;
+    if (project.id === playedId || (project.id === 'migration' ? type !== 'skill' : type !== 'attack')) continue;
+    project.progress = (project.progress || 0) + 1;
+    if (project.progress < (project.goal || 2)) continue;
+    s.initiatives.splice(s.initiatives.indexOf(project), 1);
+    if (project.id === 'migration') {
+      for (const foe of s.enemies) attackEnemy(s, foe, 16);
+      gainBlock(s, project.flex ? 10 : 6, false);
+      dealtDamage = true;
+      note(s, 'Migration Plan finished early: 16 to every foe and Block.');
+    } else { gainBlock(s, 6, false); s.nextSp += 2; note(s, 'Handoff Gate cleared: 6 Block and +2 SP next turn.'); }
+  }
+  return dealtDamage;
+}
 export function playCard(s, handIndex, targetIndex = s.target) {
-  if (s.mode !== 'combat' || !Number.isInteger(handIndex) || handIndex < 0 || handIndex >= s.hand.length) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || !Number.isInteger(handIndex) || handIndex < 0 || handIndex >= s.hand.length) return false;
   const id = s.hand[handIndex], baseId = cardBase(id), card = cardInfo(id);
   if (s.sp < card.cost) return false;
   if (baseId === 'escalate' && s.projectDebt > 10) return false;
-  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect'].includes(baseId)) && !s.enemies[targetIndex]) return false;
+  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice'].includes(baseId)) && !s.enemies[targetIndex]) return false;
   s.sp -= card.cost;
   s.hand.splice(handIndex, 1); if (baseId !== 'defect') s.discardPile.push(id); s.cardsPlayed++;
   if (baseId !== 'defect') s.readiness = Math.min(6, s.readiness + (card.type === 'skill' ? 2 : 1));
@@ -813,20 +865,86 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'pipeline': s.initiatives.push({ id: 'pipeline', remaining: s.practice === 'automation' ? 1 : 2 }); message += ' started a Test Pipeline.'; break;
     case 'protocol': s.initiatives.push({ id: 'protocol', remaining: s.practice === 'automation' ? 1 : 2 }); message += ' started a Handoff Protocol.'; break;
     case 'rollout': s.initiatives.push({ id: 'rollout', remaining: s.practice === 'automation' ? 2 : 3 }); message += ' started a Staged Rollout.'; break;
+    case 'decisionrecord': {
+      const spent = Math.min(s.flow, id.endsWith('+') ? 3 : 2);
+      s.flow -= spent;
+      gainBlock(s, 4 + spent * (id.endsWith('+') ? 5 : 4));
+      if (spent >= (id.endsWith('*') ? 1 : 2)) drawOne(s);
+      message += ` spent ${spent} Flow for Block${spent >= (id.endsWith('*') ? 1 : 2) ? ' and a card' : ''}.`;
+      break;
+    }
+    case 'releasecut': { const spent = Math.min(s.flow, 2); s.flow -= spent; message += ` spent ${spent} Flow and dealt ${attackEnemy(s, enemy, 6 + spent * 6)}.`; break; }
+    case 'changefreeze': {
+      gainBlock(s, id.endsWith('+') ? 6 : 4);
+      (enemy.reactions ||= []).push({ kind: 'freeze', block: id.endsWith('+') ? 10 : 8, missSp: id.endsWith('*') ? 2 : 1 });
+      message += ` guarded against ${enemy.name}'s next action.`;
+      break;
+    }
+    case 'pagerduty': (enemy.reactions ||= []).push({ kind: 'pager' }); message += ` set a pager for ${enemy.name}.`; break;
+    case 'grooming': {
+      drawOne(s); drawOne(s); if (id.endsWith('+')) drawOne(s);
+      if (s.hand.length && (s.setAside || []).length < 2) s.pendingChoice = { kind: 'grooming', flex: id.endsWith('*') };
+      message += s.pendingChoice ? ' drew cards; choose one to set aside for next turn.' : ' drew cards.';
+      break;
+    }
+    case 'archiveticket': {
+      if (s.hand.length) s.pendingChoice = { kind: 'archiveticket' };
+      else gainBlock(s, 3);
+      message += s.pendingChoice ? ' opened the archive; choose one card to exhaust this fight.' : ' found no card to archive; gained 3 Block.';
+      break;
+    }
+    case 'migration': s.initiatives.push({ id: 'migration', remaining: 2, progress: 0, goal: id.endsWith('+') ? 1 : 2, flex: id.endsWith('*') }); message += ' started a Migration Plan.'; break;
+    case 'handoffgate': s.initiatives.push({ id: 'handoffgate', remaining: 2, progress: 0, goal: 2 }); message += ' started a Handoff Gate.'; break;
+    case 'scopechoice': s.pendingChoice = { kind: 'scopechoice', target: targetIndex, id }; message += ' opened a scope decision; choose a safe or risky outcome.'; break;
+    case 'loadbearing': { const spent = Math.min(6, s.reserveBlock); s.reserveBlock -= spent; message += ` spent ${spent} banked Block and dealt ${attackEnemy(s, enemy, 5 + spent * 2)}.`; break; }
+    case 'evidence': { const spent = Math.min(2, enemy.mark || 0); enemy.mark -= spent; for (let i = 0; i < spent; i++) drawOne(s); if (spent === 2) s.sp++; message += ` spent ${spent} Mark for ${spent} cards${spent === 2 ? ' and 1 SP' : ''}.`; break; }
+    case 'sprintcommit': s.sp += id.endsWith('+') ? 3 : 2; s.sprintCommit += id.endsWith('*') ? 1 : 2; message += ' borrowed capacity; play the promised attacks or gain Debt.'; break;
     case 'defect': addDebt(s, -1); drawOne(s); message += ' was fixed: Debt -1 and draw 1.'; break;
   }
   s.upgradeDamage = 0;
-  if (id.endsWith('+') && card.type === 'skill') { gainBlock(s, 3, false); message += ' Upgrade: +3 Block.'; }
-  if (id.endsWith('*')) {
+  if (id.endsWith('+') && card.type === 'skill' && !SPECIAL_UPGRADES[baseId]) { gainBlock(s, 3, false); message += ' Upgrade: +3 Block.'; }
+  if (id.endsWith('*') && !SPECIAL_UPGRADES[baseId]) {
     if (card.type === 'attack') { gainBlock(s, 3, false); message += ' Flex: +3 Block.'; }
     else { drawOne(s); message += ' Flex: drew 1.'; }
   }
+  if (card.type === 'attack' && s.sprintCommit > 0) s.sprintCommit--;
+  const projectDamage = !s.pendingChoice && advanceCardProjects(s, card.type, baseId);
   note(s, message);
-  if (card.type === 'attack' || baseId === 'contingency') afterDamage(s);
+  if (card.type === 'attack' || baseId === 'contingency' || projectDamage) afterDamage(s);
+  return true;
+}
+export function chooseCombatOption(s, index) {
+  if (s.mode !== 'combat' || !s.pendingChoice || !Number.isInteger(index)) return false;
+  const choice = s.pendingChoice;
+  if (choice.kind === 'scopechoice') {
+    if (index < 0 || index > 1) return false;
+    const foe = s.enemies[choice.target];
+    if (index === 1 && !foe) return false;
+    s.pendingChoice = null;
+    if (index === 0) { gainBlock(s, choice.id.endsWith('*') ? 15 : 10); note(s, 'Scope Decision protected the team.'); }
+    else { const damage = attackEnemy(s, foe, choice.id.endsWith('+') ? 16 : 11); addDebt(s, 1); note(s, `Scope Decision cut through ${foe.name} for ${damage}; Debt +1.`); }
+    const projectDamage = advanceCardProjects(s, 'skill', 'scopechoice');
+    if (index === 1 || projectDamage) afterDamage(s);
+    return true;
+  }
+  if (index < 0 || index >= s.hand.length) return false;
+  const id = s.hand.splice(index, 1)[0];
+  s.pendingChoice = null;
+  if (choice.kind === 'grooming') {
+    (s.setAside ||= []).push(id);
+    if (choice.flex) gainBlock(s, 4);
+    note(s, `${cardInfo(id).name} is set aside for next turn.`);
+  } else if (choice.kind === 'archiveticket') {
+    (s.exhausted ||= []).push(id);
+    if (cardInfo(id).cost > 0) s.sp++;
+    if (cardBase(id) === 'defect') addDebt(s, -1);
+    note(s, `${cardInfo(id).name} was archived for this fight.`);
+  } else { s.hand.splice(index, 0, id); return false; }
+  if (advanceCardProjects(s, 'skill', choice.kind)) afterDamage(s);
   return true;
 }
 export function useRoleAbility(s, targetIndex = s.target) {
-  if (s.mode !== 'combat' || s.abilityUsed) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || s.abilityUsed) return false;
   if (s.role === 'architect') {
     const banked = Math.min(8, s.block, 12 - s.reserveBlock);
     if (banked < 1) return false;
@@ -868,7 +986,7 @@ function triggerTeamwork(s, targetIndex) {
   note(s, `Teamwork: ${ROLES[s.role].name} + ${SPECIALISTS[s.specialist].name}: ${TEAMWORK[s.specialist][s.role]}.`);
 }
 export function useSpecialist(s, targetIndex = s.target) {
-  if (s.mode !== 'combat' || !s.specialist || s.specialistUsed) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || !s.specialist || s.specialistUsed) return false;
   if (s.specialist === 'qa') {
     const foe = s.enemies[targetIndex]; if (!foe) return false;
     const marks = s.charter === 'surgical' ? 3 : 2;
@@ -887,7 +1005,7 @@ export function useSpecialist(s, targetIndex = s.target) {
   return true;
 }
 export function resolveBossProblem(s) {
-  if (s.mode !== 'combat' || s.sp < 2) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || s.sp < 2) return false;
   const boss = s.enemies.find(enemy => enemy.boss && enemy.hp > 0 && !enemy.problemResolved);
   if (!boss) return false;
   s.sp -= 2; boss.problemResolved = true;
@@ -896,7 +1014,7 @@ export function resolveBossProblem(s) {
   return true;
 }
 export function resolveMission(s) {
-  if (s.mode !== 'combat' || s.mission?.id !== 'handoff' || s.mission.resolved || s.mission.failed || s.sp < 1) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || s.mission?.id !== 'handoff' || s.mission.resolved || s.mission.failed || s.sp < 1) return false;
   s.sp--;
   s.mission.resolved = true;
   s.readiness = Math.min(6, s.readiness + 2);
@@ -904,7 +1022,7 @@ export function resolveMission(s) {
   return true;
 }
 export function shipRelease(s) {
-  if (s.mode !== 'combat' || s.enemies.some(enemy => enemy.boss) || s.readiness < 6 || s.turn < 2) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || s.enemies.some(enemy => enemy.boss) || s.readiness < 6 || s.turn < 2) return false;
   const remaining = s.enemies.filter(enemy => enemy.hp > 0).length;
   if (!remaining) return false;
   s.shippedEarly = true;
@@ -916,7 +1034,7 @@ export function shipRelease(s) {
   return true;
 }
 export function useItem(s, index, targetIndex = s.target) {
-  if (s.mode !== 'combat' || s.itemUsedThisTurn || !s.inventory[index]) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || s.itemUsedThisTurn || !s.inventory[index]) return false;
   const id = s.inventory[index];
   if (id === 'duck' && !s.enemies[targetIndex]) return false;
   s.inventory.splice(index, 1); s.itemUsedThisTurn = true; s.itemsUsed++;
@@ -931,7 +1049,7 @@ export function useItem(s, index, targetIndex = s.target) {
   return true;
 }
 export function useTrinket(s, index, targetIndex = s.target) {
-  if (s.mode !== 'combat' || !s.trinkets[index]) return false;
+  if (s.mode !== 'combat' || s.pendingChoice || !s.trinkets[index]) return false;
   const id = s.trinkets[index];
   if (s.usedTrinkets.includes(id) || (id === 'paperclip' && !s.enemies[targetIndex])) return false;
   s.usedTrinkets.push(id); s.trinketUses++;
@@ -961,9 +1079,10 @@ function hitPlayer(s, amount) {
   return damage;
 }
 export function endTurn(s) {
-  if (s.mode !== 'combat') return false;
+  if (s.mode !== 'combat' || s.pendingChoice) return false;
   s.turnBlockUsed = 0; s.turnBlockShred = 0;
   s.discardPile.push(...s.hand); s.hand = [];
+  if (s.sprintCommit > 0) { addDebt(s, s.sprintCommit); note(s, `Sprint Commitment missed ${s.sprintCommit} attack${s.sprintCommit === 1 ? '' : 's'}: Debt +${s.sprintCommit}.`); s.sprintCommit = 0; }
   if (s.mission?.id === 'audit') {
     if (s.sp >= 1) s.mission.cleanTurns++;
     else { s.mission.misses++; addDebt(s, 1); note(s, 'The audit found no spare capacity: Project Debt +1.'); }
@@ -972,7 +1091,17 @@ export function endTurn(s) {
   for (const enemy of [...s.enemies]) {
     if (enemy.hp <= 0) continue;
     enemy.block = 0;
-    const intent = intentFor(enemy);
+    let intent = intentFor(enemy);
+    const hostile = ['attack', 'erode', 'audit'].includes(intent.kind) && !enemy.redirected;
+    for (const reaction of enemy.reactions || []) {
+      if (reaction.kind === 'freeze') {
+        if (hostile) gainBlock(s, reaction.block, false);
+        else s.nextSp += reaction.missSp;
+        note(s, hostile ? `Change Freeze braced for ${enemy.name}.` : `Change Freeze found a quiet window: next SP +${reaction.missSp}.`);
+      } else if (reaction.kind === 'pager' && hostile) { enemy.weak += 2; s.nextSp++; note(s, `Pager Duty caught ${enemy.name}: 2 Weak and next SP +1.`); }
+    }
+    enemy.reactions = [];
+    intent = intentFor(enemy);
     if (intent.kind === 'stalled') { enemy.stalled = false; note(s, `${enemy.name}'s escalation was canceled.`); }
     else if (enemy.redirected && ['attack', 'erode', 'audit'].includes(intent.kind)) {
       const foe = s.enemies.find(other => other !== enemy && other.hp > 0) || enemy;
@@ -1045,7 +1174,11 @@ export function endTurn(s) {
       for (const foe of s.enemies) attackEnemy(s, foe, 14);
       note(s, 'Staged Rollout landed: 14 damage to every foe.');
       afterDamage(s); if (s.mode !== 'combat') return true;
-    } else { s.activeInitiatives.push(initiative.id); note(s, `${CARDS[initiative.id].name} is now running.`); }
+    } else if (initiative.id === 'migration') {
+      if (!initiative.flex) addDebt(s, 1);
+      note(s, initiative.flex ? 'Migration Plan expired safely.' : 'Migration Plan missed its deadline: Debt +1.');
+    } else if (initiative.id === 'handoffgate') { addSelfBurnout(s, 1); note(s, 'Handoff Gate missed its deadline: next turn starts with Burnout.'); }
+    else { s.activeInitiatives.push(initiative.id); note(s, `${CARDS[initiative.id].name} is now running.`); }
   }
   s.block = Math.min(15, s.reserveBlock + (s.relics.includes('grid') ? Math.min(3, s.block) : 0));
   s.block += s.activeInitiatives.filter(id => id === 'pipeline').length * 5;
@@ -1059,7 +1192,8 @@ export function endTurn(s) {
   s.spTax = 0; s.nextSp = 0; s.firstSkillTurn = true;
   s.flow = 0;
   s.itemUsedThisTurn = false; s.firstAttackTurn = true; s.practiceRefunded = false; s.practiceStrikeUsed = false;
-  drawHand(s);
+  drawHand(s, Math.max(0, handLimit(s) - (s.setAside || []).length));
+  s.hand.push(...(s.setAside || [])); s.setAside = [];
   return true;
 }
 function makeRewards(s, boss) {
@@ -1098,6 +1232,7 @@ function makeTuneChoices(s) {
   return upgrades;
 }
 function finishFight(s) {
+  if (s.sprintCommit > 0) { addDebt(s, s.sprintCommit); note(s, `Unfinished Sprint Commitment: Debt +${s.sprintCommit}.`); s.sprintCommit = 0; }
   s.lastContract = '';
   if (s.objective?.id === 'quick' && s.turn <= 3 && !s.shippedEarly) completeObjective(s);
   s.lastObjective = !!s.objective?.done;
@@ -1135,7 +1270,7 @@ function finishFight(s) {
   note(s, `The team recovered ${payout} credits from the incident budget.`);
   s.floor++;
   s.sp = s.maxSp; s.block = 0; s.vulnerable = 0; s.burnout = 0; s.flow = 0; s.reserveBlock = 0;
-  s.hand = []; s.drawPile = []; s.discardPile = [];
+  s.hand = []; s.drawPile = []; s.discardPile = []; s.setAside = []; s.exhausted = []; s.pendingChoice = null;
   if (s.floor >= TOTAL_FIGHTS) { s.mode = 'end'; s.ending = 'win'; note(s, 'The Deadline Dragon is defeated. The release ships.'); }
   else if (boss) { s.architecturePending = true; s.mode = 'architecture'; note(s, 'Choose the architecture that shapes the next act.'); }
   else { s.rewardChoices = makeRewards(s, boss); s.telemetry?.cardOffers.push(...s.rewardChoices.filter(choice => choice.type === 'card').map(choice => choice.id)); s.mode = 'reward'; note(s, `Victory! Choose one reward.`); }
@@ -1195,7 +1330,7 @@ function proceedFromReward(s) {
   else offerRoute(s);
 }
 export function projectEndTurn(s) {
-  if (s.mode !== 'combat') return null;
+  if (s.mode !== 'combat' || s.pendingChoice) return null;
   const copy = JSON.parse(JSON.stringify(s));
   const before = { hp: copy.hp, debt: copy.projectDebt, enemies: copy.enemies.length };
   endTurn(copy);

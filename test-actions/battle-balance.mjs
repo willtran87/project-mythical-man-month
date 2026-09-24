@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CARDS, ENEMIES, TOTAL_FIGHTS, newGame, startGame, chooseRoute, chooseArchitecture, choosePractice, resolveMission, selectTarget, intentFor, playCard, useItem, endTurn, chooseReward } from '../src/battle-game.js';
+import { CARDS, ENEMIES, TOTAL_FIGHTS, newGame, startGame, chooseRoute, chooseArchitecture, choosePractice, resolveMission, selectTarget, intentFor, playCard, chooseCombatOption, useItem, endTurn, chooseReward } from '../src/battle-game.js';
 
 const first = newGame(7), replay = newGame(7), changed = newGame(8);
 startGame(first); startGame(replay); startGame(changed);
@@ -42,6 +42,11 @@ function autopilot(seed, verbose = false) {
       const priority = s.rewardChoices[0].type === 'relic' ? relicPriority : cardPriority;
       const preferred = priority.find(id => ids.includes(id));
       chooseReward(s, Math.max(0, ids.indexOf(preferred)));
+      continue;
+    }
+    if (s.pendingChoice) {
+      const index = s.pendingChoice.kind === 'scopechoice' ? (s.block >= 10 ? 1 : 0) : 0;
+      chooseCombatOption(s, index);
       continue;
     }
     if (s.mission?.id === 'handoff' && !s.mission.resolved && !s.mission.failed && s.mission.countdown === 1 && s.sp >= 1) { resolveMission(s); continue; }
