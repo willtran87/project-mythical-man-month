@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CARDS, ENEMIES, TOTAL_FIGHTS, newGame, startGame, chooseRoute, selectTarget, intentFor, playCard, useItem, endTurn, chooseReward } from '../src/battle-game.js';
+import { CARDS, ENEMIES, TOTAL_FIGHTS, newGame, startGame, chooseRoute, chooseArchitecture, selectTarget, intentFor, playCard, useItem, endTurn, chooseReward } from '../src/battle-game.js';
 
 const first = newGame(7), replay = newGame(7), changed = newGame(8);
 startGame(first); startGame(replay); startGame(changed);
@@ -33,6 +33,7 @@ function autopilot(seed, verbose = false) {
   let steps = 0;
   while (s.mode !== 'end' && steps++ < 2000) {
     if (s.mode === 'route') { chooseRoute(s, 0); continue; }
+    if (s.mode === 'architecture') { chooseArchitecture(s, 'eventbus'); continue; }
     if (s.mode === 'reward') {
       const healIndex = s.rewardChoices.findIndex(x => x.type === 'heal');
       if (s.maxHp - s.hp >= 13 && healIndex >= 0) { chooseReward(s, healIndex); continue; }

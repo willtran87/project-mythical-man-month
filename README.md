@@ -25,6 +25,12 @@ Each battle now has an optional Sprint Brief. Completing it earns eight credits 
 
 Debt also shuffles one or two temporary Open Defect cards into combat at its pressure thresholds. Playing a Defect spends SP to fix it, removes one Debt, and draws a replacement card; fixed Defects leave the fight. New intent-control skills can advance an enemy plan, mitigate its next attack, redirect it, or cancel it at a Debt cost. Test Pipeline, Handoff Protocol, and Staged Rollout are multi-turn initiatives that pay off after their visible countdowns.
 
+Each non-boss route now carries a visible crisis condition: Legacy System adds an Open Defect, Executive Demo powers up foes from turn three, and Build Blackout cuts opening SP. Each pays bonus credits. Playing attacks raises Release Readiness by one and skills by two. Once Readiness reaches six and the team has survived a turn, it may ship the incident early. Shipping awards half the normal credits, adds one Debt per unresolved foe, forfeits the Sprint Brief and perfect defense bonus, and lowers the final score. Bosses still require a fight to the finish.
+
+Every boss phase now presents an active problem. The Budget Goblin reserves future SP, the Merge Kraken adds Defects, and the Deadline Dragon runs a three-turn damage countdown. Spend two SP to resolve the current phase's problem, or race the boss. Resolving also adds two Release Readiness. After the first two bosses, choose an Architecture that changes play for the next act: The Monolith boosts the first attack each turn but narrows the hand; Event Bus refunds SP on every third skill; Observability strengthens Mark. The next boss offers a chance to replace it. Using both the lead ability and the specialist action in one fight triggers a once-per-fight teamwork combo whose effect depends on that pairing.
+
+The main menu is available during a run through **M · Menu** in the header, with a confirmation before leaving the run. The end screen also has a **Main Menu** button for changing leads. The Run Archive records finished runs, wins, best scores overall and by lead or Charter, and discovered bosses on this device. Wins unlock three optional Escalation tiers; each tier adds foe health, higher tiers add power, and scoring scales with difficulty.
+
 Skills show a rarity tier and a 1–5 Power rating. Power estimates a card's baseline impact; combinations can outperform that rating. Rarity changes offer frequency across acts: common/uncommon/rare odds are 55/35/10% in Requirements, 40/40/20% in Integration, and 25/40/35% in Release. Offers favor skills not yet in your deck within the rolled rarity tier. The second battle reward and shop skill offers also favor card families that match your deck, lead, and relics; the reward labels show when a card fits the build. Shop skill prices are 17/25/37 credits by rarity. At the workshop, each upgrade branches into Force (+3 damage or Block) or Flex (+3 Block after attacks, draw one after skills). Both raise Power by one, up to five.
 
 The combat jokes draw on Brooks's themes: scope creep, coordination overhead, integration trouble, technical debt, conceptual integrity, and the seductive silver bullet.
@@ -46,7 +52,10 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | 1–3 | Choose a role, route, event response, or workshop choice |
 | H | Open specialist hiring from the route screen |
 | P / K | Open the Project Charter / Act Contract on the route screen |
-| M | Open challenge formats on the title screen |
+| M | Open challenge formats on the title screen; open the main menu confirmation during a run |
+| D / J | Cycle unlocked Escalation tiers / open the Run Archive on the title screen |
+| B | Spend 2 SP to resolve a boss phase problem |
+| R | Ship a ready non-boss incident early; on the ending screen, replay the same lead and format |
 | 1–2 | Choose Force or Flex after selecting a workshop upgrade |
 | 1–4 | Choose a battle reward |
 | 1–5 | Play a card in combat |
@@ -63,7 +72,6 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | C | Open or close the loadout view |
 | Space | End the combat turn |
 | F | Toggle fullscreen |
-| R | Start another run from the ending screen |
 
 ## Checks
 
@@ -78,6 +86,8 @@ node test-actions/rarity-visual.mjs
 node test-actions/systems-depth.mjs
 node test-actions/strategy-systems.mjs
 node test-actions/strategy-visual.mjs
+node test-actions/release-systems.mjs
+node test-actions/release-visual.mjs
 node test-actions/smoke.mjs
 node test-actions/pages-preview.mjs
 ```

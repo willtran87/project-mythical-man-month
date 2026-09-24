@@ -30,7 +30,7 @@ async function autopilot(seed, shots = false) {
   await fresh(seed);
   await page.keyboard.press('3');
   await page.keyboard.press('Enter');
-  let steps = 0, bossShots = 0, rewardShots = 0, relicShot = false, signatureShot = false;
+  let steps = 0, bossShots = 0, rewardShots = 0, relicShot = false, signatureShot = false, bossProblemShot = false;
   const capturedFoes = new Set(), capturedPhases = new Set();
   while ((await state()).mode !== 'end' && steps++ < 2000) {
     const s = await state();
@@ -38,6 +38,12 @@ async function autopilot(seed, shots = false) {
       if (shots && s.routeChoices[0].boss) await canvas.screenshot({ path: `${out}/boss-route-${bossShots}.png` });
       await page.keyboard.press('1');
       if (shots && s.routeChoices[0].boss) await canvas.screenshot({ path: `${out}/boss-fight-${bossShots++}.png` });
+      continue;
+    }
+    if (s.mode === 'architecture') {
+      if (shots) await canvas.screenshot({ path: `${out}/architecture-${s.bossesDefeated.length}.png` });
+      await page.keyboard.press('2');
+      assert.equal((await state()).mode, 'reward');
       continue;
     }
     if (s.mode === 'reward') {
@@ -78,6 +84,14 @@ async function autopilot(seed, shots = false) {
     const readyCharm = s.trinkets.findIndex(t => t.ready);
     if (readyCharm >= 0) { await page.keyboard.press(['z', 'x'][readyCharm]); continue; }
     const boss = s.enemies.findIndex(e => e.boss);
+    if (shots && boss >= 0 && !bossProblemShot && !s.enemies[boss].problem.resolved && s.sp >= 2) {
+      bossProblemShot = true;
+      await canvas.screenshot({ path: `${out}/boss-problem-open.png` });
+      await page.keyboard.press('b');
+      assert.equal((await state()).enemies[boss].problem.resolved, true);
+      await canvas.screenshot({ path: `${out}/boss-problem-solved.png` });
+      continue;
+    }
     const duck = s.inventory.findIndex(item => item.id === 'duck');
     if (boss >= 0 && duck >= 0 && !s.itemUsedThisTurn) { await target(boss); await page.keyboard.press(['q', 'w', 'e'][duck]); continue; }
     const pizza = s.inventory.findIndex(item => item.id === 'pizza');
@@ -113,12 +127,13 @@ let s = await state();
 assert.equal(s.mode, 'combat');
 assert.equal(s.enemies.length, 1);
 assert.equal(s.hand.length, 5);
+const openingSp = s.sp;
 await canvas.screenshot({ path: `${out}/first-battle.png` });
 const inspectIndex = s.hand.findIndex(card => card.name === 'Patch');
 assert.ok(inspectIndex >= 0);
 await click(26 + inspectIndex * 190 + 153, 643);
 assert.equal((await state()).cardPreview?.name, 'Patch');
-assert.equal((await state()).sp, 3, 'inspecting a card must not play it');
+assert.equal((await state()).sp, openingSp, 'inspecting a card must not play it');
 await canvas.screenshot({ path: `${out}/card-inspect.png` });
 await page.keyboard.press('Escape');
 assert.equal((await state()).cardPreview, null);
@@ -149,7 +164,7 @@ const hpBefore = s.enemies[0].hp;
 await click(26 + attack.index * 190 + 80, 660);
 s = await state();
 assert.ok(s.enemies[0].hp < hpBefore, 'card click did not damage enemy');
-assert.equal(s.sp, 2, 'card cost not charged');
+assert.equal(s.sp, openingSp - 1, 'card cost not charged');
 await click(1080, 668);
 s = await state();
 assert.equal(s.turn, 2);
@@ -180,6 +195,18 @@ assert.ok(Number(await page.evaluate(() => localStorage.getItem('deadline-disast
 await canvas.screenshot({ path: `${out}/win.png` });
 await page.keyboard.press('r');
 assert.equal((await state()).mode, 'route', 'keyboard restart failed');
+await page.keyboard.press('m'); await page.keyboard.press('Enter');
+assert.equal((await state()).mode, 'intro', 'main menu must be reachable from a run');
+await page.keyboard.press('j');
+assert.ok((await state()).career.wins >= 1, 'the archive records completed runs');
+assert.ok((await state()).career.bestByRole.producer >= win.score, 'the archive tracks best scores by lead');
+await canvas.screenshot({ path: `${out}/archive-after-win.png` });
+await page.keyboard.press('Escape');
+await page.keyboard.press('d');
+assert.equal((await state()).escalation, 1, 'winning unlocks the first escalation tier');
+await page.keyboard.press('2'); await page.keyboard.press('Enter');
+assert.equal((await state()).role, 'debugger', 'menu lets players switch leads');
+assert.equal((await state()).escalation, 1);
 
 await fresh(6);
 await page.keyboard.press('Enter');
