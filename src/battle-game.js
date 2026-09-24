@@ -10,6 +10,11 @@ export const ROLES = {
   debugger: { name: 'Debugger', detail: 'Expose Weak foes and strike at the root cause.', ability: 'Breakpoint', abilityDetail: 'Once per fight: apply 2 Weak and 1 Vulnerable to a foe.', icon: '✦' },
   producer: { name: 'Producer', detail: 'Push the sprint, then manage the Burnout.', ability: 'Crunch Time', abilityDetail: 'Once per fight: gain 2 SP now and 1 Burnout.', icon: '◆' }
 };
+export const MASTERY_KITS = {
+  architect: { name: 'Contingency Kit', detail: 'Replace one Patch with Buffer Budget.', remove: 'patch', add: 'reserve' },
+  debugger: { name: 'Investigation Kit', detail: 'Replace one Review with Diagnostic Probe.', remove: 'review', add: 'probe' },
+  producer: { name: 'Recovery Kit', detail: 'Replace one Patch with Quiet Hours.', remove: 'patch', add: 'quiet' }
+};
 export const SPECIALISTS = {
   qa: { name: 'QA Analyst', action: 'Repro Sweep', detail: 'Once per fight: apply 2 Mark and 1 Weak to a foe.', art: 'qa' },
   integrator: { name: 'Integration Lead', action: 'Clean Handoff', detail: 'Once per fight: gain 7 Block and draw 1.', art: 'integrator' },
@@ -45,6 +50,16 @@ export const ARCHITECTURES = {
   monolith: { name: 'The Monolith', detail: 'First attack each turn deals +5. Draw one fewer card each turn.' },
   eventbus: { name: 'Event Bus', detail: 'Every third skill played each fight refunds 1 SP.' },
   observatory: { name: 'Observability', detail: 'Applying Mark adds one extra. Attacks against marked foes gain +2.' }
+};
+export const PRACTICES = {
+  cohesion: { name: 'Small, Coherent Team', detail: 'Start fights with 7 Block. First role-family skill each turn refunds 1 SP. First attack each turn deals 1 less.', art: 'integrity.webp' },
+  automation: { name: 'Continuous Integration', detail: 'Replace a Review with Test Pipeline. Initiatives finish one turn sooner; fights add one Open Defect.', art: 'signal' },
+  triage: { name: 'Root Cause First', detail: 'First attack each turn against a Weak or Marked foe deals +6. Start fights with 1 less SP.', art: 'probe.webp' }
+};
+export const MISSIONS = {
+  handoff: { name: 'Unstable Handoff', detail: 'Spend 1 SP to stabilize before the third enemy turn, or gain 1 Project Debt.' },
+  coupled: { name: 'Coupled Systems', detail: 'Both foes have +1 power while together. Defeat either to break the link.' },
+  audit: { name: 'Compliance Audit', detail: 'End a turn with at least 1 unspent SP. Each miss adds 1 Debt; two clean turns earn bonus credits.' }
 };
 export const BOSS_PROBLEMS = {
   goblin: { name: 'Budget Freeze', detail: 'Unresolved: lose 1 SP next turn.' },
@@ -280,13 +295,13 @@ export function newGame(seed = randomSeed()) {
     hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, spTax: 0, nextSp: 0,
     deck: ['patch', 'patch', 'patch', 'patch', 'review', 'review', 'review', 'pair', 'refactor', 'panic'],
     drawPile: [], discardPile: [], hand: [],
-    inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', specialist: '', specialistUsed: false, onboardingPending: 0, projectDebt: 0, itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
-    charter: '', charterChosen: false, challenge: 'standard', challengeRule: '', dailyDate: '', escalation: 0, architecture: '', architecturesChosen: [], architecturePending: false, contract: null, contractTakenActs: [], contractsCompleted: 0, briefsCompleted: 0, briefsCompletedAct: 0, lastContract: '', earlyDebtActs: [],
-    enemies: [], target: 0, itemUsedThisTurn: false, firstAttack: true, firstSkillTurn: true, damageTakenFight: 0, lastPayout: 0, lastPerfect: false,
+    inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', masteryKit: false, specialist: '', specialistUsed: false, onboardingPending: 0, projectDebt: 0, itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
+    charter: '', charterChosen: false, practice: '', practiceRefunded: false, challenge: 'standard', challengeRule: '', dailyDate: '', escalation: 0, architecture: '', architecturesChosen: [], architecturePending: false, contract: null, contractTakenActs: [], contractsCompleted: 0, briefsCompleted: 0, briefsCompletedAct: 0, lastContract: '', earlyDebtActs: [],
+    enemies: [], target: 0, itemUsedThisTurn: false, firstAttack: true, firstSkillTurn: true, damageTakenFight: 0, turnBlockUsed: 0, turnBlockShred: 0, lastPayout: 0, lastPerfect: false,
     reserveBlock: 0, abilityUsed: false, notebookTurn: 0, redlineUsed: false, upgradeDamage: 0, debtChargedFight: [], charterFlowTurn: 0,
-    initiatives: [], activeInitiatives: [], crisis: '', readiness: 0, shippedEarly: false, earlyShips: 0, skillChain: 0, teamworkUsed: false,
+    initiatives: [], activeInitiatives: [], crisis: '', mission: null, missionWins: 0, readiness: 0, shippedEarly: false, earlyShips: 0, skillChain: 0, teamworkUsed: false,
     routeChoices: [], rewardChoices: [], tuneChoices: [], upgradePending: null, objective: null, lastObjective: false, defeatedBosses: [], eventId: '', shopStock: [], pendingRoute: null,
-    lastFightElite: false, log: ['Your first crisis awaits.'], ending: ''
+    lastFightElite: false, log: ['Your first crisis awaits.'], ending: '', deathCause: '', telemetry: { routes: [], cardOffers: [], cardPicks: [] }
   };
   selectRole(s, 'architect');
   return s;
@@ -294,6 +309,7 @@ export function newGame(seed = randomSeed()) {
 export function selectRole(s, role) {
   if (s.mode !== 'intro' || !ROLES[role]) return false;
   s.role = role;
+  s.masteryKit = false;
   s.maxHp = role === 'producer' ? 78 : 72; s.hp = s.maxHp;
   s.credits = role === 'producer' ? 18 : 14;
   s.deck = ['patch', 'patch', 'patch', 'patch', 'review', 'review', 'review', 'pair', 'refactor', 'panic'];
@@ -358,6 +374,18 @@ export function chooseArchitecture(s, id) {
   note(s, `${ARCHITECTURES[id].name} now shapes the playbook.`);
   return true;
 }
+export function choosePractice(s, id) {
+  if (s.mode !== 'practice' || s.practice || !PRACTICES[id]) return false;
+  s.practice = id;
+  if (id === 'automation') {
+    const index = s.deck.indexOf('review');
+    if (index >= 0) s.deck.splice(index, 1, 'pipeline');
+    else s.deck.push('pipeline');
+  }
+  note(s, `${PRACTICES[id].name} is now the team's working practice.`);
+  offerRoute(s);
+  return true;
+}
 export const OBJECTIVES = {
   shield: { name: 'Defend the plan', detail: 'Block 8 incoming damage this fight.' },
   flow: { name: 'Keep the thread', detail: 'Attack while at 2+ Flow this fight.' },
@@ -403,13 +431,21 @@ function offerRoute(s) {
       { label: detour === 'shop' ? 'Night market' : 'Unknown detour', detail: detour === 'shop' ? 'Shop · reinforced foe' : 'Story event · reinforced foe', ids: [pick(s, pool)], elite: false, boss: false, kind: detour }
     ];
     const crises = shuffle(s, Object.keys(CRISES));
-    s.routeChoices.forEach((choice, index) => { choice.crisis = crises[index]; });
+    s.routeChoices.forEach((choice, index) => { choice.crisis = crises[index]; choice.mission = choice.ids.length > 1 ? 'coupled' : index === 1 ? 'audit' : 'handoff'; });
   }
+  s.routeForecast = Array.from({ length: Math.min(2, TOTAL_FIGHTS - s.floor - 1) }, (_, offset) => {
+    const next = s.floor + offset + 1;
+    return { encounter: next + 1, act: ACTS[Math.min(2, Math.floor(next / 3))], kind: next % 3 === 2 ? 'Boss · relic' : next % 3 === 1 ? 'Duo / elite / market' : 'Fight / elite / story' };
+  });
   s.mode = 'route';
   note(s, `Act ${act + 1}: choose the next incident.`);
 }
 export function startGame(s) {
   if (s.mode !== 'intro') return false;
+  if (s.masteryKit) {
+    const kit = MASTERY_KITS[s.role], index = s.deck.indexOf(kit.remove);
+    if (index >= 0) s.deck.splice(index, 1, kit.add);
+  }
   if (s.challengeRule === 'crunch') addDebt(s, 4);
   if (s.challengeRule === 'austerity') s.hp = Math.max(1, s.hp - 12);
   offerRoute(s); return true;
@@ -486,16 +522,19 @@ function beginCombat(s, route) {
     enemy.maxHp += 8 + actIndex(s) * 2; enemy.hp = enemy.maxHp; enemy.power++;
   }
   s.lastFightElite = route.elite; s.crisis = route.crisis || '';
-  s.turn = 1; s.sp = s.maxSp + (s.relics.includes('battery') ? 1 : 0) + (s.charter === 'early' ? 1 : 0) + (s.challengeRule === 'crunch' ? 1 : 0); s.block = s.relics.includes('harness') ? 5 : 0;
+  s.mission = route.mission ? { id: route.mission, countdown: 3, resolved: false, failed: false, cleanTurns: 0, misses: 0 } : null;
+  if (s.mission?.id === 'coupled') for (const enemy of s.enemies) { enemy.power++; enemy.linkedPower = true; }
+  s.turn = 1; s.sp = s.maxSp + (s.relics.includes('battery') ? 1 : 0) + (s.charter === 'early' ? 1 : 0) + (s.challengeRule === 'crunch' ? 1 : 0); s.block = (s.relics.includes('harness') ? 5 : 0) + (s.practice === 'cohesion' ? 7 : 0);
   if (s.crisis === 'blackout') s.sp = Math.max(1, s.sp - 1);
+  if (s.practice === 'triage') s.sp = Math.max(1, s.sp - 1);
   if (s.onboardingPending) { s.sp = Math.max(1, s.sp - s.onboardingPending); s.onboardingPending = 0; }
   s.itemUsedThisTurn = false; s.firstAttack = true; s.firstAttackTurn = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0;
   s.spTax = 0; s.nextSp = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
-  s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = []; s.initiatives = []; s.activeInitiatives = []; s.readiness = 0; s.shippedEarly = false; s.skillChain = 0; s.teamworkUsed = false;
+  s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = []; s.initiatives = []; s.activeInitiatives = []; s.readiness = 0; s.shippedEarly = false; s.skillChain = 0; s.teamworkUsed = false; s.practiceRefunded = false; s.practiceStrikeUsed = false;
   const objectiveIds = s.specialist ? ['shield', 'flow', 'quick', 'team'] : ['shield', 'flow', 'quick'];
   s.objective = { id: objectiveIds[(s.seed + s.floor * 7) % objectiveIds.length], progress: 0, done: false, failed: false };
   if (s.relics.includes('coffee')) s.hp = Math.min(s.maxHp, s.hp + 4);
-  s.drawPile = shuffle(s, [...s.deck, ...Array(debtTier(s) + (s.crisis === 'legacy' ? 1 : 0)).fill('defect')]); s.discardPile = []; s.hand = []; drawHand(s);
+  s.drawPile = shuffle(s, [...s.deck, ...Array(debtTier(s) + (s.crisis === 'legacy' ? 1 : 0) + (s.practice === 'automation' ? 1 : 0)).fill('defect')]); s.discardPile = []; s.hand = []; drawHand(s);
   s.target = 0; s.mode = 'combat';
   note(s, route.boss ? `${s.enemies[0].name}: ${BOSS_LINES[s.enemies[0].id]}` : `${route.label}${s.crisis ? ` · ${CRISES[s.crisis].name}` : ''}: ${s.enemies.map(e => e.name).join(' and ')}.`);
   return true;
@@ -503,6 +542,7 @@ function beginCombat(s, route) {
 export function chooseRoute(s, index) {
   if (s.mode !== 'route' || !s.routeChoices[index]) return false;
   const route = s.routeChoices[index];
+  s.telemetry?.routes.push({ kind: route.kind || 'combat', elite: !!route.elite, mission: route.mission || '' });
   if (route.kind === 'event') {
     s.pendingRoute = route; s.eventId = pick(s, Object.keys(EVENTS)); s.mode = 'event';
     note(s, `${EVENTS[s.eventId].speaker}: ${EVENTS[s.eventId].title}.`); return true;
@@ -522,6 +562,7 @@ export function chooseRoute(s, index) {
       { kind: 'remove', id: '', price: SHOP_PRICES.remove, sold: false }
     ];
     s.shopStock[0].price = skillPrice(s.shopStock[0].id);
+    s.telemetry?.cardOffers.push(s.shopStock[0].id);
     s.mode = 'shop'; note(s, 'The Night Archivist opens the cabinet of almost-useful things.'); return true;
   }
   return beginCombat(s, route);
@@ -600,7 +641,7 @@ export function canBuyShop(s, index) {
 export function buyShop(s, index) {
   if (!canBuyShop(s, index)) return false;
   const offer = s.shopStock[index]; s.credits -= offer.price; offer.sold = true;
-  if (offer.kind === 'card') s.deck.push(offer.id);
+  if (offer.kind === 'card') { s.deck.push(offer.id); s.telemetry?.cardPicks.push(offer.id); }
   if (offer.kind === 'item') s.inventory.push(offer.id);
   if (offer.kind === 'trinket') s.trinkets.push(offer.id);
   if (offer.kind === 'relic') { s.relics.push(offer.id); if (offer.id === 'model') { s.maxSp++; s.sp = s.maxSp; } }
@@ -647,6 +688,8 @@ function attackEnemy(s, enemy, amount, useMark = true) {
   if (s.objective?.id === 'flow' && s.flow >= 2) completeObjective(s);
   const notebookDraw = enemy.weak && s.relics.includes('notebook') && s.notebookTurn !== s.turn;
   amount += s.flow * 2 + s.upgradeDamage;
+  if (s.practice === 'triage' && !s.practiceStrikeUsed && (enemy.weak || enemy.mark)) { amount += 6; s.practiceStrikeUsed = true; }
+  if (s.practice === 'cohesion' && s.firstAttackTurn) amount--;
   if (s.architecture === 'monolith' && s.firstAttackTurn) amount += 5;
   s.firstAttackTurn = false;
   if (s.architecture === 'observatory' && enemy.mark) amount += 2;
@@ -681,6 +724,11 @@ function heal(s, amount) { s.hp = Math.min(s.maxHp, s.hp + amount); }
 function applyMark(s, enemy, amount) { enemy.mark = Math.min(3, (enemy.mark || 0) + amount + (s.architecture === 'observatory' ? 1 : 0)); }
 function afterDamage(s) {
   s.enemies = s.enemies.filter(enemy => enemy.hp > 0);
+  if (s.mission?.id === 'coupled' && s.enemies.length <= 1 && !s.mission.resolved) {
+    s.mission.resolved = true;
+    for (const enemy of s.enemies) if (enemy.linkedPower) { enemy.power--; enemy.linkedPower = false; }
+    note(s, 'The coupled systems broke apart. Remaining foe loses 1 power.');
+  }
   s.target = clamp(s.target, 0, Math.max(0, s.enemies.length - 1));
   if (!s.enemies.length) finishFight(s);
 }
@@ -694,8 +742,10 @@ export function playCard(s, handIndex, targetIndex = s.target) {
   s.hand.splice(handIndex, 1); if (baseId !== 'defect') s.discardPile.push(id); s.cardsPlayed++;
   if (baseId !== 'defect') s.readiness = Math.min(6, s.readiness + (card.type === 'skill' ? 2 : 1));
   if (card.type === 'skill') {
-    const flowGain = s.charter === 'integrity' ? (card.family === ROLE_FAMILY[s.role] ? 2 : 0) : 1;
+    const roleFamily = card.family === ROLE_FAMILY[s.role];
+    const flowGain = s.charter === 'integrity' ? (roleFamily ? 2 : 0) : 1;
     s.flow = Math.min(3, s.flow + flowGain);
+    if (s.practice === 'cohesion' && roleFamily && !s.practiceRefunded && baseId !== 'defect') { s.sp++; s.practiceRefunded = true; note(s, 'Coherent practice refunded 1 SP.'); }
     if (s.firstSkillTurn && s.relics.includes('binder')) gainBlock(s, 3, false);
     if (s.architecture === 'eventbus' && baseId !== 'defect' && ++s.skillChain % 3 === 0) { s.sp++; note(s, 'Event Bus recycled the third skill into 1 SP.'); }
     s.firstSkillTurn = false;
@@ -760,9 +810,9 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'escalate': enemy.stalled = true; addDebt(s, 2); message += ` canceled ${enemy.name}'s next action and raised Debt by 2.`; break;
     case 'mitigate': enemy.intentPenalty = Math.min(12, (enemy.intentPenalty || 0) + 5); gainBlock(s, 4); message += ` reduced ${enemy.name}'s next attack by 5 and gained 4 Block.`; break;
     case 'redirect': enemy.redirected = true; message += ` redirected ${enemy.name}'s next attack toward a foe.`; break;
-    case 'pipeline': s.initiatives.push({ id: 'pipeline', remaining: 2 }); message += ' started a Test Pipeline (2 turns).'; break;
-    case 'protocol': s.initiatives.push({ id: 'protocol', remaining: 2 }); message += ' started a Handoff Protocol (2 turns).'; break;
-    case 'rollout': s.initiatives.push({ id: 'rollout', remaining: 3 }); message += ' started a Staged Rollout (3 turns).'; break;
+    case 'pipeline': s.initiatives.push({ id: 'pipeline', remaining: s.practice === 'automation' ? 1 : 2 }); message += ' started a Test Pipeline.'; break;
+    case 'protocol': s.initiatives.push({ id: 'protocol', remaining: s.practice === 'automation' ? 1 : 2 }); message += ' started a Handoff Protocol.'; break;
+    case 'rollout': s.initiatives.push({ id: 'rollout', remaining: s.practice === 'automation' ? 2 : 3 }); message += ' started a Staged Rollout.'; break;
     case 'defect': addDebt(s, -1); drawOne(s); message += ' was fixed: Debt -1 and draw 1.'; break;
   }
   s.upgradeDamage = 0;
@@ -845,6 +895,14 @@ export function resolveBossProblem(s) {
   note(s, `${BOSS_PROBLEMS[boss.id].name} resolved for this phase. Readiness +2.`);
   return true;
 }
+export function resolveMission(s) {
+  if (s.mode !== 'combat' || s.mission?.id !== 'handoff' || s.mission.resolved || s.mission.failed || s.sp < 1) return false;
+  s.sp--;
+  s.mission.resolved = true;
+  s.readiness = Math.min(6, s.readiness + 2);
+  note(s, 'The handoff was stabilized. Readiness +2.');
+  return true;
+}
 export function shipRelease(s) {
   if (s.mode !== 'combat' || s.enemies.some(enemy => enemy.boss) || s.readiness < 6 || s.turn < 2) return false;
   const remaining = s.enemies.filter(enemy => enemy.hp > 0).length;
@@ -892,6 +950,7 @@ function hitPlayer(s, amount) {
   if (s.vulnerable) { amount += 2; s.vulnerable--; }
   const absorbed = Math.min(s.block, amount);
   s.block -= absorbed;
+  s.turnBlockUsed = (s.turnBlockUsed || 0) + absorbed;
   if (s.objective?.id === 'shield' && !s.objective.done) {
     s.objective.progress += absorbed;
     if (s.objective.progress >= 8) completeObjective(s);
@@ -903,7 +962,12 @@ function hitPlayer(s, amount) {
 }
 export function endTurn(s) {
   if (s.mode !== 'combat') return false;
+  s.turnBlockUsed = 0; s.turnBlockShred = 0;
   s.discardPile.push(...s.hand); s.hand = [];
+  if (s.mission?.id === 'audit') {
+    if (s.sp >= 1) s.mission.cleanTurns++;
+    else { s.mission.misses++; addDebt(s, 1); note(s, 'The audit found no spare capacity: Project Debt +1.'); }
+  }
   let redirectedHit = false;
   for (const enemy of [...s.enemies]) {
     if (enemy.hp <= 0) continue;
@@ -928,6 +992,7 @@ export function endTurn(s) {
     } else if (intent.kind === 'erode') {
       const shredded = Math.min(s.block, intent.amount);
       s.block -= shredded;
+      s.turnBlockShred += shredded;
       const damage = hitPlayer(s, intent.damage);
       note(s, `${enemy.name} shredded ${shredded} Block and dealt ${damage}.`);
       if (enemy.weak) enemy.weak--;
@@ -951,7 +1016,15 @@ export function endTurn(s) {
     }
     if (['attack', 'erode', 'audit'].includes(intent.kind)) enemy.intentPenalty = 0;
     enemy.step++;
-    if (s.hp <= 0) { s.mode = 'end'; s.ending = 'lose'; note(s, 'The project lead fell in battle.'); return true; }
+    if (s.hp <= 0) { s.mode = 'end'; s.ending = 'lose'; s.deathCause = `${enemy.name}: ${intent.label}`; note(s, 'The project lead fell in battle.'); return true; }
+  }
+  if (s.mission?.id === 'handoff' && !s.mission.resolved && !s.mission.failed) {
+    s.mission.countdown--;
+    if (s.mission.countdown <= 0) {
+      s.mission.failed = true;
+      addDebt(s, 1);
+      note(s, 'The handoff failed: +1 Project Debt.');
+    }
   }
   const boss = s.enemies.find(enemy => enemy.boss && enemy.hp > 0 && !enemy.problemResolved);
   if (boss) {
@@ -960,7 +1033,7 @@ export function endTurn(s) {
     if (boss.id === 'kraken') { s.discardPile.push('defect'); note(s, 'Merge Conflict added an Open Defect to the discard.'); }
     if (boss.id === 'dragon' && boss.problemClock % 3 === 0) {
       hitPlayer(s, 12); note(s, 'Launch Countdown expired: 12 damage.');
-      if (s.hp <= 0) { s.mode = 'end'; s.ending = 'lose'; return true; }
+      if (s.hp <= 0) { s.mode = 'end'; s.ending = 'lose'; s.deathCause = 'Deadline Dragon: Launch Countdown'; return true; }
     }
   }
   if (redirectedHit) { afterDamage(s); if (s.mode !== 'combat') return true; }
@@ -985,7 +1058,7 @@ export function endTurn(s) {
   s.burnout = 0;
   s.spTax = 0; s.nextSp = 0; s.firstSkillTurn = true;
   s.flow = 0;
-  s.itemUsedThisTurn = false; s.firstAttackTurn = true;
+  s.itemUsedThisTurn = false; s.firstAttackTurn = true; s.practiceRefunded = false; s.practiceStrikeUsed = false;
   drawHand(s);
   return true;
 }
@@ -1042,6 +1115,11 @@ function finishFight(s) {
   }
   s.lastPerfect = s.damageTakenFight === 0 && !s.shippedEarly;
   let payout = (boss ? 22 : s.lastFightElite ? 19 : 11) + actIndex(s) * 2 + (s.relics.includes('ledger') ? 5 : 0) + (s.lastPerfect ? 5 : 0) + (s.lastObjective ? 8 : 0) + (s.challengeRule === 'austerity' ? 5 : 0);
+  s.lastMission = false;
+  if (s.mission && !s.shippedEarly) {
+    const accomplished = s.mission.id === 'handoff' ? s.mission.resolved : s.mission.id === 'coupled' ? s.mission.resolved : s.mission.cleanTurns >= 2 && s.mission.misses === 0;
+    if (accomplished) { payout += 6; s.missionWins++; s.lastMission = true; note(s, `${MISSIONS[s.mission.id].name} handled: +6 credits.`); }
+  }
   if (s.crisis) payout += { legacy: 4, demo: 6, blackout: 5 }[s.crisis];
   if (s.shippedEarly) { payout = Math.max(3, Math.ceil(payout / 2)); s.lastPerfect = false; }
   if (boss && s.contract?.act === actIndex(s)) {
@@ -1060,7 +1138,7 @@ function finishFight(s) {
   s.hand = []; s.drawPile = []; s.discardPile = [];
   if (s.floor >= TOTAL_FIGHTS) { s.mode = 'end'; s.ending = 'win'; note(s, 'The Deadline Dragon is defeated. The release ships.'); }
   else if (boss) { s.architecturePending = true; s.mode = 'architecture'; note(s, 'Choose the architecture that shapes the next act.'); }
-  else { s.rewardChoices = makeRewards(s, boss); s.mode = 'reward'; note(s, `Victory! Choose one reward.`); }
+  else { s.rewardChoices = makeRewards(s, boss); s.telemetry?.cardOffers.push(...s.rewardChoices.filter(choice => choice.type === 'card').map(choice => choice.id)); s.mode = 'reward'; note(s, `Victory! Choose one reward.`); }
 }
 export function chooseReward(s, index) {
   if (s.mode !== 'reward' || !s.rewardChoices[index]) return false;
@@ -1070,14 +1148,14 @@ export function chooseReward(s, index) {
     if (!s.tuneChoices.length) return false;
     s.mode = 'tune'; note(s, 'Choose one improvement for the playbook.'); return true;
   }
-  if (choice.type === 'card') { s.deck.push(choice.id); note(s, `${CARDS[choice.id].name} joined your deck.`); }
+  if (choice.type === 'card') { s.deck.push(choice.id); s.telemetry?.cardPicks.push(choice.id); note(s, `${CARDS[choice.id].name} joined your deck.`); }
   else if (choice.type === 'relic') {
     s.relics.push(choice.id);
     if (choice.id === 'model') { s.maxSp++; s.sp = s.maxSp; }
     note(s, `${RELICS[choice.id].name} is now active.`);
   } else { heal(s, choice.amount); note(s, `Recovered ${choice.amount} HP.`); }
   s.rewardChoices = []; s.tuneChoices = [];
-  offerRoute(s);
+  proceedFromReward(s);
   return true;
 }
 export function chooseTune(s, index) {
@@ -1085,7 +1163,7 @@ export function chooseTune(s, index) {
   const choice = s.tuneChoices[index];
   if (choice.type === 'audit') {
     addDebt(s, -4); note(s, 'The team paid down 4 Project Debt.');
-    s.rewardChoices = []; s.tuneChoices = []; offerRoute(s); return true;
+    s.rewardChoices = []; s.tuneChoices = []; proceedFromReward(s); return true;
   }
   if (s.deck[choice.index] !== choice.id) return false;
   if (choice.type === 'upgrade') {
@@ -1095,7 +1173,7 @@ export function chooseTune(s, index) {
     note(s, `${CARDS[choice.id].name} was retired.`);
   }
   s.rewardChoices = []; s.tuneChoices = [];
-  offerRoute(s);
+  proceedFromReward(s);
   return true;
 }
 export function chooseUpgrade(s, branch) {
@@ -1104,11 +1182,28 @@ export function chooseUpgrade(s, branch) {
   if (s.deck[index] !== id) return false;
   s.deck[index] = `${id}${branch === 'force' ? '+' : '*'}`;
   note(s, `${CARDS[id].name} gained the ${branch === 'force' ? 'Force' : 'Flex'} upgrade.`);
-  s.upgradePending = null; s.rewardChoices = []; s.tuneChoices = []; offerRoute(s);
+  s.upgradePending = null; s.rewardChoices = []; s.tuneChoices = []; proceedFromReward(s);
   return true;
 }
 export function cancelUpgrade(s) { if (s.mode !== 'upgrade') return false; s.mode = 'tune'; s.upgradePending = null; return true; }
 export function cancelTune(s) {
   if (s.mode !== 'tune') return false;
   s.mode = 'reward'; return true;
+}
+function proceedFromReward(s) {
+  if (s.floor === 1 && !s.practice) { s.mode = 'practice'; note(s, 'Choose a working practice for the rest of this run.'); }
+  else offerRoute(s);
+}
+export function projectEndTurn(s) {
+  if (s.mode !== 'combat') return null;
+  const copy = JSON.parse(JSON.stringify(s));
+  const before = { hp: copy.hp, debt: copy.projectDebt, enemies: copy.enemies.length };
+  endTurn(copy);
+  return {
+    hp: copy.hp, damage: before.hp - copy.hp, blockAbsorbed: copy.turnBlockUsed || 0, blockShredded: copy.turnBlockShred || 0,
+    debt: copy.projectDebt, debtAdded: copy.projectDebt - before.debt,
+    nextSp: copy.mode === 'combat' ? copy.sp : null, incomingFoes: Math.max(0, copy.enemies.length - before.enemies),
+    missionFailed: !!copy.mission?.failed && !s.mission?.failed,
+    lethal: copy.ending === 'lose', outcome: copy.mode
+  };
 }

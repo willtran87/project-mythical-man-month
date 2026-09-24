@@ -1,7 +1,7 @@
 import './style.css';
 import { BattleFx } from './battle-fx.js';
 import { BattleAudio } from './battle-audio.js';
-import { ACTS, ACT_LORE, ROLES, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, chooseContract, setEscalation, chooseArchitecture, resolveBossProblem, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
+import { ACTS, ACT_LORE, ROLES, MASTERY_KITS, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, PRACTICES, MISSIONS, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, chooseContract, setEscalation, chooseArchitecture, choosePractice, resolveBossProblem, resolveMission, projectEndTurn, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
@@ -56,18 +56,51 @@ for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
 const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
-let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false, showBattleNotes = false;
+let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false, showBattleNotes = false, archivePage = 'runs';
 let clock = 0, lastFrame = 0, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
+let forecastDirty = true, forecast = null;
 const battleAudio = new BattleAudio();
 const battleFx = new BattleFx(reducedMotion, fxArt, kind => battleAudio.play(kind));
 function toggleSound() { battleAudio.toggle(); render(); }
 const careerKey = 'deadline-disaster-career-v1';
 function loadCareer() {
-  try { const saved = JSON.parse(localStorage.getItem(careerKey) || 'null'); if (saved && typeof saved === 'object') return { runs: saved.runs || 0, wins: saved.wins || 0, best: saved.best || 0, bosses: saved.bosses || [], roles: saved.roles || [], charters: saved.charters || [], bestByRole: saved.bestByRole || {}, bestByCharter: saved.bestByCharter || {} }; }
+  try { const saved = JSON.parse(localStorage.getItem(careerKey) || 'null'); if (saved && typeof saved === 'object') return { runs: saved.runs || 0, wins: saved.wins || 0, best: saved.best || 0, bosses: saved.bosses || [], roles: saved.roles || [], charters: saved.charters || [], bestByRole: saved.bestByRole || {}, bestByCharter: saved.bestByCharter || {}, mastery: saved.mastery || {}, runHistory: saved.runHistory || [], metrics: saved.metrics || { routeKinds: {}, offers: {}, picks: {}, defeats: {} } }; }
   catch { /* Browser storage can be unavailable. */ }
-  return { runs: 0, wins: 0, best: 0, bosses: [], roles: [], charters: [], bestByRole: {}, bestByCharter: {} };
+  return { runs: 0, wins: 0, best: 0, bosses: [], roles: [], charters: [], bestByRole: {}, bestByCharter: {}, mastery: {}, runHistory: [], metrics: { routeKinds: {}, offers: {}, picks: {}, defeats: {} } };
 }
 let career = loadCareer();
+const saveKey = 'deadline-disaster-active-v1';
+function validSavedRun(value) {
+  const s = value?.state;
+  return value?.version === 1 && s && typeof s === 'object' && ['route', 'charter', 'contract', 'architecture', 'practice', 'hire', 'event', 'shop', 'combat', 'reward', 'tune', 'upgrade'].includes(s.mode) && ROLES[s.role] && Number.isInteger(s.floor) && s.floor >= 0 && s.floor < TOTAL_FIGHTS && Number.isInteger(s.rng) && Array.isArray(s.deck) && Array.isArray(s.enemies) && Array.isArray(s.routeChoices) && Array.isArray(s.log);
+}
+function loadSavedRun() {
+  try { const value = JSON.parse(localStorage.getItem(saveKey) || 'null'); return validSavedRun(value) ? value : null; }
+  catch { return null; }
+}
+let savedRun = loadSavedRun();
+function persistRun() {
+  forecastDirty = true;
+  try {
+    if (state.mode === 'end') { localStorage.removeItem(saveKey); savedRun = null; }
+    else if (state.mode !== 'intro' && state.mode !== 'challenge') {
+      savedRun = { version: 1, savedAt: Date.now(), state: JSON.parse(JSON.stringify(state)) };
+      localStorage.setItem(saveKey, JSON.stringify(savedRun));
+    }
+  } catch { /* The current session remains playable when storage is unavailable. */ }
+}
+function continueRun() {
+  if (!validSavedRun(savedRun)) return false;
+  state = JSON.parse(JSON.stringify(savedRun.state));
+  showLoadout = showArchive = showMenuConfirm = showBattleNotes = false;
+  forecastDirty = true;
+  return true;
+}
+function masteryFor(role) { return career.mastery[role] || { runs: 0, wins: 0, bosses: 0, briefs: 0, missions: 0 }; }
+function toggleMasteryKit() {
+  if (masteryFor(state.role).wins < 1 || state.mode !== 'intro') return;
+  state.masteryKit = !state.masteryKit;
+}
 function recordRun() {
   if (state.careerRecorded || state.mode !== 'end') return;
   state.careerRecorded = true; career.runs++; if (state.ending === 'win') career.wins++;
@@ -76,9 +109,25 @@ function recordRun() {
   career.bestByRole[state.role] = Math.max(career.bestByRole[state.role] || 0, score);
   if (state.charter) career.bestByCharter[state.charter] = Math.max(career.bestByCharter[state.charter] || 0, score);
   for (const [key, values] of [['roles', [state.role]], ['charters', state.charter ? [state.charter] : []], ['bosses', state.defeatedBosses]]) for (const value of values) if (!career[key].includes(value)) career[key].push(value);
+  const mastery = masteryFor(state.role);
+  career.mastery[state.role] = { runs: mastery.runs + 1, wins: mastery.wins + (state.ending === 'win' ? 1 : 0), bosses: mastery.bosses + state.defeatedBosses.length, briefs: mastery.briefs + state.briefsCompleted, missions: mastery.missions + (state.missionWins || 0) };
+  career.runHistory = [{ role: state.role, result: state.ending, floor: state.floor, score, cause: state.deathCause || '', seed: state.seed }, ...career.runHistory].slice(0, 20);
+  const bump = (group, key) => { if (key) career.metrics[group][key] = (career.metrics[group][key] || 0) + 1; };
+  for (const route of state.telemetry?.routes || []) bump('routeKinds', route.elite ? 'elite' : route.kind);
+  for (const id of state.telemetry?.cardOffers || []) bump('offers', id);
+  for (const id of state.telemetry?.cardPicks || []) bump('picks', id);
+  if (state.ending === 'lose') bump('defeats', (state.deathCause || 'Unknown').split(':')[0]);
   try { localStorage.setItem(careerKey, JSON.stringify(career)); } catch { /* Session progress remains visible. */ }
 }
-function returnToMenu() { state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; showBattleNotes = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; }
+function returnToMenu() { persistRun(); state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; showBattleNotes = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; }
+function replayRun() {
+  const previous = state;
+  state = makeRun(); selectRole(state, previous.role); setEscalation(state, previous.escalation);
+  state.masteryKit = !!previous.masteryKit && masteryFor(previous.role).wins > 0;
+  if (previous.challenge !== 'standard') { openChallenge(state); chooseChallenge(state, previous.challenge); }
+  startGame(state);
+}
+function currentForecast() { if (forecastDirty) { forecast = projectEndTurn(state); forecastDirty = false; } return forecast; }
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rect(x, y, w, h, fill, radius = 0, stroke = null, line = 1) {
@@ -170,7 +219,8 @@ function runHeader() {
   rect(28, 22, 1144, 121, 'rgba(17,47,60,.97)', 17, '#f4e7c6', 2);
   label('DEADLINE DISASTER', 51, 57, 27, cream, 'bold');
   label(`${ACTS[actIndex(state)].toUpperCase()}  ·  ENCOUNTER ${encounterNumber(state)}/${TOTAL_FIGHTS}  ·  RUN #${state.seed}`, 52, 91, 13, gold, 'bold', 'left', 'Arial');
-  label(ROLES[state.role].name.toUpperCase(), 52, 116, 12, '#d7e4de', 'bold', 'left', 'Arial');
+  label(`${ROLES[state.role].name.toUpperCase()}${masteryFor(state.role).missions >= 5 ? ' · VETERAN' : ''}`, 52, 116, 12, '#d7e4de', 'bold', 'left', 'Arial');
+  if (masteryFor(state.role).briefs >= 6) icon('relic', 279, 115, 11, gold);
   for (let i = 0; i < TOTAL_FIGHTS; i++) {
     const x = 307 + i * 35, boss = i % 3 === 2, current = i === state.floor;
     ctx.beginPath(); ctx.arc(x, 115, boss ? 8 : 6, 0, Math.PI * 2);
@@ -210,14 +260,20 @@ function intro() {
     label(`${i + 1}. ${role.name}`, x + 102, y + 30, 19, ink, 'bold');
     wrap(role.detail, x + 102, y + 55, 159, 13, '#53666b', 18, 'Arial');
     label(`A · ${role.ability}`, x + 102, y + 119, 11, teal, 'bold', 'left', 'Arial');
+    if (masteryFor(id).wins) label('MASTERY KIT UNLOCKED', x + 102, y + 133, 10, '#a26536', 'bold', 'left', 'Arial');
     hitboxes.push({ x, y, w: 273, h: 139, action: () => selectRole(state, id) });
   });
   button(`ESCALATION ${state.escalation} / 3`, 170, 583, 203, 65, () => setEscalation(state, (state.escalation + 1) % (Math.min(3, career.wins) + 1)), { size: 14, fill: '#e8d697' });
-  button('START THE RUN', 390, 583, 420, 65, () => startGame(state), { size: 22 });
+  if (savedRun) {
+    button('NEW RUN', 390, 583, 202, 65, () => startGame(state), { size: 19 });
+    button('CONTINUE RUN', 606, 583, 204, 65, continueRun, { size: 18, fill: '#b6ddd0' });
+  } else button('START THE RUN', 390, 583, 420, 65, () => startGame(state), { size: 22 });
   button(state.challenge === 'standard' ? 'CHALLENGE MODE' : CHALLENGES[state.challenge].name.toUpperCase(), 826, 583, 203, 65, () => openChallenge(state), { size: 13, fill: '#b6ddd0' });
   button('RUN ARCHIVE', 826, 660, 203, 39, () => { showArchive = true; }, { size: 13, fill: '#e0d3bc' });
-  button(`SFX ${battleAudio.enabled ? 'ON' : 'OFF'}  ·  V`, 505, 660, 190, 39, toggleSound, { size: 13, fill: '#d8e6da' });
-  label(`Wins unlock escalation tiers · ${career.wins} wins recorded`, 192, 680, 13, '#65777c', 'normal', 'left', 'Arial');
+  button(`SFX ${battleAudio.enabled ? 'ON' : 'OFF'}  ·  V`, 649, 660, 161, 39, toggleSound, { size: 12, fill: '#d8e6da' });
+  const kitUnlocked = masteryFor(state.role).wins > 0;
+  button(kitUnlocked ? `${state.masteryKit ? '✓ ' : ''}${MASTERY_KITS[state.role].name.toUpperCase()}` : 'MASTERY KIT LOCKED', 390, 660, 242, 39, toggleMasteryKit, { disabled: !kitUnlocked, size: 11, fill: '#e8d697' });
+  label(`${career.wins} wins · mastery in Archive`, 192, 680, 12, '#65777c', 'normal', 'left', 'Arial');
   label('1–5 cards · A ability · S specialist · Space end turn · M menu · V sound · F fullscreen', 600, 715, 13, '#65777c', 'normal', 'center', 'Arial');
 }
 function challenge() {
@@ -265,12 +321,32 @@ function route() {
     if (choice.kind === 'event') imageContain(art.archive, x + 32, 352, w - 64, 198);
     else if (choice.kind === 'shop') imageContain(art.archivist, x + 32, 352, w - 64, 198);
     else choiceArtwork(choice.ids, x + 33, 352, w - 66, 198);
+    if (choice.mission) {
+      rect(x + 32, 528, w - 64, 25, 'rgba(18,45,57,.92)', 6);
+      label(`MISSION · ${MISSIONS[choice.mission].name.toUpperCase()}`, x + w / 2, 541, 11, cream, 'bold', 'center', 'Arial', w - 80);
+    }
     const names = choice.ids.map(id => ENEMIES[id].name).join(' + ');
     label(choice.kind === 'event' ? 'Unknown story · then ' + names : choice.kind === 'shop' ? 'Shop · then ' + names : names, x + w / 2, 576, 15, ink, 'bold', 'center', 'Arial', w - 42);
     if (choice.crisis) wrap(`${CRISES[choice.crisis].name}: ${CRISES[choice.crisis].detail}`, x + 25, 589, w - 50, 13, '#a05a42', 15, 'Arial');
     rect(x + 25, 628, w - 50, 25, accent, 7);
     label(badge, x + w / 2, 641, 12, cream, 'bold', 'center', 'Arial', w - 58);
     button(choice.kind === 'event' ? 'EXPLORE' : choice.kind === 'shop' ? 'VISIT SHOP' : 'ENTER BATTLE', x + (w - 230) / 2, 667, 230, 51, () => chooseRoute(state, i), { fill: choice.boss ? coral : gold, size: 17 });
+  });
+  if (state.routeForecast?.length) label(`AHEAD  ${state.routeForecast.map(stop => `E${stop.encounter} ${stop.kind}`).join('   →   ')}`, 600, 731, 11, teal, 'bold', 'center', 'Arial', 990);
+}
+function practice() {
+  background(); runHeader();
+  rect(70, 165, 1060, 579, 'rgba(255,247,232,.98)', 20, ink, 3);
+  label('CHOOSE A WORKING PRACTICE', 600, 211, 32, ink, 'bold', 'center');
+  label('A lasting engine for your playbook, with a real cost.', 600, 250, 16, teal, 'normal', 'center');
+  Object.entries(PRACTICES).forEach(([id, data], i) => {
+    const x = 106 + i * 334;
+    rect(x, 288, 316, 362, '#f7ebd9', 15, i === 2 ? coral : teal, 3);
+    rect(x + 12, 301, 292, 210, '#263e48', 10);
+    imageCover(cardArt[data.art], x + 17, 306, 282, 200, 7);
+    label(data.name, x + 158, 541, 20, ink, 'bold', 'center', 'Georgia', 290);
+    wrap(data.detail, x + 22, 573, 272, 14, '#556a70', 18, 'Arial');
+    button(`COMMIT ${i + 1}`, x + 41, 668, 234, 52, () => choosePractice(state, id), { size: 16 });
   });
 }
 function charter() {
@@ -587,7 +663,7 @@ function combat() {
   const brief = state.objective;
   label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 518, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
   const bossProblem = state.enemies.find(enemy => enemy.boss && !enemy.problemResolved);
-  const liveNote = bossProblem ? `BOSS PROBLEM · ${BOSS_PROBLEMS[bossProblem.id].name}` : state.crisis ? `CRISIS · ${CRISES[state.crisis].name}` : state.initiatives.length ? `PLAN · ${CARDS[state.initiatives[0].id].name} ${state.initiatives[0].remaining}T` : '';
+  const liveNote = bossProblem ? `BOSS PROBLEM · ${BOSS_PROBLEMS[bossProblem.id].name}` : state.mission && !state.mission.resolved && !state.mission.failed ? `MISSION · ${MISSIONS[state.mission.id].name}${state.mission.id === 'handoff' ? ` ${state.mission.countdown}T` : ''}` : state.crisis ? `CRISIS · ${CRISES[state.crisis].name}` : state.initiatives.length ? `PLAN · ${CARDS[state.initiatives[0].id].name} ${state.initiatives[0].remaining}T` : '';
   label(`READINESS ${state.readiness}/6${liveNote ? `   ·   ${liveNote}` : ''}`, 43, 536, 11, '#a9ddd2', 'bold', 'left', 'Arial', 625);
   label(state.log[0] || '', 43, 554, 14, cream, 'normal', 'left', 'Georgia', 645);
   button('I · DETAILS', 704, 506, 120, 22, () => { showBattleNotes = true; }, { size: 11, fill: '#d8e6da' });
@@ -620,8 +696,13 @@ function combat() {
   });
   const activeBossProblem = state.enemies.some(enemy => enemy.boss && !enemy.problemResolved);
   if (activeBossProblem) button('B · SOLVE · 2 SP', 993, 575, 181, 30, () => solveFromUI(), { disabled: state.sp < 2, fill: '#b6ddd0', size: 12 });
+  else if (state.mission?.id === 'handoff' && !state.mission.resolved && !state.mission.failed) button(`B · STABILIZE · 1 SP`, 993, 575, 181, 30, () => resolveMission(state), { disabled: state.sp < 1, fill: '#b6ddd0', size: 11 });
   else button('SHIP · R', 993, 575, 181, 30, () => shipRelease(state), { disabled: state.readiness < 6 || state.turn < 2 || state.enemies.some(enemy => enemy.boss), fill: '#b6ddd0', size: 12 });
-  button('END TURN  SPACE', 993, 612, 181, 111, () => endFromUI(), { fill: coral, size: 18 });
+  button('END TURN · SPACE', 993, 612, 181, 56, () => endFromUI(), { fill: coral, size: 15 });
+  const projected = currentForecast();
+  rect(993, 675, 181, 48, projected?.lethal ? '#f6d6cd' : '#e5efe6', 8, projected?.lethal ? coral : teal, 1);
+  label(projected?.lethal ? 'LETHAL IF ENDED' : projected?.outcome !== 'combat' ? 'INCIDENT CLEARS' : `PREVIEW · HP ${projected?.hp ?? state.hp}`, 1083, 691, 11, projected?.lethal ? '#9b4135' : teal, 'bold', 'center', 'Arial');
+  label(projected ? `${projected.damage} dmg · ${projected.debtAdded > 0 ? `+${projected.debtAdded} Debt` : projected.nextSp === null ? 'reward ahead' : `next ${projected.nextSp} SP`}` : 'No active threats', 1083, 710, 11, ink, 'bold', 'center', 'Arial');
   rect(25, 749, 1150, 40, 'rgba(19,47,58,.96)', 10);
   label('TOOLS', 39, 769, 13, gold, 'bold', 'left', 'Arial');
   state.inventory.forEach((id, i) => {
@@ -643,17 +724,21 @@ function combat() {
 }
 function battleNotes() {
   const brief = state.objective;
+  const projected = currentForecast();
   const notes = [
     ['SPRINT BRIEF', brief ? `${OBJECTIVES[brief.id].name}: ${brief.done ? 'Complete' : brief.failed ? 'Missed' : OBJECTIVES[brief.id].detail}` : 'No active brief.'],
+    ...(state.mission ? [['INCIDENT MISSION', `${MISSIONS[state.mission.id].name}: ${MISSIONS[state.mission.id].detail}${state.mission.failed ? ' · Failed' : state.mission.resolved ? ' · Resolved' : ''}`]] : []),
+    ['END TURN PREVIEW', projected ? `HP ${projected.hp} (-${projected.damage}); Block used ${projected.blockAbsorbed}${projected.blockShredded ? ` + ${projected.blockShredded} shredded` : ''}. Debt ${projected.debt}${projected.nextSp !== null ? `; next SP ${projected.nextSp}` : ''}${projected.missionFailed ? ' · Handoff fails' : ''}${projected.incomingFoes ? ` · +${projected.incomingFoes} foe` : ''}${projected.lethal ? ' · LETHAL' : ''}.` : 'No combat preview.'],
     ['RELEASE READINESS', state.enemies.some(enemy => enemy.boss) ? `${state.readiness}/6. Boss fights require a full victory; spend 2 SP to solve the active problem.` : `${state.readiness}/6. After surviving a turn, ship early for half pay and one Debt per unresolved foe.`],
     ...(state.crisis ? [['CRISIS CONDITION', `${CRISES[state.crisis].name}: ${CRISES[state.crisis].detail}`]] : []),
     ...(state.contract ? [['CLIENT CONTRACT', `${CONTRACTS[state.contract.id].name}: ${CONTRACTS[state.contract.id].detail}${state.contract.failed ? ' · Missed' : ''}`]] : []),
     ...state.enemies.filter(enemy => enemy.boss && !enemy.problemResolved).map(enemy => ['BOSS PROBLEM', `${BOSS_PROBLEMS[enemy.id].name}: ${BOSS_PROBLEMS[enemy.id].detail}${enemy.id === 'dragon' ? ` · Clock ${enemy.problemClock}/3` : ''}`]),
     ...(state.architecture ? [['ARCHITECTURE', `${ARCHITECTURES[state.architecture].name}: ${ARCHITECTURES[state.architecture].detail}`]] : []),
+    ...(state.practice ? [['WORKING PRACTICE', `${PRACTICES[state.practice].name}: ${PRACTICES[state.practice].detail}`]] : []),
     ...(state.initiatives.length || state.activeInitiatives.length ? [['INITIATIVES', [...state.initiatives.map(p => `${CARDS[p.id].name} ${p.remaining} turns`), ...state.activeInitiatives.map(id => `${CARDS[id].name} active`)].join(' · ')]] : []),
     ['PROJECT DEBT', `${state.projectDebt}/12 · Pressure tier ${debtTier(state)}. Debt at 4 and 8 adds defects and tougher foes.`]
   ];
-  const rows = Math.ceil(notes.length / 2), panelHeight = 223 + (rows - 1) * 102, top = (H - panelHeight) / 2;
+  const rows = Math.ceil(Math.min(10, notes.length) / 2), panelHeight = 223 + (rows - 1) * 102, top = (H - panelHeight) / 2;
   rect(0, 0, W, H, 'rgba(10,29,39,.8)');
   rect(178, top, 844, panelHeight, '#fff8e9', 20, gold, 3);
   label('BATTLE DETAILS', 210, top + 46, 31, ink, 'bold');
@@ -664,7 +749,7 @@ function battleNotes() {
     label(title, x + 16, y + 22, 12, teal, 'bold', 'left', 'Arial');
     wrap(detail, x + 16, y + 41, 359, 13, ink, 17, 'Arial');
   };
-  notes.slice(0, 8).forEach((entry, i) => note(i % 2 ? 607 : 202, top + 107 + Math.floor(i / 2) * 102, entry));
+  notes.slice(0, 10).forEach((entry, i) => note(i % 2 ? 607 : 202, top + 107 + Math.floor(i / 2) * 102, entry));
 }
 function hoveredCardIndex() {
   if (!hoverPreviewEnabled || state.mode !== 'combat') return -1;
@@ -809,7 +894,7 @@ function loadout() {
   } else label('NO SPECIALIST · Recruit from the route screen', 540, 293, 13, teal, 'bold', 'left', 'Arial');
   rect(540, 318, 502, 50, '#edf0e5', 9, '#d7d8c7', 1);
   label(`CHARTER ${state.charter ? CHARTERS[state.charter].name : 'None'}  ·  ${CHALLENGES[state.challenge].name}  ·  ESC ${state.escalation}`, 553, 332, 11, ink, 'bold', 'left', 'Arial', 476);
-  label(`ARCH ${state.architecture ? ARCHITECTURES[state.architecture].name : 'None'}  ·  DEBT ${state.projectDebt}/12  ·  PRESSURE ${debtTier(state)}`, 553, 353, 11, state.projectDebt >= 8 ? coral : '#52686b', 'bold', 'left', 'Arial', 476);
+  label(`PRACTICE ${state.practice ? PRACTICES[state.practice].name : 'None'}  ·  ARCH ${state.architecture ? ARCHITECTURES[state.architecture].name : 'None'}  ·  DEBT ${state.projectDebt}/12`, 553, 353, 11, state.projectDebt >= 8 ? coral : '#52686b', 'bold', 'left', 'Arial', 476);
   rect(126, 379, 948, 2, '#d3bd9a');
   label('DECK', 137, 402, 17, teal, 'bold', 'left', 'Arial');
   label('RELICS', 455, 402, 17, teal, 'bold', 'left', 'Arial');
@@ -886,11 +971,11 @@ function ending() {
     label(name, x, y + 28, 12, teal, 'bold', 'center', 'Arial');
   });
   rect(686, 410, 339, 2, '#d7bfa1');
-  const words = win ? 'The team shipped by choosing its battles, protecting its health, and building a playbook that could face the final deadline.' : `The run ended in Act ${actIndex(state) + 1}. ${state.log[0]} The team can learn from this. Try a different route, save Block for telegraphed attacks, and use tools before a crisis turns terminal.`;
+  const words = win ? `The team shipped with ${state.missionWins || 0} incident missions complete. Its playbook survived the final deadline.` : `Postmortem: ${state.deathCause || 'The lead ran out of health'}. You reached encounter ${encounterNumber(state)} with ${state.projectDebt} Debt. Check the end turn preview and prepare for that foe's next intent.`;
   wrap(words, 682, 425, 345, 17, ink, 23);
   label(`SCORE ${score}  ·  PERSONAL BEST ${personalBest}  ·  ${CHALLENGES[state.challenge].name.toUpperCase()}`, 600, 565, 16, teal, 'bold', 'center', 'Arial');
-  label(`Run ${state.seed}  ·  ${state.contractsCompleted} contracts  ·  ${state.briefsCompleted} briefs  ·  ${state.credits} credits`, 600, 589, 13, '#63767a', 'bold', 'center', 'Arial');
-  button('REPLAY SAME LEAD', 357, 612, 300, 54, () => { const previous = state; state = makeRun(); selectRole(state, previous.role); setEscalation(state, previous.escalation); if (previous.challenge !== 'standard') { openChallenge(state); chooseChallenge(state, previous.challenge); } startGame(state); }, { size: 18 });
+  label(`Run ${state.seed}  ·  ${state.contractsCompleted} contracts  ·  ${state.briefsCompleted} briefs  ·  ${state.missionWins || 0} missions`, 600, 589, 13, '#63767a', 'bold', 'center', 'Arial');
+  button('REPLAY SAME LEAD', 357, 612, 300, 54, replayRun, { size: 18 });
   button('MAIN MENU', 690, 612, 190, 54, () => returnToMenu(), { size: 16, fill: '#b6ddd0' });
   label('A satirical tribute to the ideas of Frederick P. Brooks Jr.', 600, 696, 14, '#63767a', 'italic', 'center');
 }
@@ -898,27 +983,64 @@ function archiveOverlay() {
   rect(0, 0, W, H, 'rgba(12,35,46,.78)');
   rect(164, 116, 872, 570, cream, 20, gold, 4);
   label('THE RUN ARCHIVE', 600, 170, 39, ink, 'bold', 'center');
-  label('Choices discovered across runs · stored on this device', 600, 207, 16, teal, 'normal', 'center');
-  const stats = [[career.runs, 'RUNS'], [career.wins, 'WINS'], [career.best, 'BEST SCORE']];
-  stats.forEach(([value, title], i) => {
-    const x = 298 + i * 300;
-    rect(x - 112, 246, 224, 112, '#eef2e7', 12, '#b5c7ba', 2);
-    label(value, x, 292, 34, ink, 'bold', 'center');
-    label(title, x, 331, 13, teal, 'bold', 'center', 'Arial');
-  });
-  label(`Leads: ${career.roles.map(id => `${ROLES[id]?.name} ${career.bestByRole[id] || 0}`).join('  ·  ') || 'None yet'}`, 225, 404, 18, ink, 'normal', 'left', 'Georgia', 750);
-  label(`Charters: ${career.charters.map(id => `${CHARTERS[id]?.name} ${career.bestByCharter[id] || 0}`).join('  ·  ') || 'None yet'}`, 225, 450, 17, ink, 'normal', 'left', 'Georgia', 750);
-  label(`Bosses defeated: ${career.bosses.map(id => ENEMIES[id]?.name).join(', ') || 'None yet'}`, 225, 496, 17, ink, 'normal', 'left', 'Georgia', 750);
-  label(`Escalation unlocked: ${Math.min(3, career.wins)} / 3`, 225, 542, 18, teal, 'bold');
+  label('Runs and role mastery · stored on this device', 600, 207, 16, teal, 'normal', 'center');
+  button('RUNS', 287, 217, 190, 35, () => { archivePage = 'runs'; }, { size: 13, fill: archivePage === 'runs' ? gold : '#e0d3bc' });
+  button('ROLE MASTERY', 505, 217, 190, 35, () => { archivePage = 'mastery'; }, { size: 13, fill: archivePage === 'mastery' ? gold : '#e0d3bc' });
+  button('RUN INSIGHTS', 723, 217, 190, 35, () => { archivePage = 'insights'; }, { size: 13, fill: archivePage === 'insights' ? gold : '#e0d3bc' });
+  if (archivePage === 'mastery') {
+    Object.entries(ROLES).forEach(([id, role], i) => {
+      const x = 189 + i * 280, m = masteryFor(id);
+      rect(x, 268, 262, 311, '#eef2e7', 12, '#b5c7ba', 2);
+      imageContain(roleArt[id], x + 73, 277, 116, 112);
+      label(role.name.toUpperCase(), x + 131, 412, 19, ink, 'bold', 'center', 'Arial');
+      label(`WINS ${m.wins}/1 · ${m.wins ? 'KIT UNLOCKED' : MASTERY_KITS[id].name}`, x + 15, 447, 12, m.wins ? teal : '#697a7b', 'bold', 'left', 'Arial', 233);
+      label(`BRIEFS ${Math.min(m.briefs, 6)}/6 · ${m.briefs >= 6 ? 'EMBLEM UNLOCKED' : 'EMBLEM'}`, x + 15, 478, 12, m.briefs >= 6 ? teal : '#697a7b', 'bold', 'left', 'Arial', 233);
+      label(`MISSIONS ${Math.min(m.missions, 5)}/5 · ${m.missions >= 5 ? 'TITLE UNLOCKED' : 'VETERAN TITLE'}`, x + 15, 509, 12, m.missions >= 5 ? teal : '#697a7b', 'bold', 'left', 'Arial', 233);
+      label(`${m.runs} runs · ${m.bosses} bosses defeated`, x + 15, 548, 12, ink, 'normal', 'left', 'Arial');
+    });
+  } else if (archivePage === 'insights') {
+    const metrics = career.metrics;
+    const top = (counts, limit = 4) => Object.entries(counts || {}).sort((a, b) => b[1] - a[1]).slice(0, limit);
+    const routes = top(metrics.routeKinds);
+    const cards = top(metrics.offers).map(([id, offered]) => ({ name: CARDS[id]?.name || id, offered, picked: metrics.picks[id] || 0 }));
+    const defeats = top(metrics.defeats);
+    rect(195, 269, 391, 298, '#eef2e7', 12, '#b5c7ba', 2);
+    rect(607, 269, 391, 298, '#eef2e7', 12, '#b5c7ba', 2);
+    label('ROUTES & LOSSES', 216, 300, 19, ink, 'bold');
+    label('SKILL OFFERS', 628, 300, 19, ink, 'bold');
+    label('Routes chosen', 216, 335, 13, teal, 'bold', 'left', 'Arial');
+    routes.forEach(([kind, count], i) => label(`${kind.toUpperCase()}  ${count}`, 216, 362 + i * 26, 14, ink, 'normal', 'left', 'Arial'));
+    if (!routes.length) label('Finish a run to record route choices.', 216, 373, 13, '#687b79', 'italic', 'left', 'Arial');
+    label('Final threats', 216, 480, 13, teal, 'bold', 'left', 'Arial');
+    defeats.slice(0, 3).forEach(([name, count], i) => label(`${name}  ${count}`, 216, 507 + i * 25, 13, ink, 'normal', 'left', 'Arial', 350));
+    if (!defeats.length) label('No losses recorded.', 216, 517, 13, '#687b79', 'italic', 'left', 'Arial');
+    label('Offered  ·  Picked', 628, 335, 13, teal, 'bold', 'left', 'Arial');
+    cards.forEach((card, i) => label(`${card.name}  ·  ${card.offered} / ${card.picked}`, 628, 366 + i * 38, 14, ink, 'normal', 'left', 'Arial', 349));
+    if (!cards.length) wrap('Finish a run to compare skill offers with the choices you took.', 628, 374, 330, 13, '#687b79', 19, 'Arial');
+    label('Local completed runs only. Use patterns as playtest clues.', 628, 548, 12, '#687b79', 'italic', 'left', 'Arial');
+  } else {
+    const stats = [[career.runs, 'RUNS'], [career.wins, 'WINS'], [career.best, 'BEST SCORE']];
+    stats.forEach(([value, title], i) => {
+      const x = 298 + i * 300;
+      rect(x - 112, 266, 224, 92, '#eef2e7', 12, '#b5c7ba', 2);
+      label(value, x, 305, 32, ink, 'bold', 'center');
+      label(title, x, 336, 12, teal, 'bold', 'center', 'Arial');
+    });
+    label(`Leads: ${career.roles.map(id => `${ROLES[id]?.name} ${career.bestByRole[id] || 0}`).join('  ·  ') || 'None yet'}`, 225, 403, 17, ink, 'normal', 'left', 'Georgia', 750);
+    label(`Charters: ${career.charters.map(id => `${CHARTERS[id]?.name} ${career.bestByCharter[id] || 0}`).join('  ·  ') || 'None yet'}`, 225, 443, 16, ink, 'normal', 'left', 'Georgia', 750);
+    label(`Bosses defeated: ${career.bosses.map(id => ENEMIES[id]?.name).join(', ') || 'None yet'}`, 225, 483, 16, ink, 'normal', 'left', 'Georgia', 750);
+    label(`Escalation unlocked: ${Math.min(3, career.wins)} / 3`, 225, 522, 16, teal, 'bold');
+    if (career.runHistory.length) label(`LATEST · ${ROLES[career.runHistory[0].role]?.name} ${career.runHistory[0].result.toUpperCase()} · E${Math.min(TOTAL_FIGHTS, career.runHistory[0].floor + 1)} · ${career.runHistory[0].score} pts`, 225, 556, 13, '#64767a', 'bold', 'left', 'Arial', 752);
+  }
   button('BACK TO CHARACTER SELECT', 400, 601, 400, 56, () => { showArchive = false; }, { size: 17 });
 }
 function menuConfirm() {
   rect(0, 0, W, H, 'rgba(11,30,41,.76)');
   rect(274, 235, 652, 330, cream, 19, gold, 4);
-  label('RETURN TO MAIN MENU?', 600, 304, 31, ink, 'bold', 'center');
-  wrap('Your current run will end. The menu lets you choose a different lead, challenge format, or escalation tier.', 340, 350, 520, 18, '#52676a', 25);
+  label('SAVE AND RETURN?', 600, 304, 31, ink, 'bold', 'center');
+  wrap('Your run is saved at this decision. Continue it later, or start a new run with a different lead or challenge.', 340, 350, 520, 18, '#52676a', 25);
   button('CONTINUE RUN', 337, 458, 248, 64, () => { showMenuConfirm = false; }, { size: 17, fill: '#b6ddd0' });
-  button('MAIN MENU', 615, 458, 248, 64, () => returnToMenu(), { size: 17, fill: coral });
+  button('SAVE & MENU', 615, 458, 248, 64, () => returnToMenu(), { size: 17, fill: coral });
 }
 function render() {
   hitboxes = []; ctx.clearRect(0, 0, W, H);
@@ -929,6 +1051,7 @@ function render() {
   else if (state.mode === 'charter') charter();
   else if (state.mode === 'contract') contract();
   else if (state.mode === 'architecture') architecture();
+  else if (state.mode === 'practice') practice();
   else if (state.mode === 'hire') hire();
   else if (state.mode === 'event') event();
   else if (state.mode === 'shop') shop();
@@ -964,7 +1087,7 @@ canvas.addEventListener('pointerleave', () => { pointer = { x: -1, y: -1 }; hove
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault(); pointer = position(e); hoverPreviewEnabled = false;
   const hit = [...hitboxes].reverse().find(b => pointer.x >= b.x && pointer.x <= b.x + b.w && pointer.y >= b.y && pointer.y <= b.y + b.h);
-  if (hit) { hit.action(); render(); }
+  if (hit) { hit.action(); persistRun(); render(); }
 });
 window.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
@@ -974,7 +1097,7 @@ window.addEventListener('keydown', e => {
   if (previewCardIndex !== null) {
     if (key === 'escape') previewCardIndex = null;
     else if (e.key === 'Enter' && state.sp >= cardInfo(state.hand[previewCardIndex]).cost) playFromUI(previewCardIndex);
-    render(); return;
+    persistRun(); render(); return;
   }
   if (showBattleNotes) {
     if (key === 'escape' || key === 'i') showBattleNotes = false;
@@ -988,6 +1111,7 @@ window.addEventListener('keydown', e => {
   if (key === 'm' && !['intro', 'challenge', 'end'].includes(state.mode)) { showMenuConfirm = true; render(); return; }
   if (key === 'f') { if (document.fullscreenElement) document.exitFullscreen?.(); else canvas.requestFullscreen?.(); }
   if (state.mode === 'intro' && e.key === 'Enter') startGame(state);
+  else if (state.mode === 'intro' && key === 'l') continueRun();
   else if (state.mode === 'intro' && ['1', '2', '3'].includes(e.key)) selectRole(state, Object.keys(ROLES)[Number(e.key) - 1]);
   else if (state.mode === 'intro' && key === 'm') openChallenge(state);
   else if (state.mode === 'intro' && key === 'd') setEscalation(state, (state.escalation + 1) % (Math.min(3, career.wins) + 1));
@@ -1003,6 +1127,8 @@ window.addEventListener('keydown', e => {
   else if (state.mode === 'contract' && ['1', '2', '3'].includes(e.key)) chooseContract(state, Object.keys(CONTRACTS)[Number(e.key) - 1]);
   else if (state.mode === 'contract' && key === 'escape') cancelContract(state);
   else if (state.mode === 'architecture' && ['1', '2', '3'].includes(e.key)) chooseArchitecture(state, Object.keys(ARCHITECTURES)[Number(e.key) - 1]);
+  else if (state.mode === 'practice' && ['1', '2', '3'].includes(e.key)) choosePractice(state, Object.keys(PRACTICES)[Number(e.key) - 1]);
+  else if (state.mode === 'intro' && key === 'y') toggleMasteryKit();
   else if (state.mode === 'hire' && ['1', '2', '3'].includes(e.key)) hireSpecialist(state, Object.keys(SPECIALISTS)[Number(e.key) - 1]);
   else if (state.mode === 'hire' && key === 'escape') cancelHiring(state);
   else if (state.mode === 'event' && ['1', '2', '3'].includes(e.key)) chooseEvent(state, Number(e.key) - 1);
@@ -1021,7 +1147,7 @@ window.addEventListener('keydown', e => {
     }
     if (key === 'a') abilityFromUI();
     if (key === 's') specialistFromUI();
-    if (key === 'b') solveFromUI();
+    if (key === 'b') { if (state.enemies.some(enemy => enemy.boss && !enemy.problemResolved)) solveFromUI(); else resolveMission(state); }
     if (key === 'r') shipRelease(state);
     if (['1', '2', '3', '4', '5'].includes(e.key)) playFromUI(Number(e.key) - 1);
     if (e.code === 'Space') { e.preventDefault(); endFromUI(); }
@@ -1030,18 +1156,20 @@ window.addEventListener('keydown', e => {
     if (itemIndex !== undefined) itemFromUI(itemIndex);
     const charmIndex = { z: 0, x: 1 }[key];
     if (charmIndex !== undefined) trinketFromUI(charmIndex);
-  } else if (state.mode === 'end' && key === 'r') { const previous = state; state = makeRun(); selectRole(state, previous.role); setEscalation(state, previous.escalation); if (previous.challenge !== 'standard') { openChallenge(state); chooseChallenge(state, previous.challenge); } startGame(state); }
+  } else if (state.mode === 'end' && key === 'r') replayRun();
   else if (state.mode === 'end' && key === 'm') returnToMenu();
-  render();
+  persistRun(); render();
 });
+window.addEventListener('pagehide', persistRun);
 window.addEventListener('resize', resize);
 document.addEventListener('fullscreenchange', resize);
 window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); };
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
-  mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout, battleNotesOpen: showBattleNotes, archiveOpen: showArchive, menuConfirmOpen: showMenuConfirm, soundEnabled: battleAudio.enabled,
+  mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, masteryKit: state.masteryKit, savedRunAvailable: !!savedRun, loadoutOpen: showLoadout, battleNotesOpen: showBattleNotes, archiveOpen: showArchive, archivePage, menuConfirmOpen: showMenuConfirm, soundEnabled: battleAudio.enabled,
   escalation: state.escalation, escalationUnlocked: Math.min(3, career.wins), career: showArchive ? career : null,
   architecture: state.architecture || null, architectureChoices: state.mode === 'architecture' ? Object.entries(ARCHITECTURES).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
+  practice: state.practice || null, practiceChoices: state.mode === 'practice' ? Object.entries(PRACTICES).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
   challenge: state.challenge, challengeRule: state.challengeRule, dailyDate: state.dailyDate,
   challengeChoices: state.mode === 'challenge' ? Object.entries(CHALLENGES).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
   charter: state.charter || null, charterChoices: state.mode === 'charter' ? Object.entries(CHARTERS).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
@@ -1056,11 +1184,12 @@ window.render_game_to_text = () => JSON.stringify({
   objective: state.mode === 'combat' && state.objective ? { ...state.objective, name: OBJECTIVES[state.objective.id].name, detail: OBJECTIVES[state.objective.id].detail } : null,
   ability: { name: ROLES[state.role].ability, detail: ROLES[state.role].abilityDetail, ready: state.mode === 'combat' && !state.abilityUsed && (state.role !== 'architect' || (state.block > 0 && state.reserveBlock < 12)) },
   vulnerable: state.vulnerable, burnout: state.burnout, turn: state.turn,
-  routeChoices: state.mode === 'route' ? state.routeChoices.map(c => ({ label: c.label, kind: c.kind || 'combat', foes: c.ids.map(id => ENEMIES[id].name), elite: c.elite, boss: c.boss, crisis: c.crisis || null, crisisDetail: c.crisis ? CRISES[c.crisis].detail : null })) : [],
+  routeChoices: state.mode === 'route' ? state.routeChoices.map(c => ({ label: c.label, kind: c.kind || 'combat', foes: c.ids.map(id => ENEMIES[id].name), elite: c.elite, boss: c.boss, crisis: c.crisis || null, crisisDetail: c.crisis ? CRISES[c.crisis].detail : null, mission: c.mission || null })) : [],
+  routeForecast: state.mode === 'route' ? state.routeForecast || [] : [],
   event: state.mode === 'event' ? { title: EVENTS[state.eventId].title, speaker: EVENTS[state.eventId].speaker, text: EVENTS[state.eventId].text, choices: EVENTS[state.eventId].choices.map((c, i) => ({ label: c.label, detail: c.detail, available: canChooseEvent(state, i) })) } : null,
   shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, rarity: o.kind === 'card' ? cardInfo(o.id).rarity : null, power: o.kind === 'card' ? cardInfo(o.id).power : null, sold: o.sold, available: canBuyShop(state, i) })) : [],
   enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
-  crisis: state.mode === 'combat' ? state.crisis || null : null, readiness: state.mode === 'combat' ? state.readiness : null, canShip: state.mode === 'combat' && state.readiness >= 6 && state.turn >= 2 && !state.enemies.some(enemy => enemy.boss), teamworkUsed: state.mode === 'combat' ? state.teamworkUsed : null,
+  crisis: state.mode === 'combat' ? state.crisis || null : null, mission: state.mode === 'combat' ? state.mission : null, endTurnPreview: state.mode === 'combat' ? currentForecast() : null, readiness: state.mode === 'combat' ? state.readiness : null, canShip: state.mode === 'combat' && state.readiness >= 6 && state.turn >= 2 && !state.enemies.some(enemy => enemy.boss), teamworkUsed: state.mode === 'combat' ? state.teamworkUsed : null,
   fx: state.mode === 'combat' ? battleFx.active(clock) : [],
   initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining })) : [],
   activeInitiatives: state.mode === 'combat' ? state.activeInitiatives.map(id => CARDS[id].name) : [],
@@ -1073,7 +1202,7 @@ window.render_game_to_text = () => JSON.stringify({
   rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook', rarity: choice.type === 'card' ? cardInfo(choice.id).rarity : null, power: choice.type === 'card' ? cardInfo(choice.id).power : null, source: choice.source || null, fit: choice.fit || 0, family: choice.family || null })) : [],
   tuneChoices: state.mode === 'tune' ? state.tuneChoices.map(choice => ({ type: choice.type, name: choice.type === 'audit' ? 'Technical Audit' : cardInfo(choice.id).name, detail: choice.type === 'upgrade' ? 'Choose Force or Flex' : choice.type === 'audit' ? 'Reduce Debt by 4' : 'Remove one basic card' })) : [],
   upgradeChoices: state.mode === 'upgrade' ? ['force', 'flex'].map(branch => ({ branch, name: `${cardInfo(state.upgradePending.id).name}${branch === 'force' ? '+' : '*'}`, detail: branch === 'force' ? '+3 damage or Block' : cardInfo(state.upgradePending.id).type === 'attack' ? '+3 Block after playing' : 'Draw 1 after playing' })) : [],
-  bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, score: state.mode === 'end' ? runScore(state) : null, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect, lastObjective: state.lastObjective, lastContract: state.lastContract
+  bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, deathCause: state.deathCause, missionWins: state.missionWins || 0, score: state.mode === 'end' ? runScore(state) : null, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect, lastObjective: state.lastObjective, lastMission: state.lastMission, lastContract: state.lastContract
 });
 resize();
 if (!reducedMotion) requestAnimationFrame(animationLoop);

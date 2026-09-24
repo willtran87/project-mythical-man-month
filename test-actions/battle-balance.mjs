@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CARDS, ENEMIES, TOTAL_FIGHTS, newGame, startGame, chooseRoute, chooseArchitecture, selectTarget, intentFor, playCard, useItem, endTurn, chooseReward } from '../src/battle-game.js';
+import { CARDS, ENEMIES, TOTAL_FIGHTS, newGame, startGame, chooseRoute, chooseArchitecture, choosePractice, resolveMission, selectTarget, intentFor, playCard, useItem, endTurn, chooseReward } from '../src/battle-game.js';
 
 const first = newGame(7), replay = newGame(7), changed = newGame(8);
 startGame(first); startGame(replay); startGame(changed);
@@ -34,6 +34,7 @@ function autopilot(seed, verbose = false) {
   while (s.mode !== 'end' && steps++ < 2000) {
     if (s.mode === 'route') { chooseRoute(s, 0); continue; }
     if (s.mode === 'architecture') { chooseArchitecture(s, 'eventbus'); continue; }
+    if (s.mode === 'practice') { choosePractice(s, 'cohesion'); continue; }
     if (s.mode === 'reward') {
       const healIndex = s.rewardChoices.findIndex(x => x.type === 'heal');
       if (s.maxHp - s.hp >= 13 && healIndex >= 0) { chooseReward(s, healIndex); continue; }
@@ -43,6 +44,7 @@ function autopilot(seed, verbose = false) {
       chooseReward(s, Math.max(0, ids.indexOf(preferred)));
       continue;
     }
+    if (s.mission?.id === 'handoff' && !s.mission.resolved && !s.mission.failed && s.mission.countdown === 1 && s.sp >= 1) { resolveMission(s); continue; }
     const boss = s.enemies.findIndex(e => e.boss);
     const duckIndex = s.inventory.indexOf('duck');
     if (boss >= 0 && duckIndex >= 0 && !s.itemUsedThisTurn) { useItem(s, duckIndex, boss); continue; }

@@ -43,6 +43,12 @@ Route cards use separate visual treatments for steady fights, risky fights, stor
 
 Every skill card has illustrated artwork in combat, the Night Market, and reward choices. Eight original scenes, six earlier role scenes, six rarity expansion scenes, and nine new scenes cover related skill families; the card name, cost, rarity, Power, and effect remain live game text. The role relics and enemies have their own art. Prompts are in `public/assets/cards/prompts.md`, `public/assets/role-expansion-prompts.md`, `public/assets/rarity-expansion-prompts.md`, and `public/assets/build-expansion-prompts.md`.
 
+After the first victory, choose a Working Practice that shapes the rest of the run. Small, Coherent Team starts fights with Block and refunds SP for the first role-family skill each turn, while its first attack is weaker; Continuous Integration replaces a Review with Test Pipeline, accelerates initiatives, and adds an Open Defect to each fight; Root Cause First rewards attacks on Weak or Marked foes at the cost of opening SP. Non-boss incidents now have a mission alongside their crisis: stabilize an unstable handoff, break the link between coupled foes, or keep spare SP for an audit. Successful missions pay bonus credits. Route cards show each mission, and a short forecast shows the next two encounter types.
+
+Combat displays the projected outcome of ending the current turn, including health loss, Debt changes, and next-turn SP. Battle Details includes projected Block use, mission consequences, and full rule descriptions. The defeat screen names the final threat and records where the run ended. An active run saves after decisions and can be resumed after a reload or from the main menu; starting a new run replaces the saved one. The save stores the run's random number state, so its offers and draws remain deterministic.
+
+The Run Archive now tracks mastery for each lead. A win unlocks an alternate starting kit that swaps one starter skill, six completed briefs unlock an emblem, and five completed missions add a Veteran title. Its Run Insights tab records local route choices, card offers and picks, and final threats from completed runs as clues for balancing. These records stay on the device.
+
 ## Controls
 
 | Input | Action |
@@ -53,8 +59,10 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | H | Open specialist hiring from the route screen |
 | P / K | Open the Project Charter / Act Contract on the route screen |
 | M | Open challenge formats on the title screen; open the main menu confirmation during a run |
+| L | Continue a saved run from the title screen |
+| Y | Toggle an unlocked mastery kit on the title screen |
 | D / J | Cycle unlocked Escalation tiers / open the Run Archive on the title screen |
-| B | Spend 2 SP to resolve a boss phase problem |
+| B | Resolve a boss phase problem for 2 SP or stabilize a handoff mission for 1 SP |
 | I | Open or close Battle Details to review current goals and modifiers |
 | R | Ship a ready non-boss incident early; on the ending screen, replay the same lead and format |
 | 1–2 | Choose Force or Flex after selecting a workshop upgrade |
@@ -92,6 +100,7 @@ node test-actions/release-systems.mjs
 node test-actions/release-visual.mjs
 node test-actions/animation-timing.mjs
 node test-actions/layout-visual.mjs
+node test-actions/maturity-upgrade.mjs
 node test-actions/smoke.mjs
 node test-actions/pages-preview.mjs
 ```

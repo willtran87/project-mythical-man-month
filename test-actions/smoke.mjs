@@ -46,6 +46,12 @@ async function autopilot(seed, shots = false) {
       assert.equal((await state()).mode, 'reward');
       continue;
     }
+    if (s.mode === 'practice') {
+      if (shots) await canvas.screenshot({ path: `${out}/working-practice.png` });
+      await page.keyboard.press('1');
+      assert.equal((await state()).mode, 'route');
+      continue;
+    }
     if (s.mode === 'reward') {
       if (shots && rewardShots++ < 2) await canvas.screenshot({ path: `${out}/reward-${rewardShots}.png` });
       if (shots && s.rewards[0].type === 'relic' && !relicShot) {
@@ -140,7 +146,7 @@ await page.keyboard.press('Escape');
 assert.equal((await state()).battleNotesOpen, false);
 await click(760, 517);
 assert.equal((await state()).battleNotesOpen, true);
-await click(915, 285);
+await page.keyboard.press('i');
 assert.equal((await state()).battleNotesOpen, false);
 const inspectIndex = s.hand.findIndex(card => card.name === 'Patch');
 assert.ok(inspectIndex >= 0);
@@ -267,6 +273,9 @@ await page.keyboard.press('1');
 assert.equal((await state()).mode, 'upgrade');
 await canvas.screenshot({ path: `${out}/upgrade-paths.png` });
 await page.keyboard.press('2');
+assert.equal((await state()).mode, 'practice');
+await canvas.screenshot({ path: `${out}/practice-choice.png` });
+await page.keyboard.press('1');
 assert.equal((await state()).mode, 'route');
 await page.keyboard.press('3');
 let market = await state();
