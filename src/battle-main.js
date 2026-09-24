@@ -8,6 +8,7 @@ const ink = '#173241', cream = '#fff7e8', gold = '#eebd5d', coral = '#e96a55', t
 const rarityColors = { basic: '#9ca8a4', common: '#5f9a92', uncommon: '#467eaa', rare: '#c3933d' };
 const artPaths = {
   cabinet: '/assets/artifact-cabinet.png',
+  titleHero: '/assets/ui/title-hero.webp', quietBreak: '/assets/ui/quiet-break.webp', retireBasic: '/assets/ui/retire-basic.webp',
   scope: '/assets/scope-creep.png', bug: '/assets/clockwork-bug.png', handoff: '/assets/handoff-hydra.png',
   debt: '/assets/technical-debt.png', vendor: '/assets/vendor.png', goblin: '/assets/budget-goblin.png',
   kraken: '/assets/merge-kraken.png', dragon: '/assets/deadline-dragon.png',
@@ -161,13 +162,14 @@ function runHeader() {
 function intro() {
   background();
   rect(109, 68, 982, 665, 'rgba(255,247,232,.98)', 22, ink, 4);
+  rect(189, 101, 822, 3, gold, 2);
   label('DEADLINE DISASTER', 600, 136, 52, ink, 'bold', 'center');
   label('CRISIS RUN', 600, 185, 25, teal, 'bold', 'center', 'Arial');
   rect(174, 214, 852, 2, '#d7bfa1');
   label('THREE ACTS · NINE ENCOUNTERS · THREE BOSSES', 195, 252, 17, coral, 'bold', 'left', 'Arial');
   wrap('Fight the creatures of a late project. Build a playbook, read enemy intents, and spend credits at the Night Market. Support skills generate Flow for stronger attacks.', 195, 281, 530, 20, ink, 28);
-  imageContain(roleArt[state.role], 749, 265, 115, 145);
-  imageContain(art.dragon, 871, 260, 153, 155);
+  rect(739, 262, 291, 151, '#263e48', 12, gold, 3);
+  imageCover(art.titleHero, 744, 267, 281, 141, 8);
   label('CHOOSE YOUR LEAD', 600, 406, 15, teal, 'bold', 'center', 'Arial');
   Object.entries(ROLES).forEach(([id, role], i) => {
     const x = 170 + i * 288, y = 423, selected = state.role === id;
@@ -250,10 +252,10 @@ function shopService(offer, i, x) {
   const available = canBuyShop(state, i), name = offer.kind === 'trinket' ? TRINKETS[offer.id]?.name || 'Sold out' : offer.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic';
   const detail = offer.kind === 'trinket' ? TRINKETS[offer.id]?.detail || 'No charms remain.' : offer.kind === 'heal' ? 'Recover 15 HP.' : 'Remove one random Patch or Review.';
   rect(x, 550, 256, 137, offer.sold ? '#e2e2d8' : '#f6ecda', 13, '#cbb99c', 2);
-  if (offer.kind === 'trinket' && offer.id) collectiblePortrait(trinketArt[offer.id], TRINKETS[offer.id].icon, x + 11, 557, 41, 43, 6);
-  else icon(offer.kind === 'heal' ? 'heart' : 'shield', x + 29, 579, 25, offer.kind === 'heal' ? coral : teal);
-  label(name, x + 58, 579, 17, ink, 'bold');
-  wrap(detail, x + 18, 602, 220, 13, '#657377', 17, 'Arial');
+  const portrait = offer.kind === 'trinket' ? trinketArt[offer.id] : offer.kind === 'heal' ? art.quietBreak : art.retireBasic;
+  collectiblePortrait(portrait, offer.kind === 'heal' ? 'heart' : 'shield', x + 12, 558, 52, 42, 6);
+  label(name, x + 72, 579, 16, ink, 'bold', 'left', 'Georgia', 171);
+  wrap(detail, x + 18, 605, 220, 13, '#657377', 17, 'Arial');
   button(offer.sold ? 'SOLD' : `${i + 1} · ${offer.price} CREDITS`, x + 27, 646, 202, 33, () => buyShop(state, i), { disabled: !available, size: 14 });
 }
 function shop() {
@@ -263,6 +265,9 @@ function shop() {
   label('Archivist: “Everything here was useful to someone. Eventually.”', 600, 248, 18, teal, 'italic', 'center');
   rect(83, 287, 193, 376, '#263e48', 13);
   imageContain(art.archivist, 91, 300, 177, 348);
+  rect(91, 601, 177, 54, 'rgba(20,48,57,.88)', 7);
+  label('THE ARCHIVIST', 179, 619, 13, gold, 'bold', 'center', 'Arial');
+  label('Curator of useful mistakes', 179, 639, 11, cream, 'italic', 'center', 'Georgia', 164);
   state.shopStock.slice(0, 3).forEach(shopOffer);
   shopService(state.shopStock[3], 3, 300);
   shopService(state.shopStock[4], 4, 573);
@@ -272,27 +277,37 @@ function shop() {
 }
 function combatEnemyCard(enemy, i, x, w) {
   const selected = state.target === i;
-  const y = 177, h = 304;
-  rect(x, y, w, h, selected ? '#fff5df' : '#f7efdf', 16, selected ? gold : '#b8aca0', selected ? 4 : 2);
+  const y = enemy.boss ? 164 : 177, h = enemy.boss ? 322 : 304;
+  rect(x, y, w, h, selected ? '#fff5df' : '#f7efdf', enemy.boss ? 20 : 16, enemy.boss ? coral : selected ? gold : '#b8aca0', enemy.boss ? 5 : selected ? 4 : 2);
+  if (enemy.boss) {
+    rect(x + 7, y + 7, w - 14, h - 14, 'rgba(255,247,232,0)', 16, gold, 1.5);
+    label('FINAL REVIEW', x + w / 2, y + 23, 13, coral, 'bold', 'center', 'Arial');
+  }
   const intent = intentFor(enemy);
   label(enemy.boss ? 'BOSS' : enemy.elite ? 'ELITE' : 'FOE', x + 15, y + 23, 13, enemy.boss ? coral : teal, 'bold', 'left', 'Arial');
   ctx.font = 'bold 13px Arial';
   const hostileIntent = ['attack', 'erode', 'audit'].includes(intent.kind);
   icon(hostileIntent ? 'sword' : intent.kind === 'shield' ? 'shield' : intent.kind === 'heal' ? 'heart' : intent.kind === 'tax' ? 'bolt' : 'branch', x + w - 23 - ctx.measureText(intent.label).width, y + 23, 14, hostileIntent ? coral : teal);
   label(intent.label, x + w - 13, y + 23, 13, hostileIntent ? coral : teal, 'bold', 'right', 'Arial');
-  rect(x + 13, y + 44, w - 26, 171, '#263e48', 11);
+  const portraitY = enemy.boss ? y + 38 : y + 44, portraitH = enemy.boss ? 207 : 171;
+  rect(x + 13, portraitY, w - 26, portraitH, '#263e48', 11);
+  if (enemy.boss) {
+    const glow = ctx.createRadialGradient(x + w / 2, portraitY + 102, 12, x + w / 2, portraitY + 102, w * .44);
+    glow.addColorStop(0, 'rgba(238,189,93,.3)'); glow.addColorStop(1, 'rgba(238,189,93,0)');
+    ctx.fillStyle = glow; ctx.fillRect(x + 14, portraitY + 1, w - 28, portraitH - 2);
+  }
   const bob = reducedMotion ? 0 : Math.sin(clock * 2 + i) * 3;
-  imageContain(art[enemy.art], x + 22, y + 48 + bob, w - 44, 162);
+  imageContain(art[enemy.art], x + 22, portraitY + 4 + bob, w - 44, portraitH - 8);
   if (enemy.mark && !reducedMotion) {
     ctx.save(); ctx.strokeStyle = `rgba(82,200,205,${.45 + Math.sin(clock * 3) * .15})`; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(x + w / 2, y + 129, 77, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    ctx.beginPath(); ctx.arc(x + w / 2, portraitY + portraitH / 2, enemy.boss ? 95 : 77, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
   const ailments = [enemy.weak && ['WEAK', enemy.weak, teal], enemy.vulnerable && ['VULN', enemy.vulnerable, coral], enemy.mark && ['MARK', enemy.mark, '#497fa9']].filter(Boolean);
   const pillWidth = Math.min(82, (w - 50) / Math.max(1, ailments.length) - 4);
-  ailments.forEach(([name, count, color], j) => statusPill(`${name} ${count}`, x + 22 + j * (pillWidth + 4), y + 184, pillWidth, true, color));
-  label(enemy.name, x + w / 2, y + 239, 18, ink, 'bold', 'center');
-  meter(x + 18, y + 263, w - 36, 11, enemy.hp, enemy.maxHp, coral);
-  label(`${enemy.hp}/${enemy.maxHp} HP   ·   ${enemy.block} BLOCK${enemy.weak ? `   ·   ${enemy.weak} WEAK` : ''}${enemy.vulnerable ? `   ·   ${enemy.vulnerable} VULN` : ''}${enemy.mark ? `   ·   ${enemy.mark} MARK` : ''}`, x + w / 2, y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial', w - 20);
+  ailments.forEach(([name, count, color], j) => statusPill(`${name} ${count}`, x + 22 + j * (pillWidth + 4), enemy.boss ? y + 214 : y + 184, pillWidth, true, color));
+  label(enemy.name, x + w / 2, enemy.boss ? y + 258 : y + 239, enemy.boss ? 24 : 18, ink, 'bold', 'center');
+  meter(x + 18, enemy.boss ? y + 280 : y + 263, w - 36, 11, enemy.hp, enemy.maxHp, coral);
+  label(`${enemy.hp}/${enemy.maxHp} HP   ·   ${enemy.block} BLOCK${enemy.weak ? `   ·   ${enemy.weak} WEAK` : ''}${enemy.vulnerable ? `   ·   ${enemy.vulnerable} VULN` : ''}${enemy.mark ? `   ·   ${enemy.mark} MARK` : ''}`, x + w / 2, enemy.boss ? y + 304 : y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial', w - 20);
   hitboxes.push({ x, y, w, h, action: () => selectTarget(state, i) });
 }
 function playFromUI(index) {
@@ -331,17 +346,31 @@ function combatPulse() {
   const progress = clamp((clock - effect.at) / .45, 0, 1);
   const foeCount = state.enemies.length;
   const targetIndex = clamp(effect.target ?? 0, 0, foeCount - 1);
-  const targetX = foeCount === 1 ? 719 : foeCount === 2 ? 555 + targetIndex * 407 : 469 + targetIndex * 279;
+  const targetX = foeCount === 1 ? (state.enemies[0]?.boss ? 740 : 710) : foeCount === 2 ? 555 + targetIndex * 407 : 469 + targetIndex * 279;
   const x = effect.kind === 'enemy' || effect.kind === 'support' ? 179 : targetX;
   const y = 319;
   ctx.save();
   ctx.strokeStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${(1 - progress) * .8})` : effect.kind === 'mark' ? `rgba(70,171,186,${(1 - progress) * .9})` : `rgba(238,189,93,${(1 - progress) * .85})`;
   ctx.lineWidth = 5 - progress * 3;
   ctx.beginPath(); ctx.ellipse(x, y, 62 + progress * 67, 68 + progress * 56, 0, 0, Math.PI * 2); ctx.stroke();
+  const spokes = effect.kind === 'attack' || effect.kind === 'enemy' ? 9 : 6;
+  for (let i = 0; i < spokes; i++) {
+    const angle = i * Math.PI * 2 / spokes + (effect.kind === 'enemy' ? .2 : -.2);
+    const inner = 36 + progress * 46, outer = inner + 16 * (1 - progress);
+    ctx.beginPath(); ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
+    ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer); ctx.stroke();
+  }
   if (effect.kind === 'mark') {
     ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x + 15, y); ctx.moveTo(x, y - 15); ctx.lineTo(x, y + 15); ctx.stroke();
   }
   ctx.restore();
+}
+function duelSigil(enemyX, boss) {
+  const center = (317 + enemyX) / 2, y = 329;
+  ctx.save(); ctx.strokeStyle = boss ? 'rgba(233,106,85,.7)' : 'rgba(238,189,93,.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(318, y); ctx.lineTo(center - 26, y); ctx.moveTo(center + 26, y); ctx.lineTo(enemyX, y); ctx.stroke();
+  rect(center - 25, y - 25, 50, 50, '#1b3b48', 25, boss ? coral : gold, 2);
+  label('VS', center, y + 1, 17, cream, 'bold', 'center', 'Arial'); ctx.restore();
 }
 function combat() {
   background(); runHeader();
@@ -358,7 +387,11 @@ function combat() {
   statusPill(`VULN ${state.vulnerable}`, 137, 455, 79, state.vulnerable > 0, coral);
   statusPill(`BURN ${state.burnout}`, 221, 455, 84, state.burnout > 0, '#a45b55');
   const count = state.enemies.length;
-  if (count === 1) combatEnemyCard(state.enemies[0], 0, 554, 330);
+  if (count === 1) {
+    const boss = state.enemies[0].boss, enemyX = boss ? 410 : 480;
+    duelSigil(enemyX, boss);
+    combatEnemyCard(state.enemies[0], 0, enemyX, boss ? 660 : 460);
+  }
   else if (count === 2) state.enemies.forEach((enemy, i) => combatEnemyCard(enemy, i, 365 + i * 407, 380));
   else state.enemies.forEach((enemy, i) => combatEnemyCard(enemy, i, 337 + i * 279, 265));
   combatPulse();
@@ -473,29 +506,47 @@ function loadout() {
   label('TRINKETS & TOOLS', 773, 402, 17, teal, 'bold', 'left', 'Arial');
   const counts = new Map(); for (const id of state.deck) counts.set(id, (counts.get(id) || 0) + 1);
   [...counts].slice(0, 12).forEach(([id, count], i) => {
-    const card = cardInfo(id);
-    icon(card.type === 'attack' ? 'sword' : 'shield', 146, 433 + i * 22, 14, card.type === 'attack' ? coral : teal);
-    label(`${count}× ${card.name}`, 164, 433 + i * 22, 14, ink, 'normal', 'left', 'Arial', 231);
-    rect(403, 426 + i * 22, 7, 7, rarityColors[card.rarity], 4);
-    label(`P${card.power}`, 416, 433 + i * 22, 11, teal, 'bold', 'left', 'Arial');
+    const card = cardInfo(id), x = 136 + (i % 2) * 151, y = 416 + Math.floor(i / 2) * 49;
+    rect(x, y, 145, 44, '#f6ecd9', 7, rarityColors[card.rarity], card.rarity === 'rare' ? 2 : 1);
+    imageCover(cardArt[card.art], x + 4, y + 4, 38, 36, 4);
+    label(card.name, x + 47, y + 14, 12, ink, 'bold', 'left', 'Arial', 91);
+    label(`${count}×  ·  P${card.power}`, x + 47, y + 32, 11, rarityColors[card.rarity], 'bold', 'left', 'Arial');
   });
-  if (counts.size > 12) label(`+ ${counts.size - 12} more skills`, 145, 710, 13, teal, 'bold', 'left', 'Arial');
-  state.relics.slice(0, 6).forEach((id, i) => {
-    const y = 420 + i * 45;
-    collectiblePortrait(relicArt[id], RELICS[id].icon, 454, y, 35, 35, 6);
-    label(RELICS[id].name, 498, y + 10, 14, ink, 'bold', 'left', 'Arial');
-    label(RELICS[id].detail, 498, y + 27, 11, '#617276', 'normal', 'left', 'Arial');
-  });
-  if (!state.relics.length) label('No relics yet.', 455, 436, 14, '#718084', 'italic');
-  state.trinkets.forEach((id, i) => {
-    const y = 420 + i * 58, used = state.usedTrinkets.includes(id);
-    collectiblePortrait(trinketArt[id], TRINKETS[id].icon, 776, y, 35, 35, 6);
-    if (used) rect(776, y, 35, 35, 'rgba(200,212,207,.55)', 6);
-    label(`${['Z', 'X'][i]} · ${TRINKETS[id].name}`, 819, y + 10, 14, ink, 'bold', 'left', 'Arial');
-    label(`${TRINKETS[id].detail} ${used ? 'Used.' : 'Ready.'}`, 819, y + 27, 11, '#617276', 'normal', 'left', 'Arial');
-  });
-  label('SINGLE-USE TOOLS', 775, 574, 13, teal, 'bold', 'left', 'Arial');
-  state.inventory.forEach((id, i) => { imageContain(art[ITEMS[id].art], 777, 594 + i * 37, 28, 28); label(ITEMS[id].name, 812, 609 + i * 37, 13, ink, 'normal', 'left', 'Arial'); });
+  if (counts.size > 12) label(`+ ${counts.size - 12} more skills`, 137, 718, 12, teal, 'bold', 'left', 'Arial');
+  for (let i = 0; i < 6; i++) {
+    const id = state.relics[i], y = 416 + i * 49;
+    rect(451, y, 295, 44, id ? '#f6ecd9' : '#f2eddf', 7, id ? gold : '#d8d1bf', 1);
+    if (id) {
+      collectiblePortrait(relicArt[id], RELICS[id].icon, 456, y + 4, 36, 36, 5);
+      label(RELICS[id].name, 499, y + 15, 13, ink, 'bold', 'left', 'Arial', 236);
+      label(RELICS[id].detail, 499, y + 32, 10, '#617276', 'normal', 'left', 'Arial', 236);
+    } else {
+      icon('relic', 474, y + 22, 17, '#b8b8a9');
+      label('Undiscovered relic', 499, y + 23, 12, '#8b948d', 'italic', 'left', 'Georgia');
+    }
+  }
+  for (let i = 0; i < 2; i++) {
+    const id = state.trinkets[i], x = 773 + i * 149, used = id && state.usedTrinkets.includes(id);
+    rect(x, 416, 143, 103, id ? '#f6ecd9' : '#f2eddf', 8, id ? teal : '#d8d1bf', 1);
+    if (id) {
+      collectiblePortrait(trinketArt[id], TRINKETS[id].icon, x + 42, 422, 58, 53, 6);
+      if (used) rect(x + 42, 422, 58, 53, 'rgba(200,212,207,.55)', 6);
+      label(`${['Z', 'X'][i]} · ${TRINKETS[id].name}`, x + 71, 488, 11, ink, 'bold', 'center', 'Arial', 130);
+      label(used ? 'USED THIS FIGHT' : 'READY', x + 71, 506, 10, used ? coral : teal, 'bold', 'center', 'Arial');
+    } else {
+      icon('relic', x + 71, 454, 24, '#b8b8a9');
+      label('EMPTY SLOT', x + 71, 493, 11, '#8b948d', 'bold', 'center', 'Arial');
+    }
+  }
+  label('SINGLE-USE TOOLS', 775, 550, 13, teal, 'bold', 'left', 'Arial');
+  for (let i = 0; i < 3; i++) {
+    const id = state.inventory[i], y = 564 + i * 46;
+    rect(773, y, 292, 41, id ? '#f6ecd9' : '#f2eddf', 7, '#d8d1bf', 1);
+    if (id) {
+      imageContain(art[ITEMS[id].art], 780, y + 3, 38, 35);
+      label(`${['Q', 'W', 'E'][i]} · ${ITEMS[id].name}`, 829, y + 20, 13, ink, 'bold', 'left', 'Arial', 224);
+    } else label('Empty tool slot', 829, y + 20, 12, '#8b948d', 'italic', 'left', 'Georgia');
+  }
 }
 function ending() {
   background();

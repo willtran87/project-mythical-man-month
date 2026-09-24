@@ -27,6 +27,8 @@ Story detours have event-specific illustrations, and both run endings have dedic
 
 All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat uses labeled status badges, Flow markers, and short action pulses, with pulses disabled for reduced-motion settings. The collectible, role, and backdrop prompts are in `public/assets/collectibles-and-scenes-prompts.md`.
 
+The title has a dedicated project-crisis illustration, and the Night Market has illustrated healing and card-retirement services. Combat uses a duel sigil, a larger boss presentation, and short action bursts; the Playbook displays card art and collectible slots. These effects respect reduced-motion settings. The three new illustration prompts are in `public/assets/ui/aesthetic-pass-prompts.md`.
+
 Every skill card has illustrated artwork in combat, the Night Market, and reward choices. Eight original scenes, six earlier role scenes, six rarity expansion scenes, and nine new scenes cover related skill families; the card name, cost, rarity, Power, and effect remain live game text. The role relics and enemies have their own art. Prompts are in `public/assets/cards/prompts.md`, `public/assets/role-expansion-prompts.md`, `public/assets/rarity-expansion-prompts.md`, and `public/assets/build-expansion-prompts.md`.
 
 ## Controls
