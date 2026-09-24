@@ -13,10 +13,12 @@ const styles = {
   tempo: { color: '#edc95f', light: '#fff6ba', count: 11, life: 1.1 },
   teamwork: { color: '#90d6ba', light: '#fff2b0', count: 16, life: 1.24 },
   draw: { color: '#8fc8e2', light: '#f0faff', count: 10, life: 1.1 },
-  phase: { color: '#ed745c', light: '#ffe0ab', count: 22, life: 1.32 }
+  phase: { color: '#ed745c', light: '#ffe0ab', count: 22, life: 1.58 },
+  trinket: { color: '#73d6ce', light: '#f0ffef', count: 12, life: 1.25 },
+  relic: { color: '#ebc46e', light: '#fff5c9', count: 12, life: 1.25 }
 };
 const directed = new Set(['strike', 'enemy']);
-const artSizes = { strike: 125, enemy: 116, shield: 124, heal: 96, draw: 104, plan: 110, mark: 112 };
+const artSizes = { strike: 125, enemy: 116, shield: 124, heal: 96, draw: 104, plan: 110, mark: 112, weak: 106, expose: 108, burnout: 108, debt: 108, phase: 226, trinket: 78, relic: 78 };
 const rand = (seed, index) => {
   const n = Math.sin(seed * 127.1 + index * 311.7) * 43758.5453123;
   return n - Math.floor(n);
@@ -25,9 +27,11 @@ const smooth = n => n * n * (3 - 2 * n);
 const lerp = (a, b, t) => a + (b - a) * t;
 
 export class BattleFx {
-  constructor(reducedMotion = false, art = {}) { this.reducedMotion = reducedMotion; this.art = art; this.effects = []; this.serial = 0; }
-  emit(kind, x, y, at, fromX = x, fromY = y) {
-    if (this.reducedMotion || !styles[kind]) return;
+  constructor(reducedMotion = false, art = {}, onEmit = null) { this.reducedMotion = reducedMotion; this.art = art; this.onEmit = onEmit; this.effects = []; this.serial = 0; }
+  emit(kind, x, y, at, fromX = x, fromY = y, artKey = kind) {
+    if (!styles[kind]) return;
+    this.onEmit?.(kind);
+    if (this.reducedMotion) return;
     const style = styles[kind], seed = ++this.serial;
     const particles = Array.from({ length: style.count }, (_, i) => ({
       angle: i * Math.PI * 2 / style.count + rand(seed, i) * .45,
@@ -36,7 +40,7 @@ export class BattleFx {
       phase: rand(seed + 113, i) * .22,
       twist: rand(seed + 151, i) * 2 - 1
     }));
-    this.effects.push({ kind, x, y, fromX, fromY, at, life: style.life, particles });
+    this.effects.push({ kind, artKey, x, y, fromX, fromY, at, life: style.life, particles });
     if (this.effects.length > 12) this.effects.splice(0, this.effects.length - 12);
   }
   active(at) { return this.effects.filter(effect => at - effect.at < effect.life).map(effect => effect.kind); }
@@ -68,7 +72,7 @@ export class BattleFx {
     const burst = directed.has(kind) ? Math.max(0, (t - .31) / .69) : t;
     if (burst > 0) {
       this.drawSymbol(ctx, kind, x, y, burst, style);
-      this.drawArt(ctx, kind, x, y, burst);
+      this.drawArt(ctx, kind, effect.artKey, x, y, burst);
       ctx.shadowBlur = 0;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i], u = Math.max(0, (burst - p.phase) / (1 - p.phase));
@@ -90,8 +94,8 @@ export class BattleFx {
     }
     ctx.restore();
   }
-  drawArt(ctx, kind, x, y, t) {
-    const img = this.art[kind];
+  drawArt(ctx, kind, artKey, x, y, t) {
+    const img = this.art[artKey];
     if (!img?.complete || !img.naturalWidth) return;
     const width = artSizes[kind] * (.72 + t * .48);
     const height = width * img.naturalHeight / img.naturalWidth;
@@ -99,6 +103,12 @@ export class BattleFx {
     ctx.globalAlpha = Math.min(1, t * 5) * Math.pow(1 - t, .72) * .86;
     ctx.shadowBlur = 0;
     ctx.translate(x, y - (kind === 'draw' ? t * 14 : 0));
+    if (kind === 'trinket' || kind === 'relic') {
+      const radius = Math.min(width, height) * .43;
+      ctx.beginPath(); ctx.arc(0, 0, radius + 4, 0, Math.PI * 2);
+      ctx.fillStyle = kind === 'relic' ? '#f3d791' : '#9be0d4'; ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.clip();
+    }
     ctx.drawImage(img, -width / 2, -height / 2, width, height);
     ctx.restore();
   }
@@ -135,7 +145,7 @@ export class BattleFx {
       ctx.beginPath(); ctx.moveTo(x - 5, y - 7); ctx.lineTo(x + 7, y - 7); ctx.moveTo(x - 5, y - 1); ctx.lineTo(x + 5, y - 1); ctx.stroke();
     } else if (kind === 'teamwork') {
       ctx.beginPath(); ctx.arc(x - 12, y, spread * .7, -.75, 2.2); ctx.arc(x + 12, y, spread * .7, 2.4, 5.5); ctx.stroke();
-    } else if (kind === 'phase' || kind === 'strike' || kind === 'enemy') {
+    } else if (kind === 'phase' || kind === 'strike' || kind === 'enemy' || kind === 'trinket' || kind === 'relic') {
       ctx.beginPath(); ctx.arc(x, y, spread, 0, Math.PI * 2); ctx.stroke();
       for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (spread + 4), y + Math.sin(a) * (spread + 4)); ctx.lineTo(x + Math.cos(a) * (spread + 13), y + Math.sin(a) * (spread + 13)); ctx.stroke(); }
     } else if (kind === 'weak') {

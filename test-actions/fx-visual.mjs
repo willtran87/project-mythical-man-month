@@ -16,8 +16,12 @@ const frame = async (name, ms = 180) => { await page.clock.pauseAt(new Date()); 
 const fresh = async seed => page.goto(`http://127.0.0.1:5173/?seed=${seed}`, { waitUntil: 'networkidle' });
 
 await fresh(41);
-assert.equal(fxResponses.length, 7);
+assert.equal(fxResponses.length, 14);
 assert.ok(fxResponses.every(response => response.status() === 200));
+assert.equal((await state()).soundEnabled, true);
+await page.keyboard.press('v'); assert.equal((await state()).soundEnabled, false);
+await fresh(41); assert.equal((await state()).soundEnabled, false, 'sound preference should persist after reload');
+await page.keyboard.press('v'); assert.equal((await state()).soundEnabled, true);
 await page.keyboard.press('Enter'); await page.keyboard.press('1');
 assert.equal((await state()).mode, 'combat');
 let s = await state();
@@ -59,6 +63,7 @@ await frame('mark');
 await page.evaluate(() => window.advanceTime(1000));
 await page.keyboard.press('z'); await page.keyboard.press('a');
 assert.ok((await state()).fx.includes('teamwork'));
+assert.ok((await state()).fx.includes('trinket'));
 await frame('teamwork');
 
 await fresh(9); await page.keyboard.press('3'); await page.keyboard.press('Enter'); await page.keyboard.press('1');

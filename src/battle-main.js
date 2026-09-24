@@ -1,5 +1,6 @@
 import './style.css';
 import { BattleFx } from './battle-fx.js';
+import { BattleAudio } from './battle-audio.js';
 import { ACTS, ACT_LORE, ROLES, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, chooseContract, setEscalation, chooseArchitecture, resolveBossProblem, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
@@ -45,7 +46,9 @@ const roleArt = loadCollection('roles', Object.keys(ROLES));
 const specialistArt = loadCollection('specialists', Object.keys(SPECIALISTS));
 const charterArt = loadCollection('charters', Object.keys(CHARTERS));
 const sceneArt = loadCollection('scenes', ['requirements', 'integration', 'release', 'goblin', 'kraken', 'dragon']);
-const fxArt = reducedMotion ? {} : loadCollection('fx', ['strike', 'enemy', 'shield', 'heal', 'draw', 'plan', 'mark']);
+const fxArt = reducedMotion ? {} : loadCollection('fx', ['strike', 'enemy', 'shield', 'heal', 'draw', 'plan', 'mark', 'weak', 'expose', 'burnout', 'debt', 'boss-goblin', 'boss-kraken', 'boss-dragon']);
+for (const [id, image] of Object.entries(relicArt)) fxArt[`relic-${id}`] = image;
+for (const [id, image] of Object.entries(trinketArt)) fxArt[`trinket-${id}`] = image;
 const cardArt = {};
 for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
   const img = new Image(); img.src = `${import.meta.env.BASE_URL}assets/cards/${key.includes('.') ? key : `${key}.png`}`; img.onload = () => render(); cardArt[key] = img;
@@ -55,7 +58,9 @@ const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedPar
 const makeRun = () => newGame(fixedSeed ?? undefined);
 let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false;
 let clock = 0, lastFrame = 0, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
-const battleFx = new BattleFx(reducedMotion, fxArt);
+const battleAudio = new BattleAudio();
+const battleFx = new BattleFx(reducedMotion, fxArt, kind => battleAudio.play(kind));
+function toggleSound() { battleAudio.toggle(); render(); }
 const careerKey = 'deadline-disaster-career-v1';
 function loadCareer() {
   try { const saved = JSON.parse(localStorage.getItem(careerKey) || 'null'); if (saved && typeof saved === 'object') return { runs: saved.runs || 0, wins: saved.wins || 0, best: saved.best || 0, bosses: saved.bosses || [], roles: saved.roles || [], charters: saved.charters || [], bestByRole: saved.bestByRole || {}, bestByCharter: saved.bestByCharter || {} }; }
@@ -212,8 +217,9 @@ function intro() {
   button('START THE RUN', 390, 583, 420, 65, () => startGame(state), { size: 22 });
   button(state.challenge === 'standard' ? 'CHALLENGE MODE' : CHALLENGES[state.challenge].name.toUpperCase(), 826, 583, 203, 65, () => openChallenge(state), { size: 13, fill: '#b6ddd0' });
   button('RUN ARCHIVE', 826, 660, 203, 39, () => { showArchive = true; }, { size: 13, fill: '#e0d3bc' });
+  button(`SFX ${battleAudio.enabled ? 'ON' : 'OFF'}  ·  V`, 505, 660, 190, 39, toggleSound, { size: 13, fill: '#d8e6da' });
   label(`Wins unlock escalation tiers · ${career.wins} wins recorded`, 192, 680, 13, '#65777c', 'normal', 'left', 'Arial');
-  label('1–5 cards · A ability · S specialist · Space end turn · M menu · F fullscreen', 600, 715, 13, '#65777c', 'normal', 'center', 'Arial');
+  label('1–5 cards · A ability · S specialist · Space end turn · M menu · V sound · F fullscreen', 600, 715, 13, '#65777c', 'normal', 'center', 'Arial');
 }
 function challenge() {
   background();
@@ -446,13 +452,15 @@ function enemyAnchor(enemies, index) {
 function fxSnapshot() {
   return {
     hp: state.hp, block: state.block, sp: state.sp, vulnerable: state.vulnerable, burnout: state.burnout, debt: state.projectDebt, hand: state.hand.length,
+    firstAttack: state.firstAttack, firstSkillTurn: state.firstSkillTurn, redlineUsed: state.redlineUsed, notebookTurn: state.notebookTurn, flow: state.flow, reserveBlock: state.reserveBlock,
     teamwork: state.teamworkUsed, initiatives: state.initiatives.length, active: state.activeInitiatives.length,
     enemies: state.enemies.map(enemy => ({ ref: enemy, hp: enemy.hp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark, phase: enemy.phase, intent: intentFor(enemy), redirected: enemy.redirected, stalled: enemy.stalled }))
   };
 }
 function emitActionFx(before, id = '', playedCard = false) {
   if (state.mode !== 'combat') return;
-  const emit = (kind, at, from = at) => battleFx.emit(kind, at.x, at.y, clock, from.x, from.y);
+  const emit = (kind, at, from = at, artKey = kind) => battleFx.emit(kind, at.x, at.y, clock, from.x, from.y, artKey);
+  const emitRelic = relic => { if (state.relics.includes(relic)) emit('relic', { x: 329, y: 269 }, undefined, `relic-${relic}`); };
   before.enemies.forEach((enemy, index) => {
     const at = enemyAnchor(before.enemies.map(entry => entry.ref), index), foe = enemy.ref;
     if (foe.hp < enemy.hp || foe.block < enemy.block) emit('strike', at, heroAnchor);
@@ -461,7 +469,7 @@ function emitActionFx(before, id = '', playedCard = false) {
     if (foe.mark > enemy.mark) emit('mark', at);
     if (foe.weak > enemy.weak) emit('weak', at);
     if (foe.vulnerable > enemy.vulnerable) emit('expose', at);
-    if (foe.phase > enemy.phase) emit('phase', at);
+    if (foe.phase > enemy.phase) emit('phase', at, undefined, `boss-${foe.id}`);
   });
   if (state.block > before.block) emit('shield', heroAnchor);
   if (state.hp > before.hp) emit('heal', heroAnchor);
@@ -475,6 +483,10 @@ function emitActionFx(before, id = '', playedCard = false) {
   if (['pipeline', 'protocol', 'rollout', 'map', 'handoffmap', 'blueprint'].includes(id)) emit('plan', heroAnchor);
   if (id === 'defect') emit('interrupt', heroAnchor);
   if (id === 'architect' && state.reserveBlock) emit('plan', heroAnchor);
+  if (before.firstAttack && !state.firstAttack) emitRelic('checklist');
+  if (before.firstSkillTurn && !state.firstSkillTurn) emitRelic('binder');
+  if (!before.redlineUsed && state.redlineUsed) emitRelic('redline');
+  if (before.notebookTurn !== state.notebookTurn) emitRelic('notebook');
 }
 function playFromUI(index) {
   if (state.mode !== 'combat') return;
@@ -491,8 +503,13 @@ function itemFromUI(index) {
 }
 function trinketFromUI(index) {
   if (state.mode !== 'combat') return;
+  const id = state.trinkets[index];
   const before = fxSnapshot();
-  if (useTrinket(state, index, state.target)) emitActionFx(before);
+  if (useTrinket(state, index, state.target)) {
+    emitActionFx(before);
+    battleFx.emit('trinket', 329, 383, clock, 329, 383, `trinket-${id}`);
+    if (state.relics.includes('thread')) battleFx.emit('relic', 329, 269, clock, 329, 269, 'relic-thread');
+  }
 }
 function abilityFromUI() {
   if (state.mode !== 'combat') return;
@@ -530,8 +547,9 @@ function endFromUI() {
     const at = enemyAnchor(before.enemies.map(entry => entry.ref), index);
     if (enemy.ref.block > enemy.block) battleFx.emit('shield', at.x, at.y, clock);
     if (enemy.ref.hp > enemy.hp) battleFx.emit('heal', at.x, at.y, clock);
-    if (enemy.ref.phase > enemy.phase) battleFx.emit('phase', at.x, at.y, clock);
+    if (enemy.ref.phase > enemy.phase) battleFx.emit('phase', at.x, at.y, clock, at.x, at.y, `boss-${enemy.ref.id}`);
   });
+  if (state.relics.includes('grid') && state.block > state.reserveBlock) battleFx.emit('relic', 329, 269, clock, 329, 269, 'relic-grid');
   if (state.activeInitiatives.length > before.active) battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
   if (state.hand.length) battleFx.emit('draw', 340, 385, clock);
 }
@@ -761,6 +779,7 @@ function loadout() {
   rect(92, 47, 1016, 706, '#fff8e9', 22, gold, 3);
   label('YOUR PLAYBOOK', 129, 87, 33, ink, 'bold');
   button('CLOSE  ·  C', 931, 64, 148, 43, () => { showLoadout = false; }, { size: 15 });
+  button(`SFX ${battleAudio.enabled ? 'ON' : 'OFF'}  ·  V`, 748, 64, 167, 43, toggleSound, { size: 13, fill: '#d8e6da' });
   rect(122, 122, 390, 226, '#263e48', 12);
   imageCover(art.cabinet, 129, 129, 376, 212, 8);
   rect(129, 129, 376, 212, 'rgba(14,37,48,.28)', 8);
@@ -931,6 +950,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 window.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
+  if (key === 'v') { toggleSound(); return; }
   if (showMenuConfirm) { if (key === 'escape' || key === 'm') showMenuConfirm = false; else if (e.key === 'Enter') returnToMenu(); render(); return; }
   if (showArchive) { if (key === 'escape' || e.key === 'Enter') showArchive = false; render(); return; }
   if (previewCardIndex !== null) {
@@ -994,7 +1014,7 @@ document.addEventListener('fullscreenchange', resize);
 window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); };
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
-  mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout, archiveOpen: showArchive, menuConfirmOpen: showMenuConfirm,
+  mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout, archiveOpen: showArchive, menuConfirmOpen: showMenuConfirm, soundEnabled: battleAudio.enabled,
   escalation: state.escalation, escalationUnlocked: Math.min(3, career.wins), career: showArchive ? career : null,
   architecture: state.architecture || null, architectureChoices: state.mode === 'architecture' ? Object.entries(ARCHITECTURES).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
   challenge: state.challenge, challengeRule: state.challengeRule, dailyDate: state.dailyDate,

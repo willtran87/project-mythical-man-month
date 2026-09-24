@@ -37,7 +37,7 @@ The combat jokes draw on Brooks's themes: scope creep, coordination overhead, in
 
 Story detours have event-specific illustrations, and both run endings have dedicated art. The exact prompts for the new scenes are in `public/assets/story/prompts.md`.
 
-All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat uses labeled status badges and Flow markers. Action-specific particles layer with transparent illustrated bursts for strikes, enemy hits, shields, healing, card draws, planning, and Mark; other status and teamwork cues remain code-drawn. Combat effects are disabled for reduced-motion settings. Art prompts are in `public/assets/fx/prompts.md` and `public/assets/collectibles-and-scenes-prompts.md`.
+All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat uses labeled status badges and Flow markers. Action-specific particles layer with transparent illustrated bursts for strikes, enemy hits, shields, healing, card draws, planning, Mark, Weak, Vulnerable, Burnout, and Project Debt. Each boss has a distinct illustrated phase transition. Trinket uses and several triggered relic effects briefly display their collectible art in combat. Combat visuals respect reduced-motion settings. Quiet synthesized action sounds can be toggled from the title or Playbook; the setting persists on this device. Art prompts are in `public/assets/fx/prompts.md` and `public/assets/collectibles-and-scenes-prompts.md`.
 
 Route cards use separate visual treatments for steady fights, risky fights, story detours, market stops, and bosses, with clear consequence labels. Skill cards have larger hover and tap-to-inspect views; rare rewards and relics receive special frames and an acquisition toast. The title has a dedicated project-crisis illustration, and the Night Market has illustrated healing and card-retirement services. Combat uses a duel sigil, a larger boss presentation, and short action bursts; the Playbook displays card art and collectible slots. These effects respect reduced-motion settings. The three new illustration prompts are in `public/assets/ui/aesthetic-pass-prompts.md`.
 
@@ -70,6 +70,7 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | S | Use your specialist action once per battle |
 | Escape | Return from the workshop to rewards |
 | C | Open or close the loadout view |
+| V | Toggle combat sound effects |
 | Space | End the combat turn |
 | F | Toggle fullscreen |
 
