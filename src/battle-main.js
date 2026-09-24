@@ -57,7 +57,8 @@ const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
 let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false, showBattleNotes = false, archivePage = 'runs';
-let clock = 0, lastFrame = 0, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
+let clock = 0, lastFrame = 0, lastRenderedMode = null, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
+const battleMotion = { hero: null, enemies: [], cards: [], draw: null };
 let forecastDirty = true, forecast = null;
 const battleAudio = new BattleAudio();
 const battleFx = new BattleFx(reducedMotion, fxArt, kind => battleAudio.play(kind));
@@ -119,7 +120,7 @@ function recordRun() {
   if (state.ending === 'lose') bump('defeats', (state.deathCause || 'Unknown').split(':')[0]);
   try { localStorage.setItem(careerKey, JSON.stringify(career)); } catch { /* Session progress remains visible. */ }
 }
-function returnToMenu() { persistRun(); state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; showBattleNotes = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; }
+function returnToMenu() { persistRun(); state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; showBattleNotes = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; clearBattleMotion(); }
 function replayRun() {
   const previous = state;
   state = makeRun(); selectRole(state, previous.role); setEscalation(state, previous.escalation);
@@ -130,6 +131,20 @@ function replayRun() {
 function currentForecast() { if (forecastDirty) { forecast = projectEndTurn(state); forecastDirty = false; } return forecast; }
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function clearBattleMotion() { battleMotion.hero = null; battleMotion.enemies.length = 0; battleMotion.cards.length = 0; battleMotion.draw = null; }
+function cueHero(kind) { if (!reducedMotion) battleMotion.hero = { kind, at: clock }; }
+function cueEnemy(enemy, kind) {
+  if (reducedMotion || !enemy) return;
+  battleMotion.enemies = battleMotion.enemies.filter(entry => entry.enemy !== enemy);
+  battleMotion.enemies.push({ enemy, kind, at: clock });
+}
+function cueCard(card, index, destination) {
+  if (reducedMotion) return;
+  battleMotion.cards.push({ art: cardArt[card.art], rarity: card.rarity, fromX: 116 + index * 190, fromY: 646, toX: destination.x, toY: destination.y, at: clock });
+  if (battleMotion.cards.length > 4) battleMotion.cards.shift();
+}
+function cueDraw(start = 0) { if (!reducedMotion) battleMotion.draw = { at: clock, start }; }
+function motionProgress(cue, duration) { return cue ? clamp((clock - cue.at) / duration, 0, 1) : 1; }
 function rect(x, y, w, h, fill, radius = 0, stroke = null, line = 1) {
   ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.fillStyle = fill; ctx.fill();
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = line; ctx.stroke(); }
@@ -500,7 +515,21 @@ function combatEnemyCard(enemy, i, x, w) {
     ctx.fillStyle = glow; ctx.fillRect(x + 14, portraitY + 1, w - 28, portraitH - 2);
   }
   const bob = reducedMotion ? 0 : Math.sin(clock * 2 + i) * 3;
-  imageContain(art[enemy.art], x + 22, portraitY + 4 + bob, w - 44, portraitH - 8);
+  const cue = battleMotion.enemies.find(entry => entry.enemy === enemy);
+  const cueT = motionProgress(cue, cue?.kind === 'lunge' ? .2 : .24);
+  const pulse = cueT < 1 ? Math.sin(Math.PI * cueT) : 0;
+  const preparing = !reducedMotion && endTurnHovered() && ['attack', 'erode', 'audit'].includes(intent.kind) && !enemy.redirected && !enemy.stalled;
+  const anticipation = preparing ? .65 + Math.sin(clock * 7 + i) * .2 : 0;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x + 14, portraitY + 1, w - 28, portraitH - 2); ctx.clip();
+  ctx.translate(x + w / 2 + (cue?.kind === 'lunge' ? -8 : 6) * pulse - anticipation * 3, portraitY + portraitH);
+  ctx.scale(1 + (cue?.kind === 'lunge' ? .018 : -.008) * pulse, 1 + .012 * pulse);
+  imageContain(art[enemy.art], -(w - 44) / 2, -portraitH + 4 + bob, w - 44, portraitH - 8);
+  ctx.restore();
+  if (anticipation) {
+    ctx.save(); ctx.strokeStyle = `rgba(233,106,85,${anticipation})`; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(x + 16, portraitY + 3, w - 32, portraitH - 6, 10); ctx.stroke(); ctx.restore();
+  }
   if (enemy.boss) {
     rect(x + w / 2 - 143, portraitY + 8, 286, 25, 'rgba(18,45,57,.89)', 6);
     label(`${ENEMIES[enemy.id].phaseNames?.[enemy.phase - 1] || 'FINAL REVIEW'} · PHASE ${enemy.phase}/3`, x + w / 2, portraitY + 21, 12, gold, 'bold', 'center', 'Arial');
@@ -518,6 +547,51 @@ function combatEnemyCard(enemy, i, x, w) {
   hitboxes.push({ x, y, w, h, action: () => selectTarget(state, i) });
 }
 const heroAnchor = { x: 179, y: 319 };
+function endTurnHovered() { return pointer.x >= 993 && pointer.x <= 1174 && pointer.y >= 612 && pointer.y <= 668; }
+function drawHeroPortrait() {
+  const cue = battleMotion.hero;
+  const duration = cue?.kind === 'role' ? .38 : .26;
+  const t = motionProgress(cue, duration);
+  const pulse = t < 1 ? Math.sin(Math.PI * t) : 0;
+  const idle = reducedMotion ? 0 : Math.sin(clock * 1.8 - .8);
+  const kind = cue?.kind;
+  const dx = (kind === 'attack' ? 8 : kind === 'hit' ? -8 : kind === 'brace' ? -5 : kind === 'shield' ? -3 : 2) * pulse;
+  const dy = (kind === 'heal' ? -5 : kind === 'role' ? -4 : kind === 'attack' ? -2 : 0) * pulse - (reducedMotion ? 0 : (idle + 1) * .8);
+  const tilt = (kind === 'attack' ? .028 : kind === 'hit' ? -.035 : kind === 'brace' ? -.018 : 0) * pulse;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(57, 211, 247, 199); ctx.clip();
+  ctx.translate(174 + dx, 408 + dy);
+  ctx.rotate(tilt);
+  ctx.scale(1 + .004 * idle, 1 + .005 * idle);
+  imageContain(roleArt[state.role], -110, -195, 220, 195);
+  ctx.restore();
+  if (kind !== 'role' || !pulse) return;
+  ctx.save(); ctx.globalAlpha = pulse * .82; ctx.strokeStyle = state.role === 'architect' ? gold : state.role === 'debugger' ? '#81d9e6' : '#f3c377'; ctx.lineWidth = 2.5;
+  if (state.role === 'architect') {
+    ctx.strokeRect(243, 338, 42, 43);
+    ctx.beginPath(); ctx.moveTo(253, 338); ctx.lineTo(253, 381); ctx.moveTo(266, 338); ctx.lineTo(266, 381); ctx.moveTo(243, 351); ctx.lineTo(285, 351); ctx.moveTo(243, 366); ctx.lineTo(285, 366); ctx.stroke();
+  } else if (state.role === 'debugger') {
+    ctx.beginPath(); ctx.arc(257, 292, 24 + 5 * pulse, 0, Math.PI * 2); ctx.moveTo(257, 258); ctx.lineTo(257, 272); ctx.moveTo(257, 312); ctx.lineTo(257, 326); ctx.moveTo(223, 292); ctx.lineTo(237, 292); ctx.moveTo(277, 292); ctx.lineTo(291, 292); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(263, 350, 25, 0, Math.PI * 2); ctx.moveTo(263, 350); ctx.lineTo(263, 335); ctx.moveTo(263, 350); ctx.lineTo(277, 357); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawCardMotions() {
+  if (reducedMotion) return;
+  battleMotion.cards = battleMotion.cards.filter(card => clock - card.at < .28);
+  for (const card of battleMotion.cards) {
+    const t = motionProgress(card, .24), eased = t * t * (3 - 2 * t);
+    const x = card.fromX + (card.toX - card.fromX) * eased;
+    const y = card.fromY + (card.toY - card.fromY) * eased - Math.sin(Math.PI * t) * 38;
+    const w = 76 - 36 * t, h = 100 - 46 * t;
+    ctx.save(); ctx.globalAlpha = Math.min(1, (1 - t) * 1.8);
+    ctx.translate(x, y); ctx.rotate((card.toX > card.fromX ? 1 : -1) * .14 * Math.sin(Math.PI * t));
+    rect(-w / 2, -h / 2, w, h, '#fff6e5', 7, rarityColors[card.rarity], 2);
+    imageCover(card.art, -w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 4);
+    ctx.restore();
+  }
+}
 function enemyAnchor(enemies, index) {
   const count = enemies.length;
   return { x: count === 1 ? (enemies[0]?.boss ? 740 : 710) : count === 2 ? 555 + index * 407 : 469 + index * 279, y: 319 };
@@ -536,7 +610,7 @@ function emitActionFx(before, id = '', playedCard = false) {
   const emitRelic = relic => { if (state.relics.includes(relic)) emit('relic', { x: 329, y: 269 }, undefined, `relic-${relic}`); };
   before.enemies.forEach((enemy, index) => {
     const at = enemyAnchor(before.enemies.map(entry => entry.ref), index), foe = enemy.ref;
-    if (foe.hp < enemy.hp || foe.block < enemy.block) emit('strike', at, heroAnchor);
+    if (foe.hp < enemy.hp || foe.block < enemy.block) { emit('strike', at, heroAnchor); cueEnemy(foe, 'recoil'); }
     if (foe.block > enemy.block) emit('shield', at);
     if (foe.hp > enemy.hp) emit('heal', at);
     if (foe.mark > enemy.mark) emit('mark', at);
@@ -549,7 +623,7 @@ function emitActionFx(before, id = '', playedCard = false) {
   if (state.burnout > before.burnout) emit('burnout', { x: 225, y: 306 });
   if (state.projectDebt > before.debt) emit('debt', { x: 240, y: 355 });
   if (state.sp > before.sp) emit('tempo', { x: 135, y: 306 });
-  if (state.hand.length > before.hand - Number(playedCard)) emit('draw', { x: 340, y: 385 });
+  if (state.hand.length > before.hand - Number(playedCard)) { emit('draw', { x: 340, y: 385 }); cueDraw(Math.max(0, before.hand - Number(playedCard))); }
   if (state.initiatives.length > before.initiatives || state.activeInitiatives.length > before.active) emit('plan', heroAnchor);
   if (state.teamworkUsed && !before.teamwork) emit('teamwork', heroAnchor);
   if (['reprioritize', 'escalate', 'mitigate', 'redirect'].includes(id)) emit('interrupt', enemyAnchor(before.enemies.map(entry => entry.ref), state.target));
@@ -560,13 +634,25 @@ function emitActionFx(before, id = '', playedCard = false) {
   if (before.firstSkillTurn && !state.firstSkillTurn) emitRelic('binder');
   if (!before.redlineUsed && state.redlineUsed) emitRelic('redline');
   if (before.notebookTurn !== state.notebookTurn) emitRelic('notebook');
+  if (state.hp > before.hp) cueHero('heal');
+  else if (state.block > before.block) cueHero('shield');
+  else if (before.enemies.some(enemy => enemy.ref.hp < enemy.hp)) cueHero('attack');
+  else if (id || playedCard) cueHero('skill');
 }
 function playFromUI(index) {
   if (state.mode !== 'combat') return;
   previewCardIndex = null; hoverPreviewEnabled = false;
   const id = state.hand[index] ? cardBase(state.hand[index]) : '';
+  const card = state.hand[index] ? cardInfo(state.hand[index]) : null;
   const before = fxSnapshot();
-  if (playCard(state, index, state.target)) emitActionFx(before, id, true);
+  const target = enemyAnchor(state.enemies, state.target);
+  if (playCard(state, index, state.target)) {
+    if (state.mode === 'combat') {
+      emitActionFx(before, id, true);
+      const targeted = card.type === 'attack' || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect'].includes(id);
+      cueCard(card, index, targeted ? target : heroAnchor);
+    }
+  }
 }
 function itemFromUI(index) {
   if (state.mode !== 'combat') return;
@@ -587,7 +673,7 @@ function trinketFromUI(index) {
 function abilityFromUI() {
   if (state.mode !== 'combat') return;
   const before = fxSnapshot();
-  if (useRoleAbility(state, state.target)) emitActionFx(before, state.role);
+  if (useRoleAbility(state, state.target)) { emitActionFx(before, state.role); cueHero('role'); }
 }
 function specialistFromUI() {
   if (state.mode !== 'combat') return;
@@ -605,6 +691,9 @@ function endFromUI() {
   const before = fxSnapshot();
   if (!endTurn(state) || state.mode !== 'combat') return;
   const playerHit = state.hp < before.hp || state.block < before.block;
+  if (playerHit) cueHero(state.hp < before.hp ? 'hit' : 'brace');
+  else if (state.hp > before.hp) cueHero('heal');
+  for (const entry of before.enemies) if (['attack', 'erode', 'audit'].includes(entry.intent.kind) && !entry.redirected && !entry.stalled && state.enemies.includes(entry.ref)) cueEnemy(entry.ref, 'lunge');
   let emittedHit = false;
   if (playerHit) for (let i = 0; i < before.enemies.length; i++) {
     if (!['attack', 'erode', 'audit'].includes(before.enemies[i].intent.kind) || before.enemies[i].redirected || before.enemies[i].stalled) continue;
@@ -624,7 +713,7 @@ function endFromUI() {
   });
   if (state.relics.includes('grid') && state.block > state.reserveBlock) battleFx.emit('relic', 329, 269, clock, 329, 269, 'relic-grid');
   if (state.activeInitiatives.length > before.active) battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
-  if (state.hand.length) battleFx.emit('draw', 340, 385, clock);
+  if (state.hand.length) { battleFx.emit('draw', 340, 385, clock); cueDraw(); }
 }
 function statusPill(text, x, y, w, active, activeFill) {
   rect(x, y, w, 23, active ? activeFill : '#dce2db', 6);
@@ -638,13 +727,14 @@ function duelSigil(enemyX, boss) {
   label('VS', center, y + 1, 17, cream, 'bold', 'center', 'Arial'); ctx.restore();
 }
 function combat() {
+  battleMotion.enemies = battleMotion.enemies.filter(entry => clock - entry.at < .3 && state.enemies.includes(entry.enemy));
   background(); runHeader();
   rect(25, 158, 1150, 333, state.enemies.some(e => e.boss) ? 'rgba(20,49,61,.77)' : 'rgba(20,49,61,.89)', 17, '#d9bd85', 2);
   rect(41, 177, 276, 304, '#f7efdf', 16, teal, 3);
   label(ROLES[state.role].name.toUpperCase(), 58, 202, 13, teal, 'bold', 'left', 'Arial');
   label('FLOW', 213, 202, 11, teal, 'bold', 'left', 'Arial');
   for (let i = 0; i < 3; i++) icon('relic', 253 + i * 16, 202, 12, i < state.flow ? gold : '#b7c7c2');
-  imageContain(roleArt[state.role], 64, 213, 220, 195);
+  drawHeroPortrait();
   label(`${state.hp}/${state.maxHp} HP`, 62, 420, 17, ink, 'bold', 'left', 'Arial');
   label(`BANK ${state.reserveBlock}${state.nextSp ? ` · NEXT SP +${state.nextSp}` : ''}`, 296, 420, 12, teal, 'bold', 'right', 'Arial', 150);
   meter(62, 436, 235, 12, state.hp, state.maxHp, coral);
@@ -676,6 +766,8 @@ function combat() {
     const card = cardInfo(id), x = 26 + i * 190, y = 577, available = state.sp >= card.cost && !(cardBase(id) === 'escalate' && state.projectDebt > 10);
     const hot = pointer.x >= x && pointer.x <= x + 180 && pointer.y >= y && pointer.y <= y + 160;
     const top = y - (hot ? 6 : 0), color = card.type === 'attack' ? coral : teal;
+    const drawT = battleMotion.draw && i >= battleMotion.draw.start ? motionProgress(battleMotion.draw, .19) : 1;
+    ctx.save(); ctx.globalAlpha = .25 + .75 * drawT; ctx.translate(0, (1 - drawT) * 26);
     rect(x, y + 4, 180, 160, ink, 12);
     rect(x, top, 180, 160, available ? '#fff6e5' : '#d7dad4', 12, rarityColors[card.rarity], card.rarity === 'rare' ? 4 : 2);
     rect(x + 6, top + 6, 168, 82, '#263e48', 8);
@@ -691,6 +783,7 @@ function combat() {
     label(`${card.rarity.toUpperCase()} · P${card.power}`, x + 89, top + 23, 10, card.rarity === 'rare' ? gold : cream, 'bold', 'center', 'Arial', 83);
     label(`${i + 1}. ${card.name}`, x + 12, top + 107, 15, available ? ink : '#788985', 'bold', 'left', 'Arial', 156);
     wrap(card.detail, x + 12, top + 124, 156, card.detail.length > 43 ? 12 : 13, available ? '#5d6c72' : '#899692', 14, 'Arial');
+    ctx.restore();
     if (available) hitboxes.push({ x, y: y - 6, w: 180, h: 166, action: () => playFromUI(i) });
     hitboxes.push({ x: x + 137, y: top + 50, w: 32, h: 32, action: () => { previewCardIndex = i; } });
   });
@@ -721,6 +814,7 @@ function combat() {
     label(`${['Z', 'X'][i]}  ${charm.name}`, x + 34, 769, 11, used ? '#607476' : ink, 'bold', 'left', 'Arial');
     if (!used) hitboxes.push({ x, y: 754, w: 199, h: 30, action: () => trinketFromUI(i) });
   });
+  drawCardMotions();
 }
 function battleNotes() {
   const brief = state.objective;
@@ -1044,7 +1138,9 @@ function menuConfirm() {
 }
 function render() {
   hitboxes = []; ctx.clearRect(0, 0, W, H);
-  if (state.mode !== 'combat') { battleFx.effects.length = 0; showBattleNotes = false; }
+  if (state.mode !== 'combat') { battleFx.effects.length = 0; clearBattleMotion(); showBattleNotes = false; }
+  else if (lastRenderedMode !== 'combat') cueDraw();
+  lastRenderedMode = state.mode;
   if (state.mode === 'intro') intro();
   else if (state.mode === 'challenge') challenge();
   else if (state.mode === 'route') route();
@@ -1191,6 +1287,7 @@ window.render_game_to_text = () => JSON.stringify({
   enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
   crisis: state.mode === 'combat' ? state.crisis || null : null, mission: state.mode === 'combat' ? state.mission : null, endTurnPreview: state.mode === 'combat' ? currentForecast() : null, readiness: state.mode === 'combat' ? state.readiness : null, canShip: state.mode === 'combat' && state.readiness >= 6 && state.turn >= 2 && !state.enemies.some(enemy => enemy.boss), teamworkUsed: state.mode === 'combat' ? state.teamworkUsed : null,
   fx: state.mode === 'combat' ? battleFx.active(clock) : [],
+  motion: state.mode === 'combat' && !reducedMotion ? { hero: battleMotion.hero && clock - battleMotion.hero.at < .38 ? battleMotion.hero.kind : null, enemyPreparing: endTurnHovered() && state.enemies.some(enemy => ['attack', 'erode', 'audit'].includes(intentFor(enemy).kind) && !enemy.redirected && !enemy.stalled), enemyLunges: battleMotion.enemies.filter(entry => entry.kind === 'lunge' && clock - entry.at < .2).length, cardsInFlight: battleMotion.cards.filter(card => clock - card.at < .24).length, drawingHand: !!battleMotion.draw && clock - battleMotion.draw.at < .19 } : null,
   initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining })) : [],
   activeInitiatives: state.mode === 'combat' ? state.activeInitiatives.map(id => CARDS[id].name) : [],
   selectedTarget: state.target,
