@@ -16,6 +16,7 @@ const styles = {
   phase: { color: '#ed745c', light: '#ffe0ab', count: 22, life: 1.32 }
 };
 const directed = new Set(['strike', 'enemy']);
+const artSizes = { strike: 125, enemy: 116, shield: 124, heal: 96, draw: 104, plan: 110, mark: 112 };
 const rand = (seed, index) => {
   const n = Math.sin(seed * 127.1 + index * 311.7) * 43758.5453123;
   return n - Math.floor(n);
@@ -24,7 +25,7 @@ const smooth = n => n * n * (3 - 2 * n);
 const lerp = (a, b, t) => a + (b - a) * t;
 
 export class BattleFx {
-  constructor(reducedMotion = false) { this.reducedMotion = reducedMotion; this.effects = []; this.serial = 0; }
+  constructor(reducedMotion = false, art = {}) { this.reducedMotion = reducedMotion; this.art = art; this.effects = []; this.serial = 0; }
   emit(kind, x, y, at, fromX = x, fromY = y) {
     if (this.reducedMotion || !styles[kind]) return;
     const style = styles[kind], seed = ++this.serial;
@@ -67,6 +68,7 @@ export class BattleFx {
     const burst = directed.has(kind) ? Math.max(0, (t - .31) / .69) : t;
     if (burst > 0) {
       this.drawSymbol(ctx, kind, x, y, burst, style);
+      this.drawArt(ctx, kind, x, y, burst);
       ctx.shadowBlur = 0;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i], u = Math.max(0, (burst - p.phase) / (1 - p.phase));
@@ -86,6 +88,18 @@ export class BattleFx {
         ctx.restore();
       }
     }
+    ctx.restore();
+  }
+  drawArt(ctx, kind, x, y, t) {
+    const img = this.art[kind];
+    if (!img?.complete || !img.naturalWidth) return;
+    const width = artSizes[kind] * (.72 + t * .48);
+    const height = width * img.naturalHeight / img.naturalWidth;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, t * 5) * Math.pow(1 - t, .72) * .86;
+    ctx.shadowBlur = 0;
+    ctx.translate(x, y - (kind === 'draw' ? t * 14 : 0));
+    ctx.drawImage(img, -width / 2, -height / 2, width, height);
     ctx.restore();
   }
   drawSymbol(ctx, kind, x, y, t, style) {

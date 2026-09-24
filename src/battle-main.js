@@ -5,6 +5,7 @@ import { ACTS, ACT_LORE, ROLES, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHAL
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
 const W = 1200, H = 800;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ink = '#173241', cream = '#fff7e8', gold = '#eebd5d', coral = '#e96a55', teal = '#2e8d8b';
 const rarityColors = { basic: '#9ca8a4', common: '#5f9a92', uncommon: '#467eaa', rare: '#c3933d' };
 const artPaths = {
@@ -44,17 +45,17 @@ const roleArt = loadCollection('roles', Object.keys(ROLES));
 const specialistArt = loadCollection('specialists', Object.keys(SPECIALISTS));
 const charterArt = loadCollection('charters', Object.keys(CHARTERS));
 const sceneArt = loadCollection('scenes', ['requirements', 'integration', 'release', 'goblin', 'kraken', 'dragon']);
+const fxArt = reducedMotion ? {} : loadCollection('fx', ['strike', 'enemy', 'shield', 'heal', 'draw', 'plan', 'mark']);
 const cardArt = {};
 for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
   const img = new Image(); img.src = `${import.meta.env.BASE_URL}assets/cards/${key.includes('.') ? key : `${key}.png`}`; img.onload = () => render(); cardArt[key] = img;
 }
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
 let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false;
 let clock = 0, lastFrame = 0, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
-const battleFx = new BattleFx(reducedMotion);
+const battleFx = new BattleFx(reducedMotion, fxArt);
 const careerKey = 'deadline-disaster-career-v1';
 function loadCareer() {
   try { const saved = JSON.parse(localStorage.getItem(careerKey) || 'null'); if (saved && typeof saved === 'object') return { runs: saved.runs || 0, wins: saved.wins || 0, best: saved.best || 0, bosses: saved.bosses || [], roles: saved.roles || [], charters: saved.charters || [], bestByRole: saved.bestByRole || {}, bestByCharter: saved.bestByCharter || {} }; }
@@ -467,7 +468,7 @@ function emitActionFx(before, id = '', playedCard = false) {
   if (state.burnout > before.burnout) emit('burnout', { x: 225, y: 306 });
   if (state.projectDebt > before.debt) emit('debt', { x: 240, y: 355 });
   if (state.sp > before.sp) emit('tempo', { x: 135, y: 306 });
-  if (state.hand.length > before.hand - Number(playedCard)) emit('draw', { x: 160, y: 268 });
+  if (state.hand.length > before.hand - Number(playedCard)) emit('draw', { x: 340, y: 385 });
   if (state.initiatives.length > before.initiatives || state.activeInitiatives.length > before.active) emit('plan', heroAnchor);
   if (state.teamworkUsed && !before.teamwork) emit('teamwork', heroAnchor);
   if (['reprioritize', 'escalate', 'mitigate', 'redirect'].includes(id)) emit('interrupt', enemyAnchor(before.enemies.map(entry => entry.ref), state.target));
@@ -532,7 +533,7 @@ function endFromUI() {
     if (enemy.ref.phase > enemy.phase) battleFx.emit('phase', at.x, at.y, clock);
   });
   if (state.activeInitiatives.length > before.active) battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
-  if (state.hand.length) battleFx.emit('draw', 160, 268, clock);
+  if (state.hand.length) battleFx.emit('draw', 340, 385, clock);
 }
 function statusPill(text, x, y, w, active, activeFill) {
   rect(x, y, w, 23, active ? activeFill : '#dce2db', 6);
