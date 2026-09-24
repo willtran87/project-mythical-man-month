@@ -175,6 +175,8 @@ const win = await autopilot(3, true);
 assert.equal(win.ending, 'win', JSON.stringify(win));
 assert.equal(win.bossesDefeated.length, 3);
 assert.equal(win.encounter, 9);
+assert.ok(win.score > 0, 'ending records a run score');
+assert.ok(Number(await page.evaluate(() => localStorage.getItem('deadline-disaster-best-standard'))) >= win.score, 'personal best persists locally');
 await canvas.screenshot({ path: `${out}/win.png` });
 await page.keyboard.press('r');
 assert.equal((await state()).mode, 'route', 'keyboard restart failed');
@@ -186,7 +188,7 @@ for (let turn = 0; turn < 100 && (await state()).mode === 'combat'; turn++) awai
 const loss = await state();
 assert.equal(loss.ending, 'lose');
 await canvas.screenshot({ path: `${out}/lose.png` });
-await click(600, 609);
+await click(600, 637);
 assert.equal((await state()).mode, 'route', 'button restart failed');
 
 await fresh(7);

@@ -1,5 +1,5 @@
 import './style.css';
-import { ACTS, ACT_LORE, ROLES, SPECIALISTS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
+import { ACTS, ACT_LORE, ROLES, SPECIALISTS, CHARTERS, CONTRACTS, CHALLENGES, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, chooseContract, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
@@ -41,6 +41,7 @@ const relicArt = loadCollection('relics', Object.keys(RELICS));
 const trinketArt = loadCollection('trinkets', Object.keys(TRINKETS));
 const roleArt = loadCollection('roles', Object.keys(ROLES));
 const specialistArt = loadCollection('specialists', Object.keys(SPECIALISTS));
+const charterArt = loadCollection('charters', Object.keys(CHARTERS));
 const sceneArt = loadCollection('scenes', ['requirements', 'integration', 'release', 'goblin', 'kraken', 'dragon']);
 const cardArt = {};
 for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
@@ -184,7 +185,24 @@ function intro() {
     hitboxes.push({ x, y, w: 273, h: 139, action: () => selectRole(state, id) });
   });
   button('START THE RUN', 390, 583, 420, 65, () => startGame(state), { size: 22 });
+  button(state.challenge === 'standard' ? 'CHALLENGE MODE' : CHALLENGES[state.challenge].name.toUpperCase(), 826, 583, 203, 65, () => openChallenge(state), { size: 13, fill: '#b6ddd0' });
   label('Click or tap · 1–5 cards · A ability · Z/X trinkets · Space end turn · C loadout · F fullscreen', 600, 675, 14, '#65777c', 'normal', 'center', 'Arial');
+}
+function challenge() {
+  background();
+  rect(70, 98, 1060, 642, 'rgba(255,247,232,.98)', 20, ink, 3);
+  label('CHOOSE A RUN FORMAT', 600, 151, 36, ink, 'bold', 'center');
+  label('Daily Brief uses the same seed for everyone on a UTC date. Best scores save on this device.', 600, 186, 16, teal, 'normal', 'center');
+  button('BACK', 932, 119, 163, 39, () => cancelChallenge(state), { size: 13, fill: '#e0d3bc' });
+  Object.entries(CHALLENGES).forEach(([id, data], i) => {
+    const x = 91 + i * 255, selected = state.challenge === id;
+    rect(x, 239, 244, 375, selected ? '#e8f2e8' : '#f5ecdc', 14, selected ? teal : gold, selected ? 4 : 2);
+    rect(x + 11, 252, 222, 165, '#263e48', 9);
+    imageCover(sceneArt[id === 'daily' ? 'release' : id === 'crunch' ? 'integration' : 'requirements'], x + 15, 256, 214, 157, 6);
+    label(data.name, x + 122, 451, 20, ink, 'bold', 'center', 'Georgia', 220);
+    wrap(data.detail, x + 18, 481, 208, 15, '#5d7074', 19, 'Arial');
+    button(selected ? 'SELECTED' : 'SELECT RUN', x + 30, 630, 184, 53, () => chooseChallenge(state, id), { size: 14, fill: selected ? '#b6ddd0' : gold });
+  });
 }
 function choiceArtwork(ids, x, y, w, h) {
   if (ids.length === 1) imageContain(art[ENEMIES[ids[0]].art], x, y, w, h);
@@ -193,8 +211,11 @@ function choiceArtwork(ids, x, y, w, h) {
 function route() {
   background(); runHeader();
   rect(75, 170, 1050, 569, 'rgba(255,247,232,.98)', 20, ink, 3);
-  label('CHOOSE THE NEXT INCIDENT', 600, 211, 35, ink, 'bold', 'center');
-  wrap(ACT_LORE[actIndex(state)], 169, 238, 864, 17, teal, 23);
+  label('CHOOSE THE NEXT INCIDENT', 600, 211, 31, ink, 'bold', 'center');
+  wrap(ACT_LORE[actIndex(state)], 365, 239, 465, 15, teal, 19);
+  button(state.charterChosen ? CHARTERS[state.charter].name.toUpperCase() : 'CHOOSE PROJECT CHARTER', 97, 180, 239, 37, () => openCharter(state), { disabled: state.charterChosen || state.floor > 0, size: 11, fill: '#e8d697' });
+  const contractOpen = state.floor % 3 === 0 && !state.contractTakenActs.includes(actIndex(state));
+  button(state.contract ? `${CONTRACTS[state.contract.id].name.toUpperCase()} · ${state.contract.progress || 0}` : contractOpen ? 'ACCEPT ACT CONTRACT' : 'NO ACTIVE CONTRACT', 97, 222, 239, 37, () => openContract(state), { disabled: !contractOpen, size: 11, fill: '#b6ddd0' });
   button(state.specialist ? `${SPECIALISTS[state.specialist].name.toUpperCase()} · CHANGE SUPPORT` : 'RECRUIT A SPECIALIST', 861, 180, 234, 38, () => openHiring(state), { size: 12, fill: '#b6ddd0' });
   const choices = state.routeChoices;
   choices.forEach((choice, i) => {
@@ -218,6 +239,38 @@ function route() {
     rect(x + 25, 628, w - 50, 25, accent, 7);
     label(badge, x + w / 2, 641, 12, cream, 'bold', 'center', 'Arial', w - 58);
     button(choice.kind === 'event' ? 'EXPLORE' : choice.kind === 'shop' ? 'VISIT SHOP' : 'ENTER BATTLE', x + (w - 230) / 2, 667, 230, 51, () => chooseRoute(state, i), { fill: choice.boss ? coral : gold, size: 17 });
+  });
+}
+function charter() {
+  background(); runHeader();
+  rect(70, 165, 1060, 579, 'rgba(255,247,232,.98)', 20, ink, 3);
+  label('A PRINCIPLE FOR THE WHOLE RUN', 600, 213, 33, ink, 'bold', 'center');
+  label('One strong advantage, one real constraint. Choose before the first incident.', 600, 250, 16, teal, 'normal', 'center');
+  button('BACK TO ROUTE', 934, 178, 166, 37, () => cancelCharter(state), { size: 12, fill: '#e0d3bc' });
+  Object.entries(CHARTERS).forEach(([id, data], i) => {
+    const x = 106 + i * 334;
+    rect(x, 288, 316, 362, '#f7ebd9', 15, gold, 3);
+    rect(x + 12, 301, 292, 210, '#263e48', 10);
+    imageCover(charterArt[id], x + 17, 306, 282, 200, 7);
+    label(data.name, x + 158, 541, 19, ink, 'bold', 'center', 'Georgia', 290);
+    wrap(data.detail, x + 22, 574, 272, 14, '#556a70', 18, 'Arial');
+    button('COMMIT TO CHARTER', x + 41, 668, 234, 52, () => chooseCharter(state, id), { size: 14 });
+  });
+}
+function contract() {
+  background(); runHeader();
+  rect(70, 165, 1060, 579, 'rgba(255,247,232,.98)', 20, ink, 3);
+  label(`ACT ${actIndex(state) + 1} · CLIENT CONTRACTS`, 600, 213, 33, ink, 'bold', 'center');
+  label('Complete the condition by the boss for a relic, 12 credits, and 6 HP.', 600, 250, 16, teal, 'normal', 'center');
+  button('BACK TO ROUTE', 934, 178, 166, 37, () => cancelContract(state), { size: 12, fill: '#e0d3bc' });
+  Object.entries(CONTRACTS).forEach(([id, data], i) => {
+    const x = 106 + i * 334, artId = ['rollback', 'signal', 'blueprint'][i];
+    rect(x, 288, 316, 362, '#f7ebd9', 15, i === 0 ? coral : teal, 3);
+    rect(x + 12, 301, 292, 210, '#263e48', 10);
+    imageCover(cardArt[CARDS[artId].art], x + 17, 306, 282, 200, 7);
+    label(data.name, x + 158, 541, 21, ink, 'bold', 'center');
+    wrap(data.detail, x + 22, 575, 272, 15, '#556a70', 20, 'Arial');
+    button('ACCEPT CONTRACT', x + 41, 668, 234, 52, () => chooseContract(state, id), { size: 14, fill: i === 0 ? '#edb1a1' : gold });
   });
 }
 function hire() {
@@ -349,7 +402,7 @@ function playFromUI(index) {
   const ok = playCard(state, index, state.target);
   if (ok) {
     const hit = before.some((hp, i) => state.enemies[i]?.hp < hp || state.mode !== 'combat');
-    effect = { kind: ['probe', 'triangulate', 'tracesweep'].includes(playedId) ? 'mark' : hit ? 'attack' : 'support', at: clock, target: state.target };
+    effect = { kind: ['reprioritize', 'escalate', 'mitigate', 'redirect'].includes(playedId) ? 'interrupt' : ['pipeline', 'protocol', 'rollout'].includes(playedId) ? 'plan' : ['probe', 'triangulate', 'tracesweep'].includes(playedId) ? 'mark' : hit ? 'attack' : 'support', at: clock, target: state.target };
   }
 }
 function itemFromUI(index) {
@@ -371,7 +424,8 @@ function specialistFromUI() {
   if (useSpecialist(state, state.target)) effect = { kind: state.specialist === 'qa' ? 'mark' : 'support', at: clock, target: state.target };
 }
 function endFromUI() {
-  if (endTurn(state)) effect = { kind: 'enemy', at: clock };
+  const active = state.activeInitiatives.length;
+  if (endTurn(state)) effect = { kind: state.activeInitiatives.length > active ? 'plan' : 'enemy', at: clock };
 }
 function statusPill(text, x, y, w, active, activeFill) {
   rect(x, y, w, 23, active ? activeFill : '#dce2db', 6);
@@ -383,10 +437,10 @@ function combatPulse() {
   const foeCount = state.enemies.length;
   const targetIndex = clamp(effect.target ?? 0, 0, foeCount - 1);
   const targetX = foeCount === 1 ? (state.enemies[0]?.boss ? 740 : 710) : foeCount === 2 ? 555 + targetIndex * 407 : 469 + targetIndex * 279;
-  const x = effect.kind === 'enemy' || effect.kind === 'support' ? 179 : targetX;
+  const x = ['enemy', 'support', 'plan'].includes(effect.kind) ? 179 : targetX;
   const y = 319;
   ctx.save();
-  ctx.strokeStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${(1 - progress) * .8})` : effect.kind === 'mark' ? `rgba(70,171,186,${(1 - progress) * .9})` : `rgba(238,189,93,${(1 - progress) * .85})`;
+  ctx.strokeStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${(1 - progress) * .8})` : ['mark', 'interrupt'].includes(effect.kind) ? `rgba(70,171,186,${(1 - progress) * .9})` : effect.kind === 'plan' ? `rgba(137,218,168,${(1 - progress) * .9})` : `rgba(238,189,93,${(1 - progress) * .85})`;
   ctx.lineWidth = 5 - progress * 3;
   ctx.beginPath(); ctx.ellipse(x, y, 62 + progress * 67, 68 + progress * 56, 0, 0, Math.PI * 2); ctx.stroke();
   const spokes = effect.kind === 'attack' || effect.kind === 'enemy' ? 9 : 6;
@@ -396,7 +450,7 @@ function combatPulse() {
     ctx.beginPath(); ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
     ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer); ctx.stroke();
   }
-  if (effect.kind === 'mark') {
+  if (['mark', 'interrupt'].includes(effect.kind)) {
     ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x + 15, y); ctx.moveTo(x, y - 15); ctx.lineTo(x, y + 15); ctx.stroke();
   }
   ctx.restore();
@@ -433,15 +487,20 @@ function combat() {
   combatPulse();
   rect(25, 503, 1150, 66, 'rgba(19,47,58,.95)', 13);
   const brief = state.objective;
-  label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 523, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
-  label(state.log[0] || '', 43, 551, 15, cream, 'normal', 'left', 'Georgia', 645);
+  label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 518, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
+  const plans = [
+    ...(state.contract ? [`CONTRACT: ${CONTRACTS[state.contract.id].name}${state.contract.failed ? ' MISSED' : state.contract.id === 'briefs' ? ` ${state.contract.progress}/2` : ''}`] : []),
+    ...state.initiatives.map(p => `${CARDS[p.id].name} ${p.remaining}T`), ...state.activeInitiatives.map(id => `${CARDS[id].name} ACTIVE`)
+  ];
+  if (plans.length) label(plans.join('  ·  '), 43, 536, 11, '#a9ddd2', 'bold', 'left', 'Arial', 640);
+  label(state.log[0] || '', 43, 554, 14, cream, 'normal', 'left', 'Georgia', 645);
   label(`TURN ${state.turn}  ·  FLOW ${state.flow}  ·  TARGET: ${state.enemies[state.target]?.name || 'NONE'}`, 1156, 523, 13, '#d9e9dd', 'bold', 'right', 'Arial');
   const abilityReady = !state.abilityUsed && (state.role !== 'architect' || (state.block > 0 && state.reserveBlock < 12));
   button(`A · ${ROLES[state.role].ability.toUpperCase()} ${state.abilityUsed ? 'USED' : abilityReady ? 'READY' : 'NEED BLOCK'}`, 711, 536, 211, 29, () => abilityFromUI(), { disabled: !abilityReady, size: 10, fill: '#a9ddd2' });
   button(state.specialist ? `S · ${SPECIALISTS[state.specialist].action.toUpperCase()} ${state.specialistUsed ? 'USED' : 'READY'}` : 'S · NO SPECIALIST', 929, 536, 225, 29, () => specialistFromUI(), { disabled: !state.specialist || state.specialistUsed, size: 10, fill: '#f0d698' });
   label(`DRAW ${state.drawPile.length}  ·  DISCARD ${state.discardPile.length}`, 1154, 588, 12, cream, 'bold', 'right', 'Arial');
   state.hand.forEach((id, i) => {
-    const card = cardInfo(id), x = 26 + i * 190, y = 577, available = state.sp >= card.cost;
+    const card = cardInfo(id), x = 26 + i * 190, y = 577, available = state.sp >= card.cost && !(cardBase(id) === 'escalate' && state.projectDebt > 10);
     const hot = pointer.x >= x && pointer.x <= x + 180 && pointer.y >= y && pointer.y <= y + 160;
     const top = y - (hot ? 6 : 0), color = card.type === 'attack' ? coral : teal;
     rect(x, y + 4, 180, 160, ink, 12);
@@ -540,7 +599,7 @@ function reward() {
   background(); runHeader();
   rect(70, 165, 1060, 579, 'rgba(255,247,232,.98)', 20, ink, 3);
   label('VICTORY · CHOOSE ONE REWARD', 600, 216, 34, ink, 'bold', 'center');
-  label(`+${state.lastPayout} credits${state.lastObjective ? ' · brief complete: +8 credits, -1 Debt' : ''}${state.lastPerfect ? ' · no-hit bonus' : ''}  ·  Choose one.`, 600, 258, 16, teal, 'normal', 'center');
+  label(`+${state.lastPayout} credits${state.lastContract === 'completed' ? ' · client contract fulfilled!' : state.lastObjective ? ' · brief complete: -1 Debt' : ''}${state.lastPerfect ? ' · no-hit bonus' : ''}  ·  Choose one.`, 600, 258, 16, teal, 'normal', 'center');
   state.rewardChoices.forEach((choice, i) => {
     const x = 88 + i * 258, y = 311, w = 245;
     const rewardCard = choice.type === 'card' ? cardInfo(choice.id) : null;
@@ -623,7 +682,7 @@ function loadout() {
     label(`${SPECIALISTS[state.specialist].name} · ${SPECIALISTS[state.specialist].action}`, 592, 307, 14, teal, 'bold', 'left', 'Arial');
   } else label('SPECIALIST SLOT EMPTY · Recruit from the route screen', 540, 309, 13, teal, 'bold', 'left', 'Arial');
   label(`PROJECT DEBT ${state.projectDebt}/12 · PRESSURE TIER ${debtTier(state)}`, 540, 329, 12, state.projectDebt >= 8 ? coral : teal, 'bold', 'left', 'Arial');
-  label('POWER 1–5 = BASELINE IMPACT  ·  RARITY SHAPES OFFERS', 540, 347, 11, teal, 'bold', 'left', 'Arial');
+  label(`${state.charter ? CHARTERS[state.charter].name.toUpperCase() : 'NO CHARTER'}  ·  ${CHALLENGES[state.challenge].name.toUpperCase()}`, 540, 347, 11, teal, 'bold', 'left', 'Arial');
   label('DEBT 4: +2 FOE HP  ·  DEBT 8: +4 FOE HP AND +1 POWER', 540, 362, 10, '#647779', 'bold', 'left', 'Arial');
   rect(126, 370, 948, 2, '#d3bd9a');
   label('DECK', 137, 402, 17, teal, 'bold', 'left', 'Arial');
@@ -676,6 +735,12 @@ function loadout() {
 function ending() {
   background();
   const win = state.ending === 'win';
+  const score = runScore(state), recordKey = `deadline-disaster-best-${state.challenge === 'daily' ? state.dailyDate : state.challenge}`;
+  let personalBest = score;
+  try {
+    personalBest = Math.max(score, Number(localStorage.getItem(recordKey) || 0));
+    if (!state.scoreSaved) { localStorage.setItem(recordKey, String(personalBest)); state.scoreSaved = true; }
+  } catch { /* Local storage may be unavailable in private browsing. */ }
   rect(129, 76, 942, 646, 'rgba(255,247,232,.98)', 22, ink, 4);
   label(win ? 'THE RELEASE SURVIVES' : 'THE PROJECT FALLS', 600, 139, 43, win ? teal : coral, 'bold', 'center');
   label(win ? 'THE DEADLINE DRAGON IS DEFEATED' : 'THE BOARD REQUESTS A POSTMORTEM', 600, 188, 17, ink, 'bold', 'center', 'Arial');
@@ -696,14 +761,19 @@ function ending() {
   rect(686, 410, 339, 2, '#d7bfa1');
   const words = win ? 'The team shipped by choosing its battles, protecting its health, and building a playbook that could face the final deadline.' : `The run ended in Act ${actIndex(state) + 1}. ${state.log[0]} The team can learn from this. Try a different route, save Block for telegraphed attacks, and use tools before a crisis turns terminal.`;
   wrap(words, 682, 425, 345, 17, ink, 23);
-  label(`Run ${state.seed}  ·  ${state.cardsPlayed} skills played  ·  ${state.itemsUsed} tools used  ·  ${state.credits} credits`, 600, 570, 15, teal, 'bold', 'center', 'Arial');
-  button('TRY ANOTHER RUN', 411, 603, 378, 63, () => { state = makeRun(); startGame(state); }, { size: 21 });
+  label(`SCORE ${score}  ·  PERSONAL BEST ${personalBest}  ·  ${CHALLENGES[state.challenge].name.toUpperCase()}`, 600, 565, 16, teal, 'bold', 'center', 'Arial');
+  label(`Run ${state.seed}  ·  ${state.contractsCompleted} contracts  ·  ${state.briefsCompleted} briefs  ·  ${state.credits} credits`, 600, 589, 13, '#63767a', 'bold', 'center', 'Arial');
+  button('REPLAY FORMAT', 357, 612, 300, 54, () => { const previous = state; state = makeRun(); selectRole(state, previous.role); if (previous.challenge !== 'standard') { openChallenge(state); chooseChallenge(state, previous.challenge); } startGame(state); }, { size: 18 });
+  button('NEW FORMAT', 690, 612, 190, 54, () => { state = makeRun(); }, { size: 16, fill: '#b6ddd0' });
   label('A satirical tribute to the ideas of Frederick P. Brooks Jr.', 600, 696, 14, '#63767a', 'italic', 'center');
 }
 function render() {
   hitboxes = []; ctx.clearRect(0, 0, W, H);
   if (state.mode === 'intro') intro();
+  else if (state.mode === 'challenge') challenge();
   else if (state.mode === 'route') route();
+  else if (state.mode === 'charter') charter();
+  else if (state.mode === 'contract') contract();
   else if (state.mode === 'hire') hire();
   else if (state.mode === 'event') event();
   else if (state.mode === 'shop') shop();
@@ -749,8 +819,17 @@ window.addEventListener('keydown', e => {
   if (key === 'f') { if (document.fullscreenElement) document.exitFullscreen?.(); else canvas.requestFullscreen?.(); }
   if (state.mode === 'intro' && e.key === 'Enter') startGame(state);
   else if (state.mode === 'intro' && ['1', '2', '3'].includes(e.key)) selectRole(state, Object.keys(ROLES)[Number(e.key) - 1]);
+  else if (state.mode === 'intro' && key === 'm') openChallenge(state);
+  else if (state.mode === 'challenge' && ['1', '2', '3', '4'].includes(e.key)) chooseChallenge(state, Object.keys(CHALLENGES)[Number(e.key) - 1]);
+  else if (state.mode === 'challenge' && key === 'escape') cancelChallenge(state);
   else if (state.mode === 'route' && ['1', '2', '3'].includes(e.key)) chooseRoute(state, Number(e.key) - 1);
   else if (state.mode === 'route' && key === 'h') openHiring(state);
+  else if (state.mode === 'route' && key === 'p') openCharter(state);
+  else if (state.mode === 'route' && key === 'k') openContract(state);
+  else if (state.mode === 'charter' && ['1', '2', '3'].includes(e.key)) chooseCharter(state, Object.keys(CHARTERS)[Number(e.key) - 1]);
+  else if (state.mode === 'charter' && key === 'escape') cancelCharter(state);
+  else if (state.mode === 'contract' && ['1', '2', '3'].includes(e.key)) chooseContract(state, Object.keys(CONTRACTS)[Number(e.key) - 1]);
+  else if (state.mode === 'contract' && key === 'escape') cancelContract(state);
   else if (state.mode === 'hire' && ['1', '2', '3'].includes(e.key)) hireSpecialist(state, Object.keys(SPECIALISTS)[Number(e.key) - 1]);
   else if (state.mode === 'hire' && key === 'escape') cancelHiring(state);
   else if (state.mode === 'event' && ['1', '2', '3'].includes(e.key)) chooseEvent(state, Number(e.key) - 1);
@@ -776,7 +855,7 @@ window.addEventListener('keydown', e => {
     if (itemIndex !== undefined) itemFromUI(itemIndex);
     const charmIndex = { z: 0, x: 1 }[key];
     if (charmIndex !== undefined) trinketFromUI(charmIndex);
-  } else if (state.mode === 'end' && key === 'r') { state = makeRun(); startGame(state); }
+  } else if (state.mode === 'end' && key === 'r') { const previous = state; state = makeRun(); selectRole(state, previous.role); if (previous.challenge !== 'standard') { openChallenge(state); chooseChallenge(state, previous.challenge); } startGame(state); }
   render();
 });
 window.addEventListener('resize', resize);
@@ -785,6 +864,12 @@ window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); }
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
   mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout,
+  challenge: state.challenge, challengeRule: state.challengeRule, dailyDate: state.dailyDate,
+  challengeChoices: state.mode === 'challenge' ? Object.entries(CHALLENGES).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
+  charter: state.charter || null, charterChoices: state.mode === 'charter' ? Object.entries(CHARTERS).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
+  contract: state.contract ? { ...state.contract, name: CONTRACTS[state.contract.id].name, detail: CONTRACTS[state.contract.id].detail } : null,
+  contractChoices: state.mode === 'contract' ? Object.entries(CONTRACTS).map(([id, data]) => ({ id, name: data.name, detail: data.detail })) : [],
+  contractsCompleted: state.contractsCompleted, briefsCompleted: state.briefsCompleted,
   cardPreview: previewCardIndex !== null && state.mode === 'combat' ? { index: previewCardIndex, name: cardInfo(state.hand[previewCardIndex]).name } : null,
   rewardToast: rewardToast ? { type: rewardToast.type, name: rewardToast.name, detail: rewardToast.detail } : null,
   hp: state.hp, maxHp: state.maxHp, sp: state.sp, maxSp: state.maxSp, nextSp: state.nextSp, block: state.block, reserveBlock: state.reserveBlock, flow: state.flow, credits: state.credits, projectDebt: state.projectDebt, debtPressure: debtTier(state),
@@ -797,8 +882,10 @@ window.render_game_to_text = () => JSON.stringify({
   event: state.mode === 'event' ? { title: EVENTS[state.eventId].title, speaker: EVENTS[state.eventId].speaker, text: EVENTS[state.eventId].text, choices: EVENTS[state.eventId].choices.map((c, i) => ({ label: c.label, detail: c.detail, available: canChooseEvent(state, i) })) } : null,
   shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, rarity: o.kind === 'card' ? cardInfo(o.id).rarity : null, power: o.kind === 'card' ? cardInfo(o.id).power : null, sold: o.sold, available: canBuyShop(state, i) })) : [],
   enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null })) : [],
+  initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining })) : [],
+  activeInitiatives: state.mode === 'combat' ? state.activeInitiatives.map(id => CARDS[id].name) : [],
   selectedTarget: state.target,
-  hand: state.mode === 'combat' ? state.hand.map((id, i) => ({ index: i, id, name: cardInfo(id).name, cost: cardInfo(id).cost, detail: cardInfo(id).detail, rarity: cardInfo(id).rarity, power: cardInfo(id).power, playable: state.sp >= cardInfo(id).cost })) : [],
+  hand: state.mode === 'combat' ? state.hand.map((id, i) => ({ index: i, id, name: cardInfo(id).name, cost: cardInfo(id).cost, detail: cardInfo(id).detail, rarity: cardInfo(id).rarity, power: cardInfo(id).power, playable: state.sp >= cardInfo(id).cost && !(cardBase(id) === 'escalate' && state.projectDebt > 10) })) : [],
   deckSize: state.deck.length, drawSize: state.drawPile.length, discardSize: state.discardPile.length,
   inventory: state.inventory.map(id => ({ id, name: ITEMS[id].name, detail: ITEMS[id].detail })), itemUsedThisTurn: state.itemUsedThisTurn,
   trinkets: state.trinkets.map((id, i) => ({ index: i, id, name: TRINKETS[id].name, detail: TRINKETS[id].detail, ready: !state.usedTrinkets.includes(id) })),
@@ -806,7 +893,7 @@ window.render_game_to_text = () => JSON.stringify({
   rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook', rarity: choice.type === 'card' ? cardInfo(choice.id).rarity : null, power: choice.type === 'card' ? cardInfo(choice.id).power : null, source: choice.source || null, fit: choice.fit || 0, family: choice.family || null })) : [],
   tuneChoices: state.mode === 'tune' ? state.tuneChoices.map(choice => ({ type: choice.type, name: choice.type === 'audit' ? 'Technical Audit' : cardInfo(choice.id).name, detail: choice.type === 'upgrade' ? 'Choose Force or Flex' : choice.type === 'audit' ? 'Reduce Debt by 4' : 'Remove one basic card' })) : [],
   upgradeChoices: state.mode === 'upgrade' ? ['force', 'flex'].map(branch => ({ branch, name: `${cardInfo(state.upgradePending.id).name}${branch === 'force' ? '+' : '*'}`, detail: branch === 'force' ? '+3 damage or Block' : cardInfo(state.upgradePending.id).type === 'attack' ? '+3 Block after playing' : 'Draw 1 after playing' })) : [],
-  bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect, lastObjective: state.lastObjective
+  bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, score: state.mode === 'end' ? runScore(state) : null, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect, lastObjective: state.lastObjective, lastContract: state.lastContract
 });
 resize();
 if (!reducedMotion) requestAnimationFrame(animationLoop);

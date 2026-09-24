@@ -13,7 +13,7 @@ function foe(id = 'bug', hp = 70) {
 }
 
 assert.deepEqual(Object.keys(CARD_FAMILY).sort(), Object.keys(CARDS).sort(), 'every skill has a family for reward fit');
-assert.equal(REWARD_CARDS.length, 45, 'six new skills are in the reward pool');
+assert.equal(REWARD_CARDS.length, 52, 'intent-control and initiative skills are in the reward pool');
 
 const fitRun = newGame(100);
 selectRole(fitRun, 'debugger');
