@@ -114,6 +114,7 @@ assert.equal((await state()).loadoutOpen, false);
 await page.keyboard.press('z');
 assert.equal((await state()).trinkets[0].ready, false);
 assert.equal((await state()).block, 7);
+await canvas.screenshot({ path: `${out}/status-block.png` });
 await page.keyboard.press('z');
 assert.equal((await state()).block, 7, 'trinket must not activate twice in one fight');
 const attack = s.hand.find(card => card.name === 'Patch');
@@ -132,6 +133,7 @@ s = await state();
 assert.equal(s.itemUsedThisTurn, true);
 assert.equal(s.inventory.length, 1);
 await page.keyboard.press('q');
+await canvas.screenshot({ path: `${out}/status-vulnerable.png` });
 assert.equal((await state()).inventory.length, 1, 'second tool use in one turn should be blocked');
 
 const win = await autopilot(3, true);

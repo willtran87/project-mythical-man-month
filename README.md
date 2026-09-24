@@ -23,6 +23,8 @@ The combat jokes draw on Brooks's themes: scope creep, coordination overhead, in
 
 Story detours have event-specific illustrations, and both run endings have dedicated art. The exact prompts for the new scenes are in `public/assets/story/prompts.md`.
 
+All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat uses labeled status badges, Flow markers, and short action pulses, with pulses disabled for reduced-motion settings. The collectible, role, and backdrop prompts are in `public/assets/collectibles-and-scenes-prompts.md`.
+
 Every skill card has illustrated artwork in combat, the Night Market, and reward choices. Eight generated scenes cover related skill families; the card name, cost, and effect remain live game text. The exact art prompts are in `public/assets/cards/prompts.md`.
 
 ## Controls

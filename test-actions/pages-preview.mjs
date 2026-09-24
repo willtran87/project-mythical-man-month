@@ -16,7 +16,7 @@ if (!process.env.PAGES_URL) {
       response.writeHead(404).end();
       return;
     }
-    const contentType = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : 'text/html';
+    const contentType = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webp') ? 'image/webp' : 'text/html';
     response.writeHead(200, { 'content-type': contentType }).end(fs.readFileSync(file));
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -46,6 +46,9 @@ try {
   assert.ok(artwork.size >= 25, `expected generated artwork to load, got ${artwork.size} assets`);
   assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.png$/.test(asset)).length, 8, 'all eight skill illustrations should load');
   assert.equal([...artwork].filter(asset => /\/assets\/story\/[^/]+\.png$/.test(asset)).length, 7, 'all seven story illustrations should load');
+  for (const [folder, count] of [['relics', 11], ['trinkets', 5], ['roles', 3], ['scenes', 6]]) {
+    assert.equal([...artwork].filter(asset => asset.includes(`/assets/${folder}/`) && asset.endsWith('.webp')).length, count, `all ${folder} art should load`);
+  }
   assert.deepEqual(errors, []);
   fs.mkdirSync('output/pages-preview', { recursive: true });
   await page.locator('#game').screenshot({ path: 'output/pages-preview/route.png' });
