@@ -929,7 +929,8 @@ function render() {
   if (showMenuConfirm) { hitboxes = []; menuConfirm(); }
 }
 function resize() {
-  const scale = Math.min(innerWidth / W, innerHeight / H), dpr = Math.min(devicePixelRatio || 1, 2);
+  // The scene redraws as one canvas; a 2x backing store makes combat FX miss frames.
+  const scale = Math.min(innerWidth / W, innerHeight / H), dpr = Math.min(devicePixelRatio || 1, 1.2);
   canvas.style.width = `${W * scale}px`; canvas.style.height = `${H * scale}px`;
   canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0); render();
@@ -938,11 +939,11 @@ function position(e) { const b = canvas.getBoundingClientRect(); return { x: (e.
 function animationLoop(now) {
   if (!lastFrame) lastFrame = now;
   if (document.visibilityState !== 'visible') lastFrame = now;
-  else if (now - lastFrame >= 1000 / 30) { clock += Math.min(now - lastFrame, 100) / 1000; lastFrame = now; render(); }
+  else if (now - lastFrame >= 12) { clock += Math.min(now - lastFrame, 250) / 1000; lastFrame = now; render(); }
   requestAnimationFrame(animationLoop);
 }
-canvas.addEventListener('pointermove', e => { pointer = position(e); hoverPreviewEnabled = e.pointerType === 'mouse'; render(); });
-canvas.addEventListener('pointerleave', () => { pointer = { x: -1, y: -1 }; hoverPreviewEnabled = false; render(); });
+canvas.addEventListener('pointermove', e => { pointer = position(e); hoverPreviewEnabled = e.pointerType === 'mouse'; if (reducedMotion) render(); });
+canvas.addEventListener('pointerleave', () => { pointer = { x: -1, y: -1 }; hoverPreviewEnabled = false; if (reducedMotion) render(); });
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault(); pointer = position(e); hoverPreviewEnabled = false;
   const hit = [...hitboxes].reverse().find(b => pointer.x >= b.x && pointer.x <= b.x + b.w && pointer.y >= b.y && pointer.y <= b.y + b.h);

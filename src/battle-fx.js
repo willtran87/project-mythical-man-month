@@ -1,21 +1,21 @@
 const styles = {
-  strike: { color: '#f5c56c', light: '#fff4cb', count: 13, life: 1.08 },
-  enemy: { color: '#f16f5d', light: '#ffd5ae', count: 15, life: 1.12 },
-  shield: { color: '#66c9c1', light: '#d8fff0', count: 12, life: 1.12 },
-  heal: { color: '#8bd9a5', light: '#e5ffe2', count: 14, life: 1.18 },
-  mark: { color: '#67cce0', light: '#e2fbff', count: 10, life: 1.12 },
-  weak: { color: '#8aabd5', light: '#edf3ff', count: 9, life: 1.08 },
-  expose: { color: '#ed8f7e', light: '#ffe0ce', count: 11, life: 1.08 },
-  plan: { color: '#eac878', light: '#fff3cd', count: 12, life: 1.2 },
-  interrupt: { color: '#79d5d1', light: '#e1fffa', count: 14, life: 1.1 },
-  burnout: { color: '#ec9360', light: '#ffe0a9', count: 12, life: 1.16 },
-  debt: { color: '#c99a70', light: '#ffe0ad', count: 11, life: 1.2 },
-  tempo: { color: '#edc95f', light: '#fff6ba', count: 11, life: 1.1 },
-  teamwork: { color: '#90d6ba', light: '#fff2b0', count: 16, life: 1.24 },
-  draw: { color: '#8fc8e2', light: '#f0faff', count: 10, life: 1.1 },
-  phase: { color: '#ed745c', light: '#ffe0ab', count: 22, life: 1.58 },
-  trinket: { color: '#73d6ce', light: '#f0ffef', count: 12, life: 1.25 },
-  relic: { color: '#ebc46e', light: '#fff5c9', count: 12, life: 1.25 }
+  strike: { color: '#f5c56c', light: '#fff4cb', count: 13, life: .58 },
+  enemy: { color: '#f16f5d', light: '#ffd5ae', count: 15, life: .62 },
+  shield: { color: '#66c9c1', light: '#d8fff0', count: 12, life: .68 },
+  heal: { color: '#8bd9a5', light: '#e5ffe2', count: 14, life: .72 },
+  mark: { color: '#67cce0', light: '#e2fbff', count: 10, life: .68 },
+  weak: { color: '#8aabd5', light: '#edf3ff', count: 9, life: .7 },
+  expose: { color: '#ed8f7e', light: '#ffe0ce', count: 11, life: .68 },
+  plan: { color: '#eac878', light: '#fff3cd', count: 12, life: .72 },
+  interrupt: { color: '#79d5d1', light: '#e1fffa', count: 14, life: .62 },
+  burnout: { color: '#ec9360', light: '#ffe0a9', count: 12, life: .72 },
+  debt: { color: '#c99a70', light: '#ffe0ad', count: 11, life: .74 },
+  tempo: { color: '#edc95f', light: '#fff6ba', count: 11, life: .58 },
+  teamwork: { color: '#90d6ba', light: '#fff2b0', count: 16, life: .8 },
+  draw: { color: '#8fc8e2', light: '#f0faff', count: 10, life: .65 },
+  phase: { color: '#ed745c', light: '#ffe0ab', count: 22, life: .98 },
+  trinket: { color: '#73d6ce', light: '#f0ffef', count: 12, life: .72 },
+  relic: { color: '#ebc46e', light: '#fff5c9', count: 12, life: .72 }
 };
 const directed = new Set(['strike', 'enemy']);
 const artSizes = { strike: 125, enemy: 116, shield: 124, heal: 96, draw: 104, plan: 110, mark: 112, weak: 106, expose: 108, burnout: 108, debt: 108, phase: 226, trinket: 78, relic: 78 };
@@ -55,11 +55,11 @@ export class BattleFx {
   }
   drawOne(ctx, effect, t) {
     const { kind, x, y, fromX, fromY, particles } = effect, style = styles[kind];
-    const alpha = Math.pow(1 - t, .7);
+    const alpha = Math.pow(1 - t, 1.1);
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = alpha;
     ctx.shadowColor = style.color; ctx.shadowBlur = kind === 'phase' ? 18 : 9;
     if (directed.has(kind)) {
-      const travel = smooth(Math.min(1, t * 2.4));
+      const travel = smooth(Math.min(1, t * 4.5));
       const headX = lerp(fromX, x, travel), headY = lerp(fromY, y, travel);
       const tailX = lerp(fromX, x, Math.max(0, travel - .22)), tailY = lerp(fromY, y, Math.max(0, travel - .22));
       ctx.strokeStyle = style.light; ctx.lineWidth = 5 * (1 - t) + 1;
@@ -69,7 +69,7 @@ export class BattleFx {
         ctx.beginPath(); ctx.moveTo(tailX, tailY + i * 8); ctx.lineTo(headX - 16, headY + i * 5); ctx.stroke();
       }
     }
-    const burst = directed.has(kind) ? Math.max(0, (t - .31) / .69) : t;
+    const burst = directed.has(kind) ? Math.max(0, (t - .1) / .9) : t;
     if (burst > 0) {
       this.drawSymbol(ctx, kind, x, y, burst, style);
       this.drawArt(ctx, kind, effect.artKey, x, y, burst);
@@ -77,7 +77,7 @@ export class BattleFx {
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i], u = Math.max(0, (burst - p.phase) / (1 - p.phase));
         if (!u) continue;
-        const distance = p.reach * smooth(u);
+        const distance = p.reach * (1 - Math.pow(1 - u, 2.2));
         let px = x + Math.cos(p.angle) * distance;
         let py = y + Math.sin(p.angle) * distance;
         if (['heal', 'burnout', 'debt', 'draw'].includes(kind)) { px = x + Math.cos(p.angle) * p.reach * .55 + p.twist * 16 * u; py = y + Math.sin(p.angle) * 19 - p.reach * u; }
@@ -100,7 +100,7 @@ export class BattleFx {
     const width = artSizes[kind] * (.72 + t * .48);
     const height = width * img.naturalHeight / img.naturalWidth;
     ctx.save();
-    ctx.globalAlpha = Math.min(1, t * 5) * Math.pow(1 - t, .72) * .86;
+    ctx.globalAlpha = Math.min(1, t * 8) * Math.pow(1 - t, 1.1) * .9;
     ctx.shadowBlur = 0;
     ctx.translate(x, y - (kind === 'draw' ? t * 14 : 0));
     if (kind === 'trinket' || kind === 'relic') {

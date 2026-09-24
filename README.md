@@ -89,6 +89,7 @@ node test-actions/strategy-systems.mjs
 node test-actions/strategy-visual.mjs
 node test-actions/release-systems.mjs
 node test-actions/release-visual.mjs
+node test-actions/animation-timing.mjs
 node test-actions/smoke.mjs
 node test-actions/pages-preview.mjs
 ```
