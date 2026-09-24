@@ -1,0 +1,73 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { chromium } from 'playwright';
+
+const out = 'output/fx-visual'; fs.mkdirSync(out, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const canvas = page.locator('#game');
+const errors = [];
+page.on('pageerror', error => errors.push(String(error)));
+page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+const state = async () => JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+const frame = async (name, ms = 180) => { await page.clock.pauseAt(new Date()); await page.evaluate(duration => window.advanceTime(duration), ms); await canvas.screenshot({ path: `${out}/${name}.png` }); await page.clock.resume(); };
+const fresh = async seed => page.goto(`http://127.0.0.1:5173/?seed=${seed}`, { waitUntil: 'networkidle' });
+
+await fresh(41); await page.keyboard.press('Enter'); await page.keyboard.press('1');
+assert.equal((await state()).mode, 'combat');
+let s = await state();
+const attack = s.hand.find(card => card.playable && ['patch', 'pair', 'refactor'].includes(card.id));
+assert.ok(attack);
+await page.keyboard.press(String(attack.index + 1));
+assert.ok((await state()).fx.includes('strike'));
+await frame('attack');
+await page.evaluate(() => window.advanceTime(1000));
+s = await state();
+let shield = s.hand.find(card => card.playable && ['review', 'charter', 'blueprint'].includes(card.id));
+for (let i = 0; !shield && i < 3; i++) { await page.keyboard.press('Space'); s = await state(); shield = s.hand.find(card => card.playable && ['review', 'charter', 'blueprint'].includes(card.id)); }
+assert.ok(shield);
+await page.keyboard.press(String(shield.index + 1));
+assert.ok((await state()).fx.includes('shield'));
+await frame('shield');
+
+await fresh(41); await page.keyboard.press('Enter'); await page.keyboard.press('1');
+await page.keyboard.press('Space');
+assert.ok((await state()).fx.includes('enemy'), JSON.stringify(await state()));
+assert.ok((await state()).fx.includes('burnout'));
+await frame('enemy');
+assert.ok((await state()).hp < (await state()).maxHp);
+await page.evaluate(() => window.advanceTime(1000));
+await page.keyboard.press('w');
+assert.ok((await state()).fx.includes('heal'));
+await frame('heal');
+
+await fresh(23); await page.keyboard.press('Enter'); await page.keyboard.press('h'); await page.keyboard.press('1'); await page.keyboard.press('1');
+assert.equal((await state()).specialist.id, 'qa');
+await page.keyboard.press('s');
+assert.ok((await state()).fx.includes('mark'));
+await frame('mark');
+await page.evaluate(() => window.advanceTime(1000));
+await page.keyboard.press('z'); await page.keyboard.press('a');
+assert.ok((await state()).fx.includes('teamwork'));
+await frame('teamwork');
+
+await fresh(9); await page.keyboard.press('3'); await page.keyboard.press('Enter'); await page.keyboard.press('1');
+await page.keyboard.press('a');
+assert.ok((await state()).fx.includes('tempo'));
+assert.ok((await state()).fx.includes('burnout'));
+await frame('tempo-burnout');
+await fresh(41); await page.keyboard.press('Enter'); await page.keyboard.press('1'); await page.keyboard.press('Space');
+s = await state();
+const drawCard = s.hand.find(card => card.playable && card.id === 'pair');
+assert.ok(drawCard, JSON.stringify(s.hand));
+await page.keyboard.press(String(drawCard.index + 1));
+assert.ok((await state()).fx.includes('draw'));
+await frame('draw');
+const quiet = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+await quiet.goto('http://127.0.0.1:5173/?seed=41', { waitUntil: 'networkidle' });
+await quiet.keyboard.press('Enter'); await quiet.keyboard.press('1'); await quiet.keyboard.press('1');
+assert.deepEqual(JSON.parse(await quiet.evaluate(() => window.render_game_to_text())).fx, []);
+await quiet.close();
+assert.equal(errors.length, 0, errors.join('; '));
+console.log('FX visual passed: attack, shield, enemy impact, healing, Mark, teamwork, tempo, Burnout, draw, and reduced motion.');
+await browser.close();

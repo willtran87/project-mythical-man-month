@@ -1,4 +1,5 @@
 import './style.css';
+import { BattleFx } from './battle-fx.js';
 import { ACTS, ACT_LORE, ROLES, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, chooseContract, setEscalation, chooseArchitecture, resolveBossProblem, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
@@ -52,7 +53,8 @@ const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
 let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false;
-let clock = 0, lastFrame = 0, effect = null, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
+let clock = 0, lastFrame = 0, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
+const battleFx = new BattleFx(reducedMotion);
 const careerKey = 'deadline-disaster-career-v1';
 function loadCareer() {
   try { const saved = JSON.parse(localStorage.getItem(careerKey) || 'null'); if (saved && typeof saved === 'object') return { runs: saved.runs || 0, wins: saved.wins || 0, best: saved.best || 0, bosses: saved.bosses || [], roles: saved.roles || [], charters: saved.charters || [], bestByRole: saved.bestByRole || {}, bestByCharter: saved.bestByCharter || {} }; }
@@ -70,7 +72,7 @@ function recordRun() {
   for (const [key, values] of [['roles', [state.role]], ['charters', state.charter ? [state.charter] : []], ['bosses', state.defeatedBosses]]) for (const value of values) if (!career[key].includes(value)) career[key].push(value);
   try { localStorage.setItem(careerKey, JSON.stringify(career)); } catch { /* Session progress remains visible. */ }
 }
-function returnToMenu() { state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; previewCardIndex = null; rewardToast = null; }
+function returnToMenu() { state = makeRun(); showLoadout = false; showArchive = false; showMenuConfirm = false; previewCardIndex = null; rewardToast = null; battleFx.effects = []; }
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rect(x, y, w, h, fill, radius = 0, stroke = null, line = 1) {
@@ -435,66 +437,106 @@ function combatEnemyCard(enemy, i, x, w) {
   label(`${enemy.hp}/${enemy.maxHp} HP   ·   ${enemy.block} BLOCK${enemy.weak ? `   ·   ${enemy.weak} WEAK` : ''}${enemy.vulnerable ? `   ·   ${enemy.vulnerable} VULN` : ''}${enemy.mark ? `   ·   ${enemy.mark} MARK` : ''}`, x + w / 2, enemy.boss ? y + 304 : y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial', w - 20);
   hitboxes.push({ x, y, w, h, action: () => selectTarget(state, i) });
 }
+const heroAnchor = { x: 179, y: 319 };
+function enemyAnchor(enemies, index) {
+  const count = enemies.length;
+  return { x: count === 1 ? (enemies[0]?.boss ? 740 : 710) : count === 2 ? 555 + index * 407 : 469 + index * 279, y: 319 };
+}
+function fxSnapshot() {
+  return {
+    hp: state.hp, block: state.block, sp: state.sp, vulnerable: state.vulnerable, burnout: state.burnout, debt: state.projectDebt, hand: state.hand.length,
+    teamwork: state.teamworkUsed, initiatives: state.initiatives.length, active: state.activeInitiatives.length,
+    enemies: state.enemies.map(enemy => ({ ref: enemy, hp: enemy.hp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark, phase: enemy.phase, intent: intentFor(enemy), redirected: enemy.redirected, stalled: enemy.stalled }))
+  };
+}
+function emitActionFx(before, id = '', playedCard = false) {
+  if (state.mode !== 'combat') return;
+  const emit = (kind, at, from = at) => battleFx.emit(kind, at.x, at.y, clock, from.x, from.y);
+  before.enemies.forEach((enemy, index) => {
+    const at = enemyAnchor(before.enemies.map(entry => entry.ref), index), foe = enemy.ref;
+    if (foe.hp < enemy.hp || foe.block < enemy.block) emit('strike', at, heroAnchor);
+    if (foe.block > enemy.block) emit('shield', at);
+    if (foe.hp > enemy.hp) emit('heal', at);
+    if (foe.mark > enemy.mark) emit('mark', at);
+    if (foe.weak > enemy.weak) emit('weak', at);
+    if (foe.vulnerable > enemy.vulnerable) emit('expose', at);
+    if (foe.phase > enemy.phase) emit('phase', at);
+  });
+  if (state.block > before.block) emit('shield', heroAnchor);
+  if (state.hp > before.hp) emit('heal', heroAnchor);
+  if (state.burnout > before.burnout) emit('burnout', { x: 225, y: 306 });
+  if (state.projectDebt > before.debt) emit('debt', { x: 240, y: 355 });
+  if (state.sp > before.sp) emit('tempo', { x: 135, y: 306 });
+  if (state.hand.length > before.hand - Number(playedCard)) emit('draw', { x: 160, y: 268 });
+  if (state.initiatives.length > before.initiatives || state.activeInitiatives.length > before.active) emit('plan', heroAnchor);
+  if (state.teamworkUsed && !before.teamwork) emit('teamwork', heroAnchor);
+  if (['reprioritize', 'escalate', 'mitigate', 'redirect'].includes(id)) emit('interrupt', enemyAnchor(before.enemies.map(entry => entry.ref), state.target));
+  if (['pipeline', 'protocol', 'rollout', 'map', 'handoffmap', 'blueprint'].includes(id)) emit('plan', heroAnchor);
+  if (id === 'defect') emit('interrupt', heroAnchor);
+  if (id === 'architect' && state.reserveBlock) emit('plan', heroAnchor);
+}
 function playFromUI(index) {
   if (state.mode !== 'combat') return;
   previewCardIndex = null; hoverPreviewEnabled = false;
-  const playedId = state.hand[index] ? cardBase(state.hand[index]) : '';
-  const before = state.enemies.map(e => e.hp);
-  const ok = playCard(state, index, state.target);
-  if (ok) {
-    const hit = before.some((hp, i) => state.enemies[i]?.hp < hp || state.mode !== 'combat');
-    effect = { kind: ['reprioritize', 'escalate', 'mitigate', 'redirect'].includes(playedId) ? 'interrupt' : ['pipeline', 'protocol', 'rollout'].includes(playedId) ? 'plan' : ['probe', 'triangulate', 'tracesweep'].includes(playedId) ? 'mark' : hit ? 'attack' : 'support', at: clock, target: state.target };
-  }
+  const id = state.hand[index] ? cardBase(state.hand[index]) : '';
+  const before = fxSnapshot();
+  if (playCard(state, index, state.target)) emitActionFx(before, id, true);
 }
 function itemFromUI(index) {
   if (state.mode !== 'combat') return;
   const id = state.inventory[index];
-  if (useItem(state, index, state.target)) effect = { kind: id === 'duck' ? 'attack' : 'support', at: clock, target: state.target };
+  const before = fxSnapshot();
+  if (useItem(state, index, state.target)) emitActionFx(before, id);
 }
 function trinketFromUI(index) {
   if (state.mode !== 'combat') return;
-  const id = state.trinkets[index];
-  if (useTrinket(state, index, state.target)) effect = { kind: id === 'paperclip' ? 'attack' : 'support', at: clock, target: state.target };
+  const before = fxSnapshot();
+  if (useTrinket(state, index, state.target)) emitActionFx(before);
 }
 function abilityFromUI() {
   if (state.mode !== 'combat') return;
-  if (useRoleAbility(state, state.target)) effect = { kind: state.role === 'debugger' ? 'attack' : 'support', at: clock, target: state.target };
+  const before = fxSnapshot();
+  if (useRoleAbility(state, state.target)) emitActionFx(before, state.role);
 }
 function specialistFromUI() {
   if (state.mode !== 'combat') return;
-  if (useSpecialist(state, state.target)) effect = { kind: state.specialist === 'qa' ? 'mark' : 'support', at: clock, target: state.target };
+  const before = fxSnapshot();
+  if (useSpecialist(state, state.target)) emitActionFx(before);
+}
+function solveFromUI() {
+  if (state.mode !== 'combat') return;
+  const boss = state.enemies.find(enemy => enemy.boss && !enemy.problemResolved);
+  const at = boss ? enemyAnchor(state.enemies, state.enemies.indexOf(boss)) : null;
+  if (resolveBossProblem(state) && at) { battleFx.emit('interrupt', at.x, at.y, clock); battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock); }
 }
 function endFromUI() {
-  const active = state.activeInitiatives.length;
-  if (endTurn(state)) effect = { kind: state.activeInitiatives.length > active ? 'plan' : 'enemy', at: clock };
+  if (state.mode !== 'combat') return;
+  const before = fxSnapshot();
+  if (!endTurn(state) || state.mode !== 'combat') return;
+  const playerHit = state.hp < before.hp || state.block < before.block;
+  let emittedHit = false;
+  if (playerHit) for (let i = 0; i < before.enemies.length; i++) {
+    if (!['attack', 'erode', 'audit'].includes(before.enemies[i].intent.kind) || before.enemies[i].redirected || before.enemies[i].stalled) continue;
+    const at = enemyAnchor(before.enemies.map(entry => entry.ref), i);
+    battleFx.emit('enemy', heroAnchor.x, heroAnchor.y, clock, at.x, at.y);
+    emittedHit = true;
+  }
+  if (playerHit && !emittedHit) battleFx.emit('enemy', heroAnchor.x, heroAnchor.y, clock);
+  if (before.enemies.some(enemy => enemy.intent.kind === 'attack' && enemy.intent.burnout && !enemy.redirected && !enemy.stalled)) battleFx.emit('burnout', 225, 306, clock);
+  if (state.projectDebt > before.debt) battleFx.emit('debt', 240, 355, clock);
+  if (before.enemies.some(enemy => enemy.intent.kind === 'attack' && enemy.intent.vulnerable && !enemy.redirected && !enemy.stalled)) battleFx.emit('expose', heroAnchor.x, heroAnchor.y, clock);
+  before.enemies.forEach((enemy, index) => {
+    const at = enemyAnchor(before.enemies.map(entry => entry.ref), index);
+    if (enemy.ref.block > enemy.block) battleFx.emit('shield', at.x, at.y, clock);
+    if (enemy.ref.hp > enemy.hp) battleFx.emit('heal', at.x, at.y, clock);
+    if (enemy.ref.phase > enemy.phase) battleFx.emit('phase', at.x, at.y, clock);
+  });
+  if (state.activeInitiatives.length > before.active) battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
+  if (state.hand.length) battleFx.emit('draw', 160, 268, clock);
 }
 function statusPill(text, x, y, w, active, activeFill) {
   rect(x, y, w, 23, active ? activeFill : '#dce2db', 6);
   label(text, x + w / 2, y + 12, 11, active ? cream : '#5b6d70', 'bold', 'center', 'Arial');
-}
-function combatPulse() {
-  if (reducedMotion || !effect || clock - effect.at >= .45) return;
-  const progress = clamp((clock - effect.at) / .45, 0, 1);
-  const foeCount = state.enemies.length;
-  const targetIndex = clamp(effect.target ?? 0, 0, foeCount - 1);
-  const targetX = foeCount === 1 ? (state.enemies[0]?.boss ? 740 : 710) : foeCount === 2 ? 555 + targetIndex * 407 : 469 + targetIndex * 279;
-  const x = ['enemy', 'support', 'plan'].includes(effect.kind) ? 179 : targetX;
-  const y = 319;
-  ctx.save();
-  ctx.strokeStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${(1 - progress) * .8})` : ['mark', 'interrupt'].includes(effect.kind) ? `rgba(70,171,186,${(1 - progress) * .9})` : effect.kind === 'plan' ? `rgba(137,218,168,${(1 - progress) * .9})` : `rgba(238,189,93,${(1 - progress) * .85})`;
-  ctx.lineWidth = 5 - progress * 3;
-  ctx.beginPath(); ctx.ellipse(x, y, 62 + progress * 67, 68 + progress * 56, 0, 0, Math.PI * 2); ctx.stroke();
-  const spokes = effect.kind === 'attack' || effect.kind === 'enemy' ? 9 : 6;
-  for (let i = 0; i < spokes; i++) {
-    const angle = i * Math.PI * 2 / spokes + (effect.kind === 'enemy' ? .2 : -.2);
-    const inner = 36 + progress * 46, outer = inner + 16 * (1 - progress);
-    ctx.beginPath(); ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
-    ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer); ctx.stroke();
-  }
-  if (['mark', 'interrupt'].includes(effect.kind)) {
-    ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x + 15, y); ctx.moveTo(x, y - 15); ctx.lineTo(x, y + 15); ctx.stroke();
-  }
-  ctx.restore();
 }
 function duelSigil(enemyX, boss) {
   const center = (317 + enemyX) / 2, y = 329;
@@ -525,7 +567,7 @@ function combat() {
   }
   else if (count === 2) state.enemies.forEach((enemy, i) => combatEnemyCard(enemy, i, 365 + i * 407, 380));
   else state.enemies.forEach((enemy, i) => combatEnemyCard(enemy, i, 337 + i * 279, 265));
-  combatPulse();
+  battleFx.draw(ctx, clock);
   rect(25, 503, 1150, 66, 'rgba(19,47,58,.95)', 13);
   const brief = state.objective;
   label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 518, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
@@ -567,7 +609,7 @@ function combat() {
     hitboxes.push({ x: x + 137, y: top + 50, w: 32, h: 32, action: () => { previewCardIndex = i; } });
   });
   const activeBossProblem = state.enemies.some(enemy => enemy.boss && !enemy.problemResolved);
-  if (activeBossProblem) button('B · SOLVE · 2 SP', 993, 575, 181, 30, () => resolveBossProblem(state), { disabled: state.sp < 2, fill: '#b6ddd0', size: 12 });
+  if (activeBossProblem) button('B · SOLVE · 2 SP', 993, 575, 181, 30, () => solveFromUI(), { disabled: state.sp < 2, fill: '#b6ddd0', size: 12 });
   else button('SHIP · R', 993, 575, 181, 30, () => shipRelease(state), { disabled: state.readiness < 6 || state.turn < 2 || state.enemies.some(enemy => enemy.boss), fill: '#b6ddd0', size: 12 });
   button('END TURN  SPACE', 993, 612, 181, 111, () => endFromUI(), { fill: coral, size: 18 });
   rect(25, 749, 1150, 40, 'rgba(19,47,58,.96)', 10);
@@ -844,6 +886,7 @@ function menuConfirm() {
 }
 function render() {
   hitboxes = []; ctx.clearRect(0, 0, W, H);
+  if (state.mode !== 'combat') battleFx.effects.length = 0;
   if (state.mode === 'intro') intro();
   else if (state.mode === 'challenge') challenge();
   else if (state.mode === 'route') route();
@@ -932,7 +975,7 @@ window.addEventListener('keydown', e => {
     }
     if (key === 'a') abilityFromUI();
     if (key === 's') specialistFromUI();
-    if (key === 'b') resolveBossProblem(state);
+    if (key === 'b') solveFromUI();
     if (key === 'r') shipRelease(state);
     if (['1', '2', '3', '4', '5'].includes(e.key)) playFromUI(Number(e.key) - 1);
     if (e.code === 'Space') { e.preventDefault(); endFromUI(); }
@@ -972,6 +1015,7 @@ window.render_game_to_text = () => JSON.stringify({
   shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, rarity: o.kind === 'card' ? cardInfo(o.id).rarity : null, power: o.kind === 'card' ? cardInfo(o.id).power : null, sold: o.sold, available: canBuyShop(state, i) })) : [],
   enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
   crisis: state.mode === 'combat' ? state.crisis || null : null, readiness: state.mode === 'combat' ? state.readiness : null, canShip: state.mode === 'combat' && state.readiness >= 6 && state.turn >= 2 && !state.enemies.some(enemy => enemy.boss), teamworkUsed: state.mode === 'combat' ? state.teamworkUsed : null,
+  fx: state.mode === 'combat' ? battleFx.active(clock) : [],
   initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining })) : [],
   activeInitiatives: state.mode === 'combat' ? state.activeInitiatives.map(id => CARDS[id].name) : [],
   selectedTarget: state.target,
