@@ -15,11 +15,13 @@ npm run dev
 
 Open the local URL printed by Vite. Add `?seed=42` to replay a particular run's route offers, shuffled hands, and rewards.
 
-Choose an Architect, Debugger, or Producer loadout, then choose a route. Standard and risky routes lead directly into combat; the third route leads through a story event or shop before a reinforced foe. Events offer bargains with health, credits, deck size, tools, and trinkets. The Night Archivist sells skills, tools, trinkets, relics, healing, and removal of basic cards. Fights award credits, with higher payouts on risky routes and bosses; avoiding all enemy damage earns a five-credit bonus.
+Choose an Architect, Debugger, or Producer loadout, then choose a route. On the route screen you can hire one of three specialists for a once-per-fight action. Hiring in later acts costs SP on the next fight's opening turn, representing onboarding. Standard and risky routes lead directly into combat; the third route leads through a story event or shop before a reinforced foe. Events offer bargains with health, credits, deck size, tools, and trinkets. The Night Archivist sells skills, tools, trinkets, relics, healing, and removal of basic cards. Fights award credits, with higher payouts on risky routes and bosses; avoiding all enemy damage earns a five-credit bonus.
 
 Play up to five cards from your hand against the selected foe. Cards cost skill points (SP); SP refreshes each turn. Playing support skills builds up to three Flow, adding two damage per Flow to attacks that turn. Each lead has eight exclusive skills, a signature starting deck, and a once-per-fight ability: Architect banks Block, Debugger exposes a target, and Producer borrows SP at the cost of Burnout. The new Mark effect adds four damage to the next attack on that foe and spends one stack; Exploit Path can spend the whole stack at once. Role-specific relics reinforce these play styles. Enemy intents show their next action, including multi-hit attacks, SP tax, splitting, Block shredding, and Burnout audits. Click an enemy to target it, and end your turn to let enemies act. You can use one single-use tool per turn. Trinkets are different: up to two equipped trinkets each activate once per fight and refresh in the next battle. Elite fights can award a trinket. Relics are permanent passive effects. After a fight, choose a role skill, a build-aware skill, healing, or a workshop visit to upgrade one card or remove a basic card. Bosses offer relics in place of cards. Health, credits, deck, tools, trinkets, and relics carry through the run. Reaching zero health ends it.
 
-Skills show a rarity tier and a 1–5 Power rating. Power estimates a card's baseline impact; combinations can outperform that rating. Rarity changes offer frequency across acts: common/uncommon/rare odds are 55/35/10% in Requirements, 40/40/20% in Integration, and 25/40/35% in Release. Offers favor skills not yet in your deck within the rolled rarity tier. The second battle reward and shop skill offers also favor card families that match your deck, lead, and relics; the reward labels show when a card fits the build. Shop skill prices are 17/25/37 credits by rarity. Upgrading a card raises its displayed Power by one, up to five, alongside the existing damage or Block improvement.
+Each battle now has an optional Sprint Brief. Completing it earns eight credits and pays down one Project Debt. Shortcut cards add Debt on their first use each fight; at four Debt, regular enemies gain health, and at eight they gain more health and attack power. A workshop Technical Audit pays down four Debt. Bosses change phase at 65% and 30% health, immediately telegraphing their new next intent.
+
+Skills show a rarity tier and a 1–5 Power rating. Power estimates a card's baseline impact; combinations can outperform that rating. Rarity changes offer frequency across acts: common/uncommon/rare odds are 55/35/10% in Requirements, 40/40/20% in Integration, and 25/40/35% in Release. Offers favor skills not yet in your deck within the rolled rarity tier. The second battle reward and shop skill offers also favor card families that match your deck, lead, and relics; the reward labels show when a card fits the build. Shop skill prices are 17/25/37 credits by rarity. At the workshop, each upgrade branches into Force (+3 damage or Block) or Flex (+3 Block after attacks, draw one after skills). Both raise Power by one, up to five.
 
 The combat jokes draw on Brooks's themes: scope creep, coordination overhead, integration trouble, technical debt, conceptual integrity, and the seductive silver bullet.
 
@@ -38,6 +40,8 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | Click or tap | Choose a role, route, event response, purchase, reward, enemy target, card, or tool |
 | Enter | Start from the title screen or leave the shop for battle |
 | 1–3 | Choose a role, route, event response, or workshop choice |
+| H | Open specialist hiring from the route screen |
+| 1–2 | Choose Force or Flex after selecting a workshop upgrade |
 | 1–4 | Choose a battle reward |
 | 1–5 | Play a card in combat |
 | Hover a card or tap its lens | Preview its art and full effect |
@@ -48,6 +52,7 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | Q / W / E | Use the corresponding carried tool |
 | Z / X | Activate an equipped trinket once per battle |
 | A | Use your role ability once per battle |
+| S | Use your specialist action once per battle |
 | Escape | Return from the workshop to rewards |
 | C | Open or close the loadout view |
 | Space | End the combat turn |
@@ -64,6 +69,7 @@ node test-actions/role-depth.mjs
 node test-actions/build-depth.mjs
 node test-actions/rarity-depth.mjs
 node test-actions/rarity-visual.mjs
+node test-actions/systems-depth.mjs
 node test-actions/smoke.mjs
 node test-actions/pages-preview.mjs
 ```

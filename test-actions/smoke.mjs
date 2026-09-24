@@ -31,7 +31,7 @@ async function autopilot(seed, shots = false) {
   await page.keyboard.press('3');
   await page.keyboard.press('Enter');
   let steps = 0, bossShots = 0, rewardShots = 0, relicShot = false, signatureShot = false;
-  const capturedFoes = new Set();
+  const capturedFoes = new Set(), capturedPhases = new Set();
   while ((await state()).mode !== 'end' && steps++ < 2000) {
     const s = await state();
     if (s.mode === 'route') {
@@ -62,6 +62,10 @@ async function autopilot(seed, shots = false) {
       continue;
     }
     if (shots) for (const enemy of s.enemies) {
+      if (enemy.boss && enemy.phase > 1 && !capturedPhases.has(`${enemy.name}-${enemy.phase}`)) {
+        capturedPhases.add(`${enemy.name}-${enemy.phase}`);
+        await canvas.screenshot({ path: `${out}/${enemy.name.toLowerCase().replaceAll(' ', '-')}-phase-${enemy.phase}.png` });
+      }
       if (['Dependency Spider', 'Metrics Siren', 'Process Auditor', 'Approval Chimera', 'Regression Slime', 'Notification Swarm'].includes(enemy.name) && !capturedFoes.has(enemy.name)) {
         capturedFoes.add(enemy.name);
         await canvas.screenshot({ path: `${out}/${enemy.name.toLowerCase().replaceAll(' ', '-')}.png` });
@@ -218,6 +222,9 @@ await page.keyboard.press('Escape');
 assert.equal((await state()).mode, 'reward');
 await page.keyboard.press('4');
 await page.keyboard.press('1');
+assert.equal((await state()).mode, 'upgrade');
+await canvas.screenshot({ path: `${out}/upgrade-paths.png` });
+await page.keyboard.press('2');
 assert.equal((await state()).mode, 'route');
 await page.keyboard.press('3');
 let market = await state();
@@ -234,6 +241,22 @@ assert.equal((await state()).mode, 'combat', 'leaving shop should lead to battle
 await canvas.screenshot({ path: `${out}/second-trinket.png` });
 await page.keyboard.press('x');
 assert.equal((await state()).trinkets[1].ready, false);
+await fresh(23);
+await page.keyboard.press('Enter');
+await click(976, 198);
+assert.equal((await state()).mode, 'hire');
+await canvas.screenshot({ path: `${out}/hire-specialist.png` });
+await click(255, 694);
+assert.equal((await state()).specialist.id, 'qa');
+assert.equal((await state()).credits, 2);
+await page.keyboard.press('1');
+assert.equal((await state()).mode, 'combat');
+assert.equal((await state()).objective.id, 'team');
+await canvas.screenshot({ path: `${out}/specialist-combat.png` });
+await page.keyboard.press('s');
+assert.equal((await state()).specialist.ready, false);
+assert.equal((await state()).enemies[0].mark, 2);
+await canvas.screenshot({ path: `${out}/specialist-used.png` });
 assert.equal(errors.length, 0, `browser errors: ${errors.join('; ')}`);
 console.log('Battle browser smoke passed: roles, events, shop purchase, combat, three bosses, full win/loss, restart, no browser errors.');
 await browser.close();

@@ -10,19 +10,26 @@ export const ROLES = {
   debugger: { name: 'Debugger', detail: 'Expose Weak foes and strike at the root cause.', ability: 'Breakpoint', abilityDetail: 'Once per fight: apply 2 Weak and 1 Vulnerable to a foe.', icon: '✦' },
   producer: { name: 'Producer', detail: 'Push the sprint, then manage the Burnout.', ability: 'Crunch Time', abilityDetail: 'Once per fight: gain 2 SP now and 1 Burnout.', icon: '◆' }
 };
+export const SPECIALISTS = {
+  qa: { name: 'QA Analyst', action: 'Repro Sweep', detail: 'Once per fight: apply 2 Mark and 1 Weak to a foe.', art: 'qa' },
+  integrator: { name: 'Integration Lead', action: 'Clean Handoff', detail: 'Once per fight: gain 7 Block and draw 1.', art: 'integrator' },
+  captain: { name: 'Release Captain', action: 'Release Window', detail: 'Once per fight: gain 1 SP and clear 1 Burnout.', art: 'captain' }
+};
+export const cardBase = id => id.replace(/[+*]$/, '');
+export const debtTier = s => Math.min(2, Math.floor((s.projectDebt || 0) / 4));
 
 export const CARDS = {
   patch: { name: 'Patch', cost: 1, type: 'attack', detail: 'Deal 7 damage.', rarity: 'basic', art: 'patch' },
   review: { name: 'Review', cost: 1, type: 'skill', detail: 'Gain 7 Block.', rarity: 'basic', art: 'review' },
   pair: { name: 'Pair Debug', cost: 1, type: 'attack', detail: 'Deal 5 damage. Draw 1.', rarity: 'common', art: 'pair' },
   refactor: { name: 'Refactor', cost: 1, type: 'attack', detail: 'Deal 6. Apply 1 Weak.', rarity: 'common', art: 'pair' },
-  panic: { name: 'Panic Fix', cost: 0, type: 'attack', detail: 'Deal 4. Gain 1 Burnout.', rarity: 'basic', art: 'sprint' },
+  panic: { name: 'Panic Fix', cost: 0, type: 'attack', detail: 'Deal 4. +1 Burnout. +1 Debt first use/fight.', rarity: 'basic', art: 'sprint' },
   memo: { name: 'Decision Memo', cost: 1, type: 'skill', detail: 'Gain 5 Block. Draw 1.', rarity: 'common', art: 'blueprint' },
   sweep: { name: 'Test Sweep', cost: 2, type: 'attack', detail: 'Deal 7 to ALL foes.', rarity: 'uncommon', art: 'signal' },
   guardrail: { name: 'Guardrail', cost: 2, type: 'skill', detail: 'Gain 13 Block. Apply 1 Weak.', rarity: 'uncommon', art: 'review' },
   rollback: { name: 'Rollback', cost: 1, type: 'skill', detail: 'Heal 5. Gain 3 Block.', rarity: 'uncommon', art: 'rollback' },
   critical: { name: 'Critical Path', cost: 2, type: 'attack', detail: 'Deal 17 damage.', rarity: 'rare', art: 'critical' },
-  overclock: { name: 'Overclock', cost: 0, type: 'skill', detail: 'Gain 2 SP. Lose 4 HP.', rarity: 'rare', art: 'overclock.webp' },
+  overclock: { name: 'Overclock', cost: 0, type: 'skill', detail: '+2 SP. Lose 4 HP. +1 Debt first use/fight.', rarity: 'rare', art: 'overclock.webp' },
   blueprint: { name: 'Clean Design', cost: 2, type: 'skill', detail: 'Gain 10 Block. Draw 2.', rarity: 'rare', art: 'blueprint' },
   rootcause: { name: 'Root Cause', cost: 1, type: 'attack', detail: 'Deal 9. +6 vs Weak foes.', rarity: 'uncommon', art: 'pair' },
   scopelock: { name: 'Scope Lock', cost: 1, type: 'attack', detail: 'Deal 5. Apply 2 Vulnerable.', rarity: 'uncommon', art: 'critical' },
@@ -42,7 +49,7 @@ export const CARDS = {
   breakpoint: { name: 'Breakpoint', cost: 1, type: 'attack', detail: 'Deal 8. +8 vs Weak + Vulnerable.', rarity: 'uncommon', role: 'debugger', art: 'cascade.webp' },
   cascade: { name: 'Root-Cause Cascade', cost: 2, type: 'attack', detail: 'Deal 7 to ALL. +6 vs Weak foes.', rarity: 'rare', role: 'debugger', art: 'cascade.webp' },
   standup: { name: 'Standup Sprint', cost: 0, type: 'skill', detail: 'Gain 1 SP. Gain 1 Burnout.', rarity: 'common', role: 'producer', art: 'standup.webp' },
-  trade: { name: 'Scope Trade', cost: 1, type: 'attack', detail: 'Deal 11. Lose 3 HP.', rarity: 'uncommon', role: 'producer', art: 'standup.webp' },
+  trade: { name: 'Scope Trade', cost: 1, type: 'attack', detail: 'Deal 11. Lose 3 HP. +1 Debt first use/fight.', rarity: 'uncommon', role: 'producer', art: 'standup.webp' },
   quiet: { name: 'Quiet Hours', cost: 1, type: 'skill', detail: 'Clear up to 2 Burnout. Gain 6 Block.', rarity: 'uncommon', role: 'producer', art: 'rollback' },
   launch: { name: 'Launch Window', cost: 2, type: 'attack', detail: 'Deal 12 +5 per Burnout, then clear Burnout.', rarity: 'rare', role: 'producer', art: 'launch.webp' },
   reserve: { name: 'Buffer Budget', cost: 0, type: 'skill', detail: 'Gain 3 Block. Bank 2 for next turn.', rarity: 'common', role: 'architect', art: 'risk.webp' },
@@ -58,7 +65,7 @@ export const CARDS = {
   contingency: { name: 'Contingency Plan', cost: 2, type: 'skill', detail: '8 Block. Bank 4. Deal 5 to ALL.', rarity: 'rare', role: 'architect', art: 'contingency.webp' },
   triangulate: { name: 'Triangulate', cost: 1, type: 'skill', detail: '1 Weak, 1 Mark. Draw 1 if marked.', rarity: 'uncommon', role: 'debugger', art: 'triangulate.webp' },
   tracesweep: { name: 'Trace Sweep', cost: 2, type: 'attack', detail: 'Deal 5 to ALL. Mark each foe.', rarity: 'rare', role: 'debugger', art: 'tracesweep.webp' },
-  borrow: { name: 'Borrowed Weekend', cost: 0, type: 'skill', detail: 'Gain 2 SP. Draw 1. Gain 2 Burnout.', rarity: 'rare', role: 'producer', art: 'borrow.webp' },
+  borrow: { name: 'Borrowed Weekend', cost: 0, type: 'skill', detail: '+2 SP. Draw 1. +2 Burnout. +1 Debt first use/fight.', rarity: 'rare', role: 'producer', art: 'borrow.webp' },
   reallocate: { name: 'Reallocate', cost: 1, type: 'skill', detail: 'Burnout -2. If any: draw 2, +1 SP.', rarity: 'uncommon', role: 'producer', art: 'reallocate.webp' }
 };
 export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate'];
@@ -90,13 +97,13 @@ export const RARITY_WEIGHTS = [
   { common: 25, uncommon: 40, rare: 35 }
 ];
 export function cardInfo(id) {
-  const upgraded = id.endsWith('+');
-  const card = CARDS[upgraded ? id.slice(0, -1) : id];
+  const upgraded = /[+*]$/.test(id), branch = id.endsWith('*') ? 'flex' : 'force', base = cardBase(id);
+  const card = CARDS[base];
   if (!card) return card;
-  const power = Math.min(5, CARD_POWER[upgraded ? id.slice(0, -1) : id] + (upgraded ? 1 : 0));
-  const family = CARD_FAMILY[upgraded ? id.slice(0, -1) : id];
+  const power = Math.min(5, CARD_POWER[base] + (upgraded ? 1 : 0));
+  const family = CARD_FAMILY[base];
   if (!upgraded) return { ...card, power, family };
-  return { ...card, name: `${card.name}+`, detail: `${card.detail} ${card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true, power, family };
+  return { ...card, name: `${card.name}${branch === 'flex' ? '*' : '+'}`, detail: `${card.detail} ${branch === 'flex' ? card.type === 'attack' ? '+3 Block.' : 'Draw 1.' : card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true, branch, power, family };
 }
 
 export const ITEMS = {
@@ -147,9 +154,9 @@ export const ENEMIES = {
   swarm: { name: 'Notification Swarm', art: 'swarm', hp: 24, pattern: [strike(3, { hits: 2, burnout: 1 }), shield(5), strike(5, { hits: 2 })] },
   shredder: { name: 'Spec Shredder', art: 'shredder', hp: 29, pattern: [strike(5), { kind: 'erode', amount: 5, damage: 6 }, shield(6)] },
   collector: { name: 'Overtime Collector', art: 'collector', hp: 32, pattern: [strike(6, { burnout: 1 }), { kind: 'audit', damage: 5 }, shield(6)] },
-  goblin: { name: 'Budget Goblin', art: 'goblin', hp: 58, boss: true, pattern: [strike(8), strike(6, { burnout: 1 }), shield(10), strike(12)] },
-  kraken: { name: 'Merge Kraken', art: 'kraken', hp: 74, boss: true, pattern: [strike(9), strike(7, { vulnerable: 1 }), summon('bug'), strike(13), shield(11)] },
-  dragon: { name: 'Deadline Dragon', art: 'dragon', hp: 100, boss: true, pattern: [strike(11), strike(8, { vulnerable: 1 }), shield(12), strike(17), summon('scope'), strike(19)] }
+  goblin: { name: 'Budget Goblin', art: 'goblin', hp: 58, boss: true, phaseNames: ['Budget Review', 'Cost Cutting', 'Emergency Freeze'], pattern: [strike(8), strike(6, { burnout: 1 }), shield(10), strike(12)], phases: [[strike(7, { burnout: 1 }), shield(7), strike(10)], [{ kind: 'tax', amount: 1 }, strike(10), shield(5)]] },
+  kraken: { name: 'Merge Kraken', art: 'kraken', hp: 74, boss: true, phaseNames: ['Open Branches', 'Conflict Storm', 'Forced Merge'], pattern: [strike(9), strike(7, { vulnerable: 1 }), summon('bug'), strike(13), shield(11)], phases: [[strike(8, { vulnerable: 1 }), shield(7), strike(10)], [strike(7, { hits: 2 }), shield(6), strike(11)]] },
+  dragon: { name: 'Deadline Dragon', art: 'dragon', hp: 100, boss: true, phaseNames: ['Planning', 'Crunch', 'Launch Night'], pattern: [strike(11), strike(8, { vulnerable: 1 }), shield(12), strike(17), summon('scope'), strike(19)], phases: [[strike(10, { burnout: 1 }), shield(9), strike(14)], [strike(11, { vulnerable: 1 }), strike(8, { hits: 2 }), strike(16)]] }
 };
 const REGULARS = [
   ['scope', 'bug', 'handoff', 'mimic', 'auditor', 'swarm', 'shredder'],
@@ -226,10 +233,10 @@ export function newGame(seed = randomSeed()) {
     hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, spTax: 0, nextSp: 0,
     deck: ['patch', 'patch', 'patch', 'patch', 'review', 'review', 'review', 'pair', 'refactor', 'panic'],
     drawPile: [], discardPile: [], hand: [],
-    inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
+    inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', specialist: '', specialistUsed: false, onboardingPending: 0, projectDebt: 0, itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
     enemies: [], target: 0, itemUsedThisTurn: false, firstAttack: true, firstSkillTurn: true, damageTakenFight: 0, lastPayout: 0, lastPerfect: false,
-    reserveBlock: 0, abilityUsed: false, notebookTurn: 0, redlineUsed: false, upgradeDamage: 0,
-    routeChoices: [], rewardChoices: [], tuneChoices: [], defeatedBosses: [], eventId: '', shopStock: [], pendingRoute: null,
+    reserveBlock: 0, abilityUsed: false, notebookTurn: 0, redlineUsed: false, upgradeDamage: 0, debtChargedFight: [],
+    routeChoices: [], rewardChoices: [], tuneChoices: [], upgradePending: null, objective: null, lastObjective: false, defeatedBosses: [], eventId: '', shopStock: [], pendingRoute: null,
     lastFightElite: false, log: ['Your first crisis awaits.'], ending: ''
   };
   selectRole(s, 'architect');
@@ -251,6 +258,25 @@ export function selectRole(s, role) {
 }
 export function actIndex(s) { return Math.min(2, Math.floor(s.floor / 3)); }
 export function encounterNumber(s) { return Math.min(TOTAL_FIGHTS, s.floor + 1); }
+export const OBJECTIVES = {
+  shield: { name: 'Defend the plan', detail: 'Block 8 incoming damage this fight.' },
+  flow: { name: 'Keep the thread', detail: 'Attack while at 2+ Flow this fight.' },
+  quick: { name: 'Beat the estimate', detail: 'Win by the end of turn 3.' },
+  team: { name: 'Use the whole team', detail: 'Use a role ability and a specialist action.' }
+};
+export const specialistPrice = s => 12 + actIndex(s) * 5;
+export function openHiring(s) { if (s.mode !== 'route') return false; s.mode = 'hire'; return true; }
+export function cancelHiring(s) { if (s.mode !== 'hire') return false; s.mode = 'route'; return true; }
+export function hireSpecialist(s, id) {
+  if (s.mode !== 'hire' || !SPECIALISTS[id] || s.specialist === id || s.credits < specialistPrice(s)) return false;
+  s.credits -= specialistPrice(s); s.specialist = id;
+  s.onboardingPending = s.floor >= 6 ? 2 : s.floor >= 3 ? 1 : 0;
+  s.mode = 'route'; note(s, `${SPECIALISTS[id].name} joined the team${s.onboardingPending ? `; next fight starts with ${s.onboardingPending} less SP for onboarding` : ''}.`);
+  return true;
+}
+function addDebt(s, amount) { s.projectDebt = clamp(s.projectDebt + amount, 0, 12); }
+function chargeDebt(s, source) { if (s.debtChargedFight.includes(source)) return; s.debtChargedFight.push(source); addDebt(s, 1); }
+function completeObjective(s) { if (s.objective) s.objective.done = true; }
 
 function offerRoute(s) {
   const act = actIndex(s), boss = s.floor % 3 === 2;
@@ -279,8 +305,8 @@ export function startGame(s) { if (s.mode === 'intro') offerRoute(s); }
 
 function createEnemy(s, id, elite = false) {
   const data = ENEMIES[id], act = actIndex(s);
-  const maxHp = data.hp + (data.boss ? 0 : act * 4) + (elite ? 14 + act * 3 : 0);
-  return { id, name: data.name, art: data.art, hp: maxHp, maxHp, block: 0, weak: 0, vulnerable: 0, mark: 0, step: 0, power: act + (elite ? 2 : 0), elite, boss: !!data.boss };
+  const pressure = debtTier(s), maxHp = data.hp + (data.boss ? 0 : act * 4 + pressure * 2) + (elite ? 14 + act * 3 : 0);
+  return { id, name: data.name, art: data.art, hp: maxHp, maxHp, block: 0, weak: 0, vulnerable: 0, mark: 0, step: 0, phase: 1, power: act + (data.boss ? 0 : Math.max(0, pressure - 1)) + (elite ? 2 : 0), elite, boss: !!data.boss };
 }
 function drawOne(s) {
   if (s.hand.length >= 5) return;
@@ -308,7 +334,7 @@ export function buildFit(s, id) {
   let score = family === ROLE_FAMILY[s.role] ? 2 : 0;
   if (CARDS[id].role === s.role) score++;
   for (const owned of s.deck) {
-    const base = owned.endsWith('+') ? owned.slice(0, -1) : owned;
+    const base = cardBase(owned);
     if (CARDS[base]?.rarity !== 'basic' && CARD_FAMILY[base] === family) score += 2;
   }
   for (const relic of s.relics) if (RELIC_FAMILY[relic] === family) score += 2;
@@ -327,7 +353,7 @@ export function pickSkillOffer(s, pool, { exclude = [], fit = false } = {}) {
     if (roll < 0) { tier = rarity; break; }
   }
   const tierChoices = choices.filter(id => CARDS[id].rarity === tier);
-  const unseen = tierChoices.filter(id => !s.deck.some(owned => owned === id || owned === `${id}+`));
+  const unseen = tierChoices.filter(id => !s.deck.some(owned => cardBase(owned) === id));
   const candidates = unseen.length ? unseen : tierChoices;
   if (!fit) return pick(s, candidates);
   const totalFit = candidates.reduce((sum, id) => sum + 1 + buildFit(s, id), 0);
@@ -348,9 +374,12 @@ function beginCombat(s, route) {
   }
   s.lastFightElite = route.elite;
   s.turn = 1; s.sp = s.maxSp + (s.relics.includes('battery') ? 1 : 0); s.block = s.relics.includes('harness') ? 5 : 0;
+  if (s.onboardingPending) { s.sp = Math.max(1, s.sp - s.onboardingPending); s.onboardingPending = 0; }
   s.itemUsedThisTurn = false; s.firstAttack = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0;
   s.spTax = 0; s.nextSp = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
-  s.reserveBlock = 0; s.abilityUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0;
+  s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = [];
+  const objectiveIds = s.specialist ? ['shield', 'flow', 'quick', 'team'] : ['shield', 'flow', 'quick'];
+  s.objective = { id: objectiveIds[(s.seed + s.floor * 7) % objectiveIds.length], progress: 0, done: false, failed: false };
   if (s.relics.includes('coffee')) s.hp = Math.min(s.maxHp, s.hp + 4);
   s.drawPile = shuffle(s, s.deck); s.discardPile = []; s.hand = []; drawHand(s);
   s.target = 0; s.mode = 'combat';
@@ -477,7 +506,9 @@ export function selectTarget(s, index) {
   return true;
 }
 export function intentFor(enemy) {
-  const intent = ENEMIES[enemy.id].pattern[enemy.step % ENEMIES[enemy.id].pattern.length];
+  const data = ENEMIES[enemy.id];
+  const pattern = enemy.phase > 1 ? data.phases?.[enemy.phase - 2] || data.pattern : data.pattern;
+  const intent = pattern[enemy.step % pattern.length];
   if (intent.kind === 'attack') {
     const n = Math.max(0, intent.damage + enemy.power - (enemy.weak ? 2 : 0));
     return { ...intent, damage: n, label: `${intent.hits ? `MULTI ${intent.hits} × ${n}` : `${intent.burnout ? 'DRAIN' : intent.vulnerable ? 'EXPOSE' : 'ATTACK'} ${n}`}${intent.burnout ? ' · Burnout' : intent.vulnerable ? ' · Vulnerable' : ''}` };
@@ -498,6 +529,7 @@ export function intentFor(enemy) {
 }
 function attackEnemy(s, enemy, amount, useMark = true) {
   if (!enemy) return 0;
+  if (s.objective?.id === 'flow' && s.flow >= 2) completeObjective(s);
   const notebookDraw = enemy.weak && s.relics.includes('notebook') && s.notebookTurn !== s.turn;
   amount += s.flow * 2 + s.upgradeDamage;
   if (useMark && enemy.mark) { amount += 4; enemy.mark--; }
@@ -509,6 +541,13 @@ function attackEnemy(s, enemy, amount, useMark = true) {
   enemy.block -= blocked;
   const damage = Math.max(0, amount - blocked);
   enemy.hp = Math.max(0, enemy.hp - damage);
+  if (enemy.boss && enemy.hp > 0) {
+    const nextPhase = enemy.hp <= enemy.maxHp * .3 ? 3 : enemy.hp <= enemy.maxHp * .65 ? 2 : 1;
+    if (nextPhase > enemy.phase) {
+      enemy.phase = nextPhase; enemy.step = 0;
+      note(s, `${enemy.name} enters ${ENEMIES[enemy.id].phaseNames[nextPhase - 1]}! Next intent: ${intentFor(enemy).label}.`);
+    }
+  }
   if (notebookDraw) { s.notebookTurn = s.turn; drawOne(s); }
   return damage;
 }
@@ -525,7 +564,7 @@ function afterDamage(s) {
 }
 export function playCard(s, handIndex, targetIndex = s.target) {
   if (s.mode !== 'combat' || !Number.isInteger(handIndex) || handIndex < 0 || handIndex >= s.hand.length) return false;
-  const id = s.hand[handIndex], baseId = id.endsWith('+') ? id.slice(0, -1) : id, card = cardInfo(id);
+  const id = s.hand[handIndex], baseId = cardBase(id), card = cardInfo(id);
   if (s.sp < card.cost) return false;
   if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate'].includes(baseId)) && !s.enemies[targetIndex]) return false;
   s.sp -= card.cost;
@@ -542,7 +581,7 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'patch': message += ` dealt ${attackEnemy(s, enemy, 7)}.`; break;
     case 'pair': message += ` dealt ${attackEnemy(s, enemy, 5)} and drew a card.`; drawOne(s); break;
     case 'refactor': message += ` dealt ${attackEnemy(s, enemy, 6)} and weakened ${enemy.name}.`; enemy.weak++; break;
-    case 'panic': message += ` dealt ${attackEnemy(s, enemy, 4)}. Burnout +1.`; addSelfBurnout(s, 1); break;
+    case 'panic': message += ` dealt ${attackEnemy(s, enemy, 4)}. Burnout +1, Debt +1 first use this fight.`; addSelfBurnout(s, 1); chargeDebt(s, 'panic'); break;
     case 'critical': message += ` dealt ${attackEnemy(s, enemy, 17)}.`; break;
     case 'sweep': {
       let total = 0;
@@ -553,7 +592,7 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'memo': gainBlock(s, 5); drawOne(s); message += ' raised Block and drew a card.'; break;
     case 'guardrail': gainBlock(s, 13); enemy.weak++; message += ` raised Block and weakened ${enemy.name}.`; break;
     case 'rollback': heal(s, 5); gainBlock(s, 3); message += ' healed and raised Block.'; break;
-    case 'overclock': s.sp += 2; s.hp = Math.max(1, s.hp - 4); message += ' gained 2 SP at the cost of 4 HP.'; break;
+    case 'overclock': s.sp += 2; s.hp = Math.max(1, s.hp - 4); chargeDebt(s, 'overclock'); message += ' gained 2 SP at the cost of 4 HP and Debt.'; break;
     case 'blueprint': gainBlock(s, 10); drawOne(s); drawOne(s); message += ' raised Block and drew two cards.'; break;
     case 'rootcause': message += ` dealt ${attackEnemy(s, enemy, enemy.weak ? 15 : 9)}.`; break;
     case 'scopelock': message += ` dealt ${attackEnemy(s, enemy, 5)} and exposed ${enemy.name}.`; enemy.vulnerable += 2; break;
@@ -573,7 +612,7 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'breakpoint': message += ` dealt ${attackEnemy(s, enemy, 8 + (enemy.weak && enemy.vulnerable ? 8 : 0))}.`; break;
     case 'cascade': { let total = 0; for (const foe of s.enemies) total += attackEnemy(s, foe, 7 + (foe.weak ? 6 : 0)); message += ` hit all foes for ${total} total.`; break; }
     case 'standup': s.sp++; addSelfBurnout(s, 1); message += ' gained 1 SP and 1 Burnout.'; break;
-    case 'trade': message += ` dealt ${attackEnemy(s, enemy, 11)} at a cost of 3 HP.`; s.hp = Math.max(1, s.hp - 3); break;
+    case 'trade': message += ` dealt ${attackEnemy(s, enemy, 11)} at a cost of 3 HP and Debt.`; s.hp = Math.max(1, s.hp - 3); chargeDebt(s, 'trade'); break;
     case 'quiet': s.burnout = Math.max(0, s.burnout - 2); gainBlock(s, 6); message += ' cleared Burnout and raised Block.'; break;
     case 'launch': { const burnout = s.burnout; message += ` dealt ${attackEnemy(s, enemy, 12 + burnout * 5)} and cleared ${burnout} Burnout.`; s.burnout = 0; break; }
     case 'reserve': gainBlock(s, 3); s.reserveBlock = Math.min(12, s.reserveBlock + 2); message += ' raised Block and banked 2.'; break;
@@ -589,11 +628,15 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'contingency': { gainBlock(s, 8); s.reserveBlock = Math.min(12, s.reserveBlock + 4); let total = 0; for (const foe of s.enemies) total += attackEnemy(s, foe, 5); message += ` raised Block, banked 4, and hit all foes for ${total}.`; break; }
     case 'triangulate': { const marked = enemy.mark > 0; enemy.weak++; enemy.mark = Math.min(3, (enemy.mark || 0) + 1); if (marked) drawOne(s); message += marked ? ` weakened and marked ${enemy.name}, then drew 1.` : ` weakened and marked ${enemy.name}.`; break; }
     case 'tracesweep': { let total = 0; for (const foe of s.enemies) { total += attackEnemy(s, foe, 5); foe.mark = Math.min(3, (foe.mark || 0) + 1); } message += ` hit all foes for ${total} and marked each.`; break; }
-    case 'borrow': s.sp += 2; drawOne(s); addSelfBurnout(s, 2); message += ' gained 2 SP and a card at a cost of 2 Burnout.'; break;
+    case 'borrow': s.sp += 2; drawOne(s); addSelfBurnout(s, 2); chargeDebt(s, 'borrow'); message += ' gained 2 SP and a card at a cost of 2 Burnout and Debt.'; break;
     case 'reallocate': { const cleared = Math.min(2, s.burnout); s.burnout -= cleared; if (cleared) { drawOne(s); drawOne(s); s.sp++; } message += cleared ? ` cleared ${cleared} Burnout, drew 2, and gained 1 SP.` : ' found no Burnout to reallocate.'; break; }
   }
   s.upgradeDamage = 0;
   if (id.endsWith('+') && card.type === 'skill') { gainBlock(s, 3, false); message += ' Upgrade: +3 Block.'; }
+  if (id.endsWith('*')) {
+    if (card.type === 'attack') { gainBlock(s, 3, false); message += ' Flex: +3 Block.'; }
+    else { drawOne(s); message += ' Flex: drew 1.'; }
+  }
   note(s, message);
   if (card.type === 'attack' || baseId === 'contingency') afterDamage(s);
   return true;
@@ -615,6 +658,22 @@ export function useRoleAbility(s, targetIndex = s.target) {
     note(s, 'Crunch Time granted 2 SP at the cost of 1 Burnout.');
   }
   s.abilityUsed = true;
+  if (s.objective?.id === 'team' && s.specialistUsed) completeObjective(s);
+  return true;
+}
+export function useSpecialist(s, targetIndex = s.target) {
+  if (s.mode !== 'combat' || !s.specialist || s.specialistUsed) return false;
+  if (s.specialist === 'qa') {
+    const foe = s.enemies[targetIndex]; if (!foe) return false;
+    foe.mark = Math.min(3, foe.mark + 2); foe.weak++;
+    note(s, `QA Analyst reproduced the flaw: ${foe.name} gained 2 Mark and Weak.`);
+  } else if (s.specialist === 'integrator') {
+    gainBlock(s, 7, false); drawOne(s); note(s, 'Integration Lead made a clean handoff: 7 Block and draw 1.');
+  } else {
+    s.sp++; s.burnout = Math.max(0, s.burnout - 1); note(s, 'Release Captain found a window: +1 SP, -1 Burnout.');
+  }
+  s.specialistUsed = true;
+  if (s.objective?.id === 'team' && s.abilityUsed) completeObjective(s);
   return true;
 }
 export function useItem(s, index, targetIndex = s.target) {
@@ -652,6 +711,10 @@ function hitPlayer(s, amount) {
   if (s.vulnerable) { amount += 2; s.vulnerable--; }
   const absorbed = Math.min(s.block, amount);
   s.block -= absorbed;
+  if (s.objective?.id === 'shield' && !s.objective.done) {
+    s.objective.progress += absorbed;
+    if (s.objective.progress >= 8) completeObjective(s);
+  }
   const damage = Math.max(0, amount - absorbed);
   s.hp = Math.max(0, s.hp - damage);
   s.damageTakenFight += damage;
@@ -701,6 +764,7 @@ export function endTurn(s) {
   s.block = Math.min(15, s.reserveBlock + (s.relics.includes('grid') ? Math.min(3, s.block) : 0));
   s.reserveBlock = 0;
   s.turn++;
+  if (s.objective?.id === 'quick' && s.turn > 3 && !s.objective.done) s.objective.failed = true;
   s.sp = Math.max(1, s.maxSp - s.burnout - s.spTax + s.nextSp);
   s.burnout = 0;
   s.spTax = 0; s.nextSp = 0; s.firstSkillTurn = true;
@@ -731,7 +795,7 @@ function makeRewards(s, boss) {
   ];
 }
 function makeTuneChoices(s) {
-  const entries = s.deck.map((id, index) => ({ id, index })).filter(entry => !entry.id.endsWith('+'));
+  const entries = s.deck.map((id, index) => ({ id, index })).filter(entry => !/[+*]$/.test(entry.id));
   const basics = entries.filter(entry => ['patch', 'review'].includes(entry.id));
   const unique = new Set(), upgrades = [];
   for (const entry of [...shuffle(s, entries.filter(entry => !['patch', 'review'].includes(entry.id))), ...shuffle(s, basics)]) {
@@ -741,9 +805,13 @@ function makeTuneChoices(s) {
     if (upgrades.length >= (basics.length ? 2 : 3)) break;
   }
   if (basics.length) upgrades.push({ type: 'remove', ...pick(s, basics) });
+  if (s.projectDebt > 0) upgrades.push({ type: 'audit', id: 'review', index: -1 });
   return upgrades;
 }
 function finishFight(s) {
+  if (s.objective?.id === 'quick' && s.turn <= 3) completeObjective(s);
+  s.lastObjective = !!s.objective?.done;
+  if (s.lastObjective) addDebt(s, -1);
   const boss = s.floor % 3 === 2;
   if (boss) s.defeatedBosses.push(BOSSES[actIndex(s)]);
   if (s.lastFightElite) {
@@ -755,7 +823,7 @@ function finishFight(s) {
     }
   }
   s.lastPerfect = s.damageTakenFight === 0;
-  const payout = (boss ? 22 : s.lastFightElite ? 19 : 11) + actIndex(s) * 2 + (s.relics.includes('ledger') ? 5 : 0) + (s.lastPerfect ? 5 : 0);
+  const payout = (boss ? 22 : s.lastFightElite ? 19 : 11) + actIndex(s) * 2 + (s.relics.includes('ledger') ? 5 : 0) + (s.lastPerfect ? 5 : 0) + (s.lastObjective ? 8 : 0);
   s.lastPayout = payout;
   s.credits += payout;
   note(s, `The team recovered ${payout} credits from the incident budget.`);
@@ -786,10 +854,13 @@ export function chooseReward(s, index) {
 export function chooseTune(s, index) {
   if (s.mode !== 'tune' || !s.tuneChoices[index]) return false;
   const choice = s.tuneChoices[index];
+  if (choice.type === 'audit') {
+    addDebt(s, -4); note(s, 'The team paid down 4 Project Debt.');
+    s.rewardChoices = []; s.tuneChoices = []; offerRoute(s); return true;
+  }
   if (s.deck[choice.index] !== choice.id) return false;
   if (choice.type === 'upgrade') {
-    s.deck[choice.index] += '+';
-    note(s, `${CARDS[choice.id].name} was upgraded.`);
+    s.upgradePending = { ...choice }; s.mode = 'upgrade'; return true;
   } else {
     s.deck.splice(choice.index, 1);
     note(s, `${CARDS[choice.id].name} was retired.`);
@@ -798,6 +869,16 @@ export function chooseTune(s, index) {
   offerRoute(s);
   return true;
 }
+export function chooseUpgrade(s, branch) {
+  if (s.mode !== 'upgrade' || !['force', 'flex'].includes(branch) || !s.upgradePending) return false;
+  const { id, index } = s.upgradePending;
+  if (s.deck[index] !== id) return false;
+  s.deck[index] = `${id}${branch === 'force' ? '+' : '*'}`;
+  note(s, `${CARDS[id].name} gained the ${branch === 'force' ? 'Force' : 'Flex'} upgrade.`);
+  s.upgradePending = null; s.rewardChoices = []; s.tuneChoices = []; offerRoute(s);
+  return true;
+}
+export function cancelUpgrade(s) { if (s.mode !== 'upgrade') return false; s.mode = 'tune'; s.upgradePending = null; return true; }
 export function cancelTune(s) {
   if (s.mode !== 'tune') return false;
   s.mode = 'reward'; return true;

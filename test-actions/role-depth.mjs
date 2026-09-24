@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CARDS, cardInfo, newGame, selectRole, startGame, chooseRoute, playCard, useRoleAbility, endTurn, intentFor, chooseReward, chooseTune } from '../src/battle-game.js';
+import { CARDS, cardInfo, newGame, selectRole, startGame, chooseRoute, playCard, useRoleAbility, endTurn, intentFor, chooseReward, chooseTune, chooseUpgrade } from '../src/battle-game.js';
 
 function combat(role, seed) {
   const s = newGame(seed);
@@ -69,6 +69,8 @@ assert.equal(reward.mode, 'tune');
 const choice = reward.tuneChoices.findIndex(c => c.type === 'upgrade');
 const id = reward.tuneChoices[choice].id;
 assert.equal(chooseTune(reward, choice), true);
+assert.equal(reward.mode, 'upgrade');
+assert.equal(chooseUpgrade(reward, 'force'), true);
 assert.equal(reward.mode, 'route');
 assert.ok(reward.deck.includes(`${id}+`));
 assert.ok(cardInfo(`${id}+`).name.endsWith('+'));
