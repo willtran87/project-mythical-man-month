@@ -95,32 +95,32 @@ const BOSS_LINES = {
   dragon: '“Yesterday was your last safe deadline.”'
 };
 export const EVENTS = {
-  council: { title: 'The Architecture Council', speaker: 'Principal Architect', text: 'Three diagrams disagree. The council asks which one you will defend when the deadline arrives.', choices: [
+  council: { title: 'The Architecture Council', speaker: 'Principal Architect', art: 'storyCouncil', text: 'Three diagrams disagree. The council asks which one you will defend when the deadline arrives.', choices: [
     { label: 'Write one design', detail: 'Pay 12 credits. Add Clean Design.', effect: 'design', cost: 12 },
     { label: 'Cut a promise', detail: 'Lose 4 HP. Remove a basic card.', effect: 'purge', hpCost: 4 },
     { label: 'Request a study', detail: 'Gain 10 credits.', effect: 'funding' }
   ] },
-  night: { title: 'The Midnight Deploy', speaker: 'Operations Engineer', text: 'The build light turns red. Someone offers to skip the checklist and call it momentum.', choices: [
+  night: { title: 'The Midnight Deploy', speaker: 'Operations Engineer', art: 'storyMidnight', text: 'The build light turns red. Someone offers to skip the checklist and call it momentum.', choices: [
     { label: 'Ship the hotfix', detail: 'Lose 8 HP. Gain 22 credits.', effect: 'rush', hpCost: 8 },
     { label: 'Roll back calmly', detail: 'Heal 10 HP.', effect: 'rest' },
     { label: 'Automate the check', detail: 'Pay 10 credits. Add Automation.', effect: 'automation', cost: 10 }
   ] },
-  retro: { title: 'The Blameless Postmortem', speaker: 'Team Lead', text: 'The incident report has twelve authors. Only the useful lessons fit on one page.', choices: [
+  retro: { title: 'The Blameless Postmortem', speaker: 'Team Lead', art: 'storyRetro', text: 'The incident report has twelve authors. Only the useful lessons fit on one page.', choices: [
     { label: 'Retire an old habit', detail: 'Remove a basic card. Heal 4 HP.', effect: 'retire' },
     { label: 'Name a scapegoat', detail: 'Gain 16 credits. Lose 5 HP.', effect: 'scapegoat', hpCost: 5 },
     { label: 'Practice root cause', detail: 'Lose 4 HP. Add Root Cause.', effect: 'root', hpCost: 4 }
   ] },
-  sponsor: { title: 'The Executive Sponsor', speaker: 'Vice President of Synergy', text: 'A sponsor smiles and offers funding, provided the deck looks impressive by Friday.', choices: [
+  sponsor: { title: 'The Executive Sponsor', speaker: 'Vice President of Synergy', art: 'storySponsor', text: 'A sponsor smiles and offers funding, provided the deck looks impressive by Friday.', choices: [
     { label: 'Take the grant', detail: 'Pay 18 credits. Gain a random relic.', effect: 'relic', cost: 18 },
     { label: 'Ask for a small budget', detail: 'Gain 12 credits.', effect: 'funding12' },
     { label: 'Insist on scope control', detail: 'Lose 3 HP. Add Scope Lock.', effect: 'scope', hpCost: 3 }
   ] },
-  archive: { title: 'The Forgotten Archive', speaker: 'Night Archivist', text: 'In the basement, abandoned plans whisper that every shortcut was once a brilliant idea.', choices: [
+  archive: { title: 'The Forgotten Archive', speaker: 'Night Archivist', art: 'archive', text: 'In the basement, abandoned plans whisper that every shortcut was once a brilliant idea.', choices: [
     { label: 'Study the map', detail: 'Add Handoff Map. Heal 5 HP.', effect: 'map' },
     { label: 'Reclaim the old tool', detail: 'Gain a random tool, if space allows.', effect: 'tool' },
     { label: 'Leave the clutter', detail: 'Remove a basic card.', effect: 'retire' }
   ] },
-  lostfound: { title: 'Lost and Found', speaker: 'Facilities Keeper', text: 'A locked drawer contains the little objects that kept earlier teams going.', choices: [
+  lostfound: { title: 'Lost and Found', speaker: 'Facilities Keeper', art: 'storyLostFound', text: 'A locked drawer contains the little objects that kept earlier teams going.', choices: [
     { label: 'Borrow a charm', detail: 'Gain a random trinket, if a slot is free.', effect: 'trinket' },
     { label: 'Sell your spare tool', detail: 'Lose one tool. Gain 20 credits.', effect: 'selltool' },
     { label: 'Take a quiet break', detail: 'Heal 7 HP.', effect: 'rest7' }

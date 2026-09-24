@@ -21,6 +21,8 @@ Play up to five cards from your hand against the selected foe. Cards cost skill 
 
 The combat jokes draw on Brooks's themes: scope creep, coordination overhead, integration trouble, technical debt, conceptual integrity, and the seductive silver bullet.
 
+Story detours have event-specific illustrations, and both run endings have dedicated art. The exact prompts for the new scenes are in `public/assets/story/prompts.md`.
+
 Every skill card has illustrated artwork in combat, the Night Market, and reward choices. Eight generated scenes cover related skill families; the card name, cost, and effect remain live game text. The exact art prompts are in `public/assets/cards/prompts.md`.
 
 ## Controls

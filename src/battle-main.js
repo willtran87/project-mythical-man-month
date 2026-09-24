@@ -14,7 +14,11 @@ const artPaths = {
   auditor: '/assets/process-auditor.png', spider: '/assets/dependency-spider.png', siren: '/assets/metrics-siren.png',
   chimera: '/assets/approval-chimera.png', slime: '/assets/regression-slime.png', swarm: '/assets/notification-swarm.png',
   archivist: '/assets/night-archivist.png', archive: '/assets/after-hours-archive.png',
-  duck: '/assets/debug-duck.png', pizza: '/assets/emergency-pizza.png', blueprint: '/assets/one-page-blueprint.png'
+  duck: '/assets/debug-duck.png', pizza: '/assets/emergency-pizza.png', blueprint: '/assets/one-page-blueprint.png',
+  storyCouncil: '/assets/story/architecture-council.png', storyMidnight: '/assets/story/midnight-deploy.png',
+  storyRetro: '/assets/story/blameless-postmortem.png', storySponsor: '/assets/story/executive-sponsor.png',
+  storyLostFound: '/assets/story/lost-and-found.png', victory: '/assets/story/release-victory.png',
+  defeat: '/assets/story/project-defeat.png'
 };
 const art = {};
 for (const [id, path] of Object.entries(artPaths)) {
@@ -184,7 +188,7 @@ function event() {
   label('AN UNPLANNED CONVERSATION', 600, 204, 14, coral, 'bold', 'center', 'Arial');
   label(data.title.toUpperCase(), 600, 237, 32, ink, 'bold', 'center');
   rect(99, 273, 425, 250, '#263e48', 13);
-  imageContain(art.archive, 105, 279, 413, 238);
+  imageCover(art[data.art], 105, 279, 413, 238, 10);
   label(data.speaker.toUpperCase(), 557, 293, 15, teal, 'bold', 'left', 'Arial');
   wrap(`“${data.text}”`, 557, 326, 536, 22, ink, 30);
   label('EVERY ANSWER LEADS TO A REINFORCED FOE', 557, 471, 13, coral, 'bold', 'left', 'Arial');
@@ -391,21 +395,28 @@ function ending() {
   background();
   const win = state.ending === 'win';
   rect(129, 76, 942, 646, 'rgba(255,247,232,.98)', 22, ink, 4);
-  label(win ? 'THE RELEASE SURVIVES' : 'THE PROJECT FALLS', 600, 151, 45, win ? teal : coral, 'bold', 'center');
-  label(win ? 'THE DEADLINE DRAGON IS DEFEATED' : 'THE BOARD REQUESTS A POSTMORTEM', 600, 199, 17, ink, 'bold', 'center', 'Arial');
-  rect(193, 233, 814, 2, '#d7bfa1');
+  label(win ? 'THE RELEASE SURVIVES' : 'THE PROJECT FALLS', 600, 139, 43, win ? teal : coral, 'bold', 'center');
+  label(win ? 'THE DEADLINE DRAGON IS DEFEATED' : 'THE BOARD REQUESTS A POSTMORTEM', 600, 188, 17, ink, 'bold', 'center', 'Arial');
+  rect(193, 218, 814, 2, '#d7bfa1');
+  rect(172, 236, 475, 307, '#263e48', 14, win ? teal : coral, 3);
+  imageCover(win ? art.victory : art.defeat, 179, 243, 461, 293, 10);
   const stats = [
     [`${state.floor}/${TOTAL_FIGHTS}`, 'FIGHTS WON'],
     [`${state.hp}/${state.maxHp}`, 'HEALTH'],
     [String(state.deck.length), 'SKILLS'],
     [String(state.defeatedBosses.length), 'BOSSES']
   ];
-  stats.forEach(([value, name], i) => { const x = 286 + i * 210; label(value, x, 296, 35, ink, 'bold', 'center'); label(name, x, 336, 14, teal, 'bold', 'center', 'Arial'); });
-  const words = win ? 'The team shipped by choosing its battles, protecting its health, and building a playbook that could face the final deadline.' : `The run ended in Act ${actIndex(state) + 1}. ${state.log[0]} Try a different route, keep Block for telegraphed attacks, and use tools before a crisis becomes terminal.`;
-  wrap(words, 238, 393, 715, 21, ink, 29);
-  label(`Run ${state.seed}  ·  ${state.cardsPlayed} skills played  ·  ${state.itemsUsed} tools used  ·  ${state.credits} credits`, 600, 529, 16, teal, 'bold', 'center', 'Arial');
-  button('TRY ANOTHER RUN', 411, 578, 378, 63, () => { state = makeRun(); startGame(state); }, { size: 21 });
-  label('A satirical tribute to the ideas of Frederick P. Brooks Jr.', 600, 683, 14, '#63767a', 'italic', 'center');
+  stats.forEach(([value, name], i) => {
+    const x = 757 + (i % 2) * 177, y = 273 + Math.floor(i / 2) * 82;
+    label(value, x, y, 31, ink, 'bold', 'center');
+    label(name, x, y + 28, 12, teal, 'bold', 'center', 'Arial');
+  });
+  rect(686, 410, 339, 2, '#d7bfa1');
+  const words = win ? 'The team shipped by choosing its battles, protecting its health, and building a playbook that could face the final deadline.' : `The run ended in Act ${actIndex(state) + 1}. ${state.log[0]} The team can learn from this. Try a different route, save Block for telegraphed attacks, and use tools before a crisis turns terminal.`;
+  wrap(words, 682, 425, 345, 17, ink, 23);
+  label(`Run ${state.seed}  ·  ${state.cardsPlayed} skills played  ·  ${state.itemsUsed} tools used  ·  ${state.credits} credits`, 600, 570, 15, teal, 'bold', 'center', 'Arial');
+  button('TRY ANOTHER RUN', 411, 603, 378, 63, () => { state = makeRun(); startGame(state); }, { size: 21 });
+  label('A satirical tribute to the ideas of Frederick P. Brooks Jr.', 600, 696, 14, '#63767a', 'italic', 'center');
 }
 function render() {
   hitboxes = []; ctx.clearRect(0, 0, W, H);
