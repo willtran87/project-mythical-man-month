@@ -302,7 +302,7 @@ function playFromUI(index) {
   const ok = playCard(state, index, state.target);
   if (ok) {
     const hit = before.some((hp, i) => state.enemies[i]?.hp < hp || state.mode !== 'combat');
-    effect = { kind: playedId === 'probe' ? 'mark' : hit ? 'attack' : 'support', at: clock, target: state.target };
+    effect = { kind: ['probe', 'triangulate', 'tracesweep'].includes(playedId) ? 'mark' : hit ? 'attack' : 'support', at: clock, target: state.target };
   }
 }
 function itemFromUI(index) {
@@ -430,6 +430,7 @@ function reward() {
     else imageCover(cardArt[cardInfo(choice.id).art], x + 25, y + 58, w - 50, 145, 9);
     label(name, x + w / 2, y + 235, 18, ink, 'bold', 'center', 'Georgia', w - 20);
     wrap(detail, x + 19, y + 260, w - 38, 14, '#607078', 18, 'Arial');
+    if (choice.source === 'build') label(choice.fit >= 3 ? `BUILD FIT · ${choice.family.toUpperCase()}` : 'FLEX PICK', x + w / 2, y + 308, 11, teal, 'bold', 'center', 'Arial');
     button(choice.type === 'tune' ? 'OPEN WORKSHOP' : 'TAKE REWARD', x + 27, 662, w - 54, 52, () => chooseReward(state, i), { size: 15 });
   });
 }
@@ -600,7 +601,7 @@ window.render_game_to_text = () => JSON.stringify({
   inventory: state.inventory.map(id => ({ id, name: ITEMS[id].name, detail: ITEMS[id].detail })), itemUsedThisTurn: state.itemUsedThisTurn,
   trinkets: state.trinkets.map((id, i) => ({ index: i, id, name: TRINKETS[id].name, detail: TRINKETS[id].detail, ready: !state.usedTrinkets.includes(id) })),
   relics: state.relics.map(id => RELICS[id].name),
-  rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook', rarity: choice.type === 'card' ? cardInfo(choice.id).rarity : null, power: choice.type === 'card' ? cardInfo(choice.id).power : null })) : [],
+  rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook', rarity: choice.type === 'card' ? cardInfo(choice.id).rarity : null, power: choice.type === 'card' ? cardInfo(choice.id).power : null, source: choice.source || null, fit: choice.fit || 0, family: choice.family || null })) : [],
   tuneChoices: state.mode === 'tune' ? state.tuneChoices.map(choice => ({ type: choice.type, name: cardInfo(choice.id).name, detail: choice.type === 'upgrade' ? `+3 ${cardInfo(choice.id).type === 'attack' ? 'damage' : 'Block'}` : 'Remove one basic card' })) : [],
   bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect
 });

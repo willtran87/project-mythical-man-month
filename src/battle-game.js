@@ -22,17 +22,17 @@ export const CARDS = {
   guardrail: { name: 'Guardrail', cost: 2, type: 'skill', detail: 'Gain 13 Block. Apply 1 Weak.', rarity: 'uncommon', art: 'review' },
   rollback: { name: 'Rollback', cost: 1, type: 'skill', detail: 'Heal 5. Gain 3 Block.', rarity: 'uncommon', art: 'rollback' },
   critical: { name: 'Critical Path', cost: 2, type: 'attack', detail: 'Deal 17 damage.', rarity: 'rare', art: 'critical' },
-  overclock: { name: 'Overclock', cost: 0, type: 'skill', detail: 'Gain 2 SP. Lose 4 HP.', rarity: 'rare', art: 'sprint' },
+  overclock: { name: 'Overclock', cost: 0, type: 'skill', detail: 'Gain 2 SP. Lose 4 HP.', rarity: 'rare', art: 'overclock.webp' },
   blueprint: { name: 'Clean Design', cost: 2, type: 'skill', detail: 'Gain 10 Block. Draw 2.', rarity: 'rare', art: 'blueprint' },
   rootcause: { name: 'Root Cause', cost: 1, type: 'attack', detail: 'Deal 9. +6 vs Weak foes.', rarity: 'uncommon', art: 'pair' },
   scopelock: { name: 'Scope Lock', cost: 1, type: 'attack', detail: 'Deal 5. Apply 2 Vulnerable.', rarity: 'uncommon', art: 'critical' },
   automation: { name: 'Automation', cost: 1, type: 'skill', detail: 'Gain 5 Block. At 2 Flow, gain 1 SP.', rarity: 'uncommon', art: 'signal' },
   handoffmap: { name: 'Handoff Map', cost: 0, type: 'skill', detail: 'Draw 2. Gain 1 Burnout.', rarity: 'common', art: 'blueprint' },
-  incident: { name: 'Incident Room', cost: 2, type: 'attack', detail: 'Deal 8 to all. +2 per Flow.', rarity: 'rare', art: 'critical' },
+  incident: { name: 'Incident Room', cost: 2, type: 'attack', detail: 'Deal 8 to all. +2 per Flow.', rarity: 'rare', art: 'incident.webp' },
   triage: { name: 'Triage', cost: 1, type: 'skill', detail: 'Heal 3. Gain 5 Block.', rarity: 'common', art: 'rollback' },
   signal: { name: 'Signal Boost', cost: 1, type: 'skill', detail: 'Apply 1 Weak to all foes. Draw 1.', rarity: 'uncommon', art: 'signal' },
   sprint: { name: 'Sprint Burst', cost: 1, type: 'attack', detail: 'Deal 6. +4 per trinket used this fight.', rarity: 'uncommon', art: 'sprint' },
-  backlog: { name: 'Backlog Cut', cost: 2, type: 'attack', detail: 'Deal 13. Gain 1 SP if foe is Vulnerable.', rarity: 'rare', art: 'critical' },
+  backlog: { name: 'Backlog Cut', cost: 2, type: 'attack', detail: 'Deal 13. Gain 1 SP if foe is Vulnerable.', rarity: 'rare', art: 'backlog.webp' },
   charter: { name: 'Design Charter', cost: 1, type: 'skill', detail: 'Gain 6 Block. Bank 3 for next turn.', rarity: 'common', role: 'architect', art: 'charter.webp' },
   map: { name: 'Dependency Map', cost: 1, type: 'skill', detail: '4 Block. Draw 1. +1 SP if banked.', rarity: 'uncommon', role: 'architect', art: 'charter.webp' },
   contract: { name: 'Interface Contract', cost: 2, type: 'attack', detail: 'Deal 7 + up to 10 from half Block.', rarity: 'uncommon', role: 'architect', art: 'integrity.webp' },
@@ -53,9 +53,15 @@ export const CARDS = {
   weekend: { name: 'Recovery Weekend', cost: 2, type: 'skill', detail: 'Heal 7. Clear 3 Burnout. Gain 5 Block.', rarity: 'rare', role: 'producer', art: 'recovery.webp' },
   hardstop: { name: 'Hard Stop', cost: 1, type: 'skill', detail: 'Gain 7 Block. Clear 1 Burnout.', rarity: 'common', art: 'recovery.webp' },
   retro: { name: 'Retrospective', cost: 1, type: 'skill', detail: 'Draw 2. Heal 3 if below half HP.', rarity: 'uncommon', art: 'warroom.webp' },
-  warroom: { name: 'War Room', cost: 2, type: 'skill', detail: '6 Block. 1 Weak to ALL. Draw 1.', rarity: 'rare', art: 'warroom.webp' }
+  warroom: { name: 'War Room', cost: 2, type: 'skill', detail: '6 Block. 1 Weak to ALL. Draw 1.', rarity: 'rare', art: 'warroom.webp' },
+  bufferexchange: { name: 'Buffer Exchange', cost: 1, type: 'attack', detail: 'Deal 7. +1 SP if Block is banked.', rarity: 'uncommon', role: 'architect', art: 'buffer.webp' },
+  contingency: { name: 'Contingency Plan', cost: 2, type: 'skill', detail: '8 Block. Bank 4. Deal 5 to ALL.', rarity: 'rare', role: 'architect', art: 'contingency.webp' },
+  triangulate: { name: 'Triangulate', cost: 1, type: 'skill', detail: '1 Weak, 1 Mark. Draw 1 if marked.', rarity: 'uncommon', role: 'debugger', art: 'triangulate.webp' },
+  tracesweep: { name: 'Trace Sweep', cost: 2, type: 'attack', detail: 'Deal 5 to ALL. Mark each foe.', rarity: 'rare', role: 'debugger', art: 'tracesweep.webp' },
+  borrow: { name: 'Borrowed Weekend', cost: 0, type: 'skill', detail: 'Gain 2 SP. Draw 1. Gain 2 Burnout.', rarity: 'rare', role: 'producer', art: 'borrow.webp' },
+  reallocate: { name: 'Reallocate', cost: 1, type: 'skill', detail: 'Burnout -2. If any: draw 2, +1 SP.', rarity: 'uncommon', role: 'producer', art: 'reallocate.webp' }
 };
-export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom'];
+export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate'];
 export const CARD_POWER = {
   patch: 2, review: 2, panic: 1, pair: 3, refactor: 3, memo: 3, sweep: 3, guardrail: 4,
   rollback: 4, critical: 4, overclock: 4, blueprint: 5, rootcause: 4, scopelock: 4,
@@ -63,7 +69,20 @@ export const CARD_POWER = {
   charter: 3, map: 3, contract: 4, integrity: 5, trace: 3, repro: 3, breakpoint: 4,
   cascade: 5, standup: 2, trade: 4, quiet: 4, launch: 5,
   reserve: 2, riskmatrix: 3, probe: 3, exploit: 5, burnrate: 4, weekend: 5,
-  hardstop: 3, retro: 3, warroom: 4
+  hardstop: 3, retro: 3, warroom: 4, bufferexchange: 3, contingency: 5,
+  triangulate: 4, tracesweep: 4, borrow: 4, reallocate: 4
+};
+export const CARD_FAMILY = {
+  patch: 'strike', review: 'block', panic: 'burnout', pair: 'draw', refactor: 'weak', memo: 'draw',
+  sweep: 'area', guardrail: 'block', rollback: 'recovery', critical: 'strike', overclock: 'tempo',
+  blueprint: 'draw', rootcause: 'weak', scopelock: 'vulnerable', automation: 'flow',
+  handoffmap: 'draw', incident: 'area', triage: 'recovery', signal: 'weak', sprint: 'tempo',
+  backlog: 'vulnerable', charter: 'bank', map: 'bank', contract: 'block', integrity: 'bank',
+  trace: 'weak', repro: 'vulnerable', breakpoint: 'weak', cascade: 'weak', standup: 'burnout',
+  trade: 'tempo', quiet: 'recovery', launch: 'burnout', reserve: 'bank', riskmatrix: 'bank',
+  probe: 'mark', exploit: 'mark', burnrate: 'burnout', weekend: 'recovery', hardstop: 'recovery',
+  retro: 'draw', warroom: 'weak', bufferexchange: 'bank', contingency: 'bank',
+  triangulate: 'mark', tracesweep: 'mark', borrow: 'burnout', reallocate: 'burnout'
 };
 export const RARITY_WEIGHTS = [
   { common: 55, uncommon: 35, rare: 10 },
@@ -75,8 +94,9 @@ export function cardInfo(id) {
   const card = CARDS[upgraded ? id.slice(0, -1) : id];
   if (!card) return card;
   const power = Math.min(5, CARD_POWER[upgraded ? id.slice(0, -1) : id] + (upgraded ? 1 : 0));
-  if (!upgraded) return { ...card, power };
-  return { ...card, name: `${card.name}+`, detail: `${card.detail} ${card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true, power };
+  const family = CARD_FAMILY[upgraded ? id.slice(0, -1) : id];
+  if (!upgraded) return { ...card, power, family };
+  return { ...card, name: `${card.name}+`, detail: `${card.detail} ${card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true, power, family };
 }
 
 export const ITEMS = {
@@ -278,9 +298,25 @@ function rewardCardPools(s) {
     neutral: REWARD_CARDS.filter(id => !CARDS[id].role)
   };
 }
-export function pickSkillOffer(s, pool) {
+const ROLE_FAMILY = { architect: 'bank', debugger: 'mark', producer: 'burnout' };
+const RELIC_FAMILY = { harness: 'block', model: 'tempo', interface: 'block', checklist: 'strike',
+  binder: 'block', battery: 'tempo', lens: 'weak', thread: 'tempo', grid: 'bank',
+  notebook: 'weak', redline: 'burnout' };
+export function buildFit(s, id) {
+  const family = CARD_FAMILY[id];
+  if (!family) return 0;
+  let score = family === ROLE_FAMILY[s.role] ? 2 : 0;
+  if (CARDS[id].role === s.role) score++;
+  for (const owned of s.deck) {
+    const base = owned.endsWith('+') ? owned.slice(0, -1) : owned;
+    if (CARDS[base]?.rarity !== 'basic' && CARD_FAMILY[base] === family) score += 2;
+  }
+  for (const relic of s.relics) if (RELIC_FAMILY[relic] === family) score += 2;
+  return score;
+}
+export function pickSkillOffer(s, pool, { exclude = [], fit = false } = {}) {
   const weights = RARITY_WEIGHTS[actIndex(s)];
-  const choices = pool.filter(id => CARDS[id]);
+  const choices = pool.filter(id => CARDS[id] && !exclude.includes(id));
   if (!choices.length) return undefined;
   const available = ['common', 'uncommon', 'rare'].filter(rarity => choices.some(id => CARDS[id].rarity === rarity));
   const total = available.reduce((sum, rarity) => sum + weights[rarity], 0);
@@ -291,8 +327,16 @@ export function pickSkillOffer(s, pool) {
     if (roll < 0) { tier = rarity; break; }
   }
   const tierChoices = choices.filter(id => CARDS[id].rarity === tier);
-  const unseen = tierChoices.filter(id => !s.deck.includes(id));
-  return pick(s, unseen.length ? unseen : tierChoices);
+  const unseen = tierChoices.filter(id => !s.deck.some(owned => owned === id || owned === `${id}+`));
+  const candidates = unseen.length ? unseen : tierChoices;
+  if (!fit) return pick(s, candidates);
+  const totalFit = candidates.reduce((sum, id) => sum + 1 + buildFit(s, id), 0);
+  let fitRoll = nextRandom(s) * totalFit;
+  for (const id of candidates) {
+    fitRoll -= 1 + buildFit(s, id);
+    if (fitRoll < 0) return id;
+  }
+  return candidates.at(-1);
 }
 export function skillPrice(id) {
   return { common: 17, uncommon: 25, rare: 37 }[CARDS[id].rarity];
@@ -327,7 +371,7 @@ export function chooseRoute(s, index) {
     const pools = rewardCardPools(s);
     const tailoredRelics = availableRelics.filter(id => RELICS[id].role === s.role);
     s.shopStock = [
-      { kind: 'card', id: pickSkillOffer(s, nextRandom(s) < .65 ? pools.role : pools.neutral), price: 0, sold: false },
+      { kind: 'card', id: pickSkillOffer(s, nextRandom(s) < .65 ? pools.role : pools.neutral, { fit: true }), price: 0, sold: false },
       { kind: 'item', id: pick(s, Object.keys(ITEMS)), price: SHOP_PRICES.item, sold: false },
       { kind: 'relic', id: availableRelics.length ? pick(s, tailoredRelics.length && nextRandom(s) < .5 ? tailoredRelics : availableRelics) : '', price: SHOP_PRICES.relic, sold: false },
       { kind: 'trinket', id: availableTrinkets.length ? pick(s, availableTrinkets) : '', price: SHOP_PRICES.trinket, sold: false },
@@ -483,7 +527,7 @@ export function playCard(s, handIndex, targetIndex = s.target) {
   if (s.mode !== 'combat' || !Number.isInteger(handIndex) || handIndex < 0 || handIndex >= s.hand.length) return false;
   const id = s.hand[handIndex], baseId = id.endsWith('+') ? id.slice(0, -1) : id, card = cardInfo(id);
   if (s.sp < card.cost) return false;
-  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade'].includes(baseId)) || ['guardrail', 'repro'].includes(baseId)) && !s.enemies[targetIndex]) return false;
+  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate'].includes(baseId)) && !s.enemies[targetIndex]) return false;
   s.sp -= card.cost;
   s.hand.splice(handIndex, 1); s.discardPile.push(id); s.cardsPlayed++;
   if (card.type === 'skill') {
@@ -541,11 +585,17 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'hardstop': gainBlock(s, 7); s.burnout = Math.max(0, s.burnout - 1); message += ' raised Block and cleared 1 Burnout.'; break;
     case 'retro': drawOne(s); drawOne(s); if (s.hp * 2 < s.maxHp) heal(s, 3); message += ' drew 2 and recovered when needed.'; break;
     case 'warroom': gainBlock(s, 6); for (const foe of s.enemies) foe.weak++; drawOne(s); message += ' raised Block, weakened all foes, and drew 1.'; break;
+    case 'bufferexchange': { const banked = s.reserveBlock > 0; message += ` dealt ${attackEnemy(s, enemy, 7)}.`; if (banked) { s.sp++; message += ' Banked Block recovered 1 SP.'; } break; }
+    case 'contingency': { gainBlock(s, 8); s.reserveBlock = Math.min(12, s.reserveBlock + 4); let total = 0; for (const foe of s.enemies) total += attackEnemy(s, foe, 5); message += ` raised Block, banked 4, and hit all foes for ${total}.`; break; }
+    case 'triangulate': { const marked = enemy.mark > 0; enemy.weak++; enemy.mark = Math.min(3, (enemy.mark || 0) + 1); if (marked) drawOne(s); message += marked ? ` weakened and marked ${enemy.name}, then drew 1.` : ` weakened and marked ${enemy.name}.`; break; }
+    case 'tracesweep': { let total = 0; for (const foe of s.enemies) { total += attackEnemy(s, foe, 5); foe.mark = Math.min(3, (foe.mark || 0) + 1); } message += ` hit all foes for ${total} and marked each.`; break; }
+    case 'borrow': s.sp += 2; drawOne(s); addSelfBurnout(s, 2); message += ' gained 2 SP and a card at a cost of 2 Burnout.'; break;
+    case 'reallocate': { const cleared = Math.min(2, s.burnout); s.burnout -= cleared; if (cleared) { drawOne(s); drawOne(s); s.sp++; } message += cleared ? ` cleared ${cleared} Burnout, drew 2, and gained 1 SP.` : ' found no Burnout to reallocate.'; break; }
   }
   s.upgradeDamage = 0;
   if (id.endsWith('+') && card.type === 'skill') { gainBlock(s, 3, false); message += ' Upgrade: +3 Block.'; }
   note(s, message);
-  if (card.type === 'attack') afterDamage(s);
+  if (card.type === 'attack' || baseId === 'contingency') afterDamage(s);
   return true;
 }
 export function useRoleAbility(s, targetIndex = s.target) {
@@ -671,9 +721,11 @@ function makeRewards(s, boss) {
     return choices;
   }
   const pools = rewardCardPools(s);
+  const roleId = pickSkillOffer(s, pools.role);
+  const matchId = pickSkillOffer(s, [...pools.role, ...pools.neutral], { exclude: [roleId], fit: true });
   return [
-    { type: 'card', id: pickSkillOffer(s, pools.role) },
-    { type: 'card', id: pickSkillOffer(s, pools.neutral) },
+    { type: 'card', id: roleId, source: 'role' },
+    { type: 'card', id: matchId, source: 'build', fit: buildFit(s, matchId), family: CARD_FAMILY[matchId] },
     { type: 'heal', amount: 11 },
     { type: 'tune' }
   ];
