@@ -88,7 +88,7 @@ assert.equal(canBuyShop(market, 0), true);
 market.credits = 55;
 const card = market.shopStock[0].id, credits = market.credits, deckSize = market.deck.length;
 assert.equal(buyShop(market, 0), true);
-assert.equal(market.credits, credits - 17);
+assert.equal(market.credits, credits - market.shopStock[0].price);
 assert.equal(market.deck.length, deckSize + 1);
 assert.equal(market.deck.at(-1), card);
 assert.equal(buyShop(market, 0), false, 'sold stock cannot be purchased twice');

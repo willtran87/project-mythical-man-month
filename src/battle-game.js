@@ -44,14 +44,39 @@ export const CARDS = {
   standup: { name: 'Standup Sprint', cost: 0, type: 'skill', detail: 'Gain 1 SP. Gain 1 Burnout.', rarity: 'common', role: 'producer', art: 'standup.webp' },
   trade: { name: 'Scope Trade', cost: 1, type: 'attack', detail: 'Deal 11. Lose 3 HP.', rarity: 'uncommon', role: 'producer', art: 'standup.webp' },
   quiet: { name: 'Quiet Hours', cost: 1, type: 'skill', detail: 'Clear up to 2 Burnout. Gain 6 Block.', rarity: 'uncommon', role: 'producer', art: 'rollback' },
-  launch: { name: 'Launch Window', cost: 2, type: 'attack', detail: 'Deal 12 +5 per Burnout, then clear Burnout.', rarity: 'rare', role: 'producer', art: 'launch.webp' }
+  launch: { name: 'Launch Window', cost: 2, type: 'attack', detail: 'Deal 12 +5 per Burnout, then clear Burnout.', rarity: 'rare', role: 'producer', art: 'launch.webp' },
+  reserve: { name: 'Buffer Budget', cost: 0, type: 'skill', detail: 'Gain 3 Block. Bank 2 for next turn.', rarity: 'common', role: 'architect', art: 'risk.webp' },
+  riskmatrix: { name: 'Risk Matrix', cost: 1, type: 'skill', detail: 'Gain 5 Block. +1 SP next turn.', rarity: 'uncommon', role: 'architect', art: 'risk.webp' },
+  probe: { name: 'Diagnostic Probe', cost: 1, type: 'attack', detail: 'Deal 4. Apply 2 Mark.', rarity: 'common', role: 'debugger', art: 'probe.webp' },
+  exploit: { name: 'Exploit Path', cost: 2, type: 'attack', detail: 'Deal 7 +5 per Mark. Clear Mark.', rarity: 'rare', role: 'debugger', art: 'exploit.webp' },
+  burnrate: { name: 'Burn Rate', cost: 1, type: 'attack', detail: 'Deal 7 +3 per Burnout. Gain 1 Burnout.', rarity: 'uncommon', role: 'producer', art: 'burn.webp' },
+  weekend: { name: 'Recovery Weekend', cost: 2, type: 'skill', detail: 'Heal 7. Clear 3 Burnout. Gain 5 Block.', rarity: 'rare', role: 'producer', art: 'recovery.webp' },
+  hardstop: { name: 'Hard Stop', cost: 1, type: 'skill', detail: 'Gain 7 Block. Clear 1 Burnout.', rarity: 'common', art: 'recovery.webp' },
+  retro: { name: 'Retrospective', cost: 1, type: 'skill', detail: 'Draw 2. Heal 3 if below half HP.', rarity: 'uncommon', art: 'warroom.webp' },
+  warroom: { name: 'War Room', cost: 2, type: 'skill', detail: '6 Block. 1 Weak to ALL. Draw 1.', rarity: 'rare', art: 'warroom.webp' }
 };
-export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch'];
+export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom'];
+export const CARD_POWER = {
+  patch: 2, review: 2, panic: 1, pair: 3, refactor: 3, memo: 3, sweep: 3, guardrail: 4,
+  rollback: 4, critical: 4, overclock: 4, blueprint: 5, rootcause: 4, scopelock: 4,
+  automation: 3, handoffmap: 2, incident: 5, triage: 3, signal: 4, sprint: 3, backlog: 4,
+  charter: 3, map: 3, contract: 4, integrity: 5, trace: 3, repro: 3, breakpoint: 4,
+  cascade: 5, standup: 2, trade: 4, quiet: 4, launch: 5,
+  reserve: 2, riskmatrix: 3, probe: 3, exploit: 5, burnrate: 4, weekend: 5,
+  hardstop: 3, retro: 3, warroom: 4
+};
+export const RARITY_WEIGHTS = [
+  { common: 55, uncommon: 35, rare: 10 },
+  { common: 40, uncommon: 40, rare: 20 },
+  { common: 25, uncommon: 40, rare: 35 }
+];
 export function cardInfo(id) {
   const upgraded = id.endsWith('+');
   const card = CARDS[upgraded ? id.slice(0, -1) : id];
-  if (!card || !upgraded) return card;
-  return { ...card, name: `${card.name}+`, detail: `${card.detail} ${card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true };
+  if (!card) return card;
+  const power = Math.min(5, CARD_POWER[upgraded ? id.slice(0, -1) : id] + (upgraded ? 1 : 0));
+  if (!upgraded) return { ...card, power };
+  return { ...card, name: `${card.name}+`, detail: `${card.detail} ${card.type === 'attack' ? '+3 dmg.' : '+3 Block.'}`, upgraded: true, power };
 }
 
 export const ITEMS = {
@@ -178,7 +203,7 @@ export function newGame(seed = randomSeed()) {
   seed = Number(seed) >>> 0;
   const s = {
     mode: 'intro', seed, rng: seed || 0x9e3779b9, floor: 0, turn: 0,
-    hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, spTax: 0,
+    hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, spTax: 0, nextSp: 0,
     deck: ['patch', 'patch', 'patch', 'patch', 'review', 'review', 'review', 'pair', 'refactor', 'panic'],
     drawPile: [], discardPile: [], hand: [],
     inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
@@ -235,7 +260,7 @@ export function startGame(s) { if (s.mode === 'intro') offerRoute(s); }
 function createEnemy(s, id, elite = false) {
   const data = ENEMIES[id], act = actIndex(s);
   const maxHp = data.hp + (data.boss ? 0 : act * 4) + (elite ? 14 + act * 3 : 0);
-  return { id, name: data.name, art: data.art, hp: maxHp, maxHp, block: 0, weak: 0, vulnerable: 0, step: 0, power: act + (elite ? 2 : 0), elite, boss: !!data.boss };
+  return { id, name: data.name, art: data.art, hp: maxHp, maxHp, block: 0, weak: 0, vulnerable: 0, mark: 0, step: 0, power: act + (elite ? 2 : 0), elite, boss: !!data.boss };
 }
 function drawOne(s) {
   if (s.hand.length >= 5) return;
@@ -253,6 +278,25 @@ function rewardCardPools(s) {
     neutral: REWARD_CARDS.filter(id => !CARDS[id].role)
   };
 }
+export function pickSkillOffer(s, pool) {
+  const weights = RARITY_WEIGHTS[actIndex(s)];
+  const choices = pool.filter(id => CARDS[id]);
+  if (!choices.length) return undefined;
+  const available = ['common', 'uncommon', 'rare'].filter(rarity => choices.some(id => CARDS[id].rarity === rarity));
+  const total = available.reduce((sum, rarity) => sum + weights[rarity], 0);
+  let roll = nextRandom(s) * total;
+  let tier = available.at(-1);
+  for (const rarity of available) {
+    roll -= weights[rarity];
+    if (roll < 0) { tier = rarity; break; }
+  }
+  const tierChoices = choices.filter(id => CARDS[id].rarity === tier);
+  const unseen = tierChoices.filter(id => !s.deck.includes(id));
+  return pick(s, unseen.length ? unseen : tierChoices);
+}
+export function skillPrice(id) {
+  return { common: 17, uncommon: 25, rare: 37 }[CARDS[id].rarity];
+}
 function beginCombat(s, route) {
   s.enemies = route.ids.map(id => createEnemy(s, id, route.elite));
   if (route.kind === 'event' || route.kind === 'shop') for (const enemy of s.enemies) {
@@ -261,7 +305,7 @@ function beginCombat(s, route) {
   s.lastFightElite = route.elite;
   s.turn = 1; s.sp = s.maxSp + (s.relics.includes('battery') ? 1 : 0); s.block = s.relics.includes('harness') ? 5 : 0;
   s.itemUsedThisTurn = false; s.firstAttack = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0;
-  s.spTax = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
+  s.spTax = 0; s.nextSp = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
   s.reserveBlock = 0; s.abilityUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0;
   if (s.relics.includes('coffee')) s.hp = Math.min(s.maxHp, s.hp + 4);
   s.drawPile = shuffle(s, s.deck); s.discardPile = []; s.hand = []; drawHand(s);
@@ -283,13 +327,14 @@ export function chooseRoute(s, index) {
     const pools = rewardCardPools(s);
     const tailoredRelics = availableRelics.filter(id => RELICS[id].role === s.role);
     s.shopStock = [
-      { kind: 'card', id: pick(s, nextRandom(s) < .65 ? pools.role : pools.neutral), price: SHOP_PRICES.card, sold: false },
+      { kind: 'card', id: pickSkillOffer(s, nextRandom(s) < .65 ? pools.role : pools.neutral), price: 0, sold: false },
       { kind: 'item', id: pick(s, Object.keys(ITEMS)), price: SHOP_PRICES.item, sold: false },
       { kind: 'relic', id: availableRelics.length ? pick(s, tailoredRelics.length && nextRandom(s) < .5 ? tailoredRelics : availableRelics) : '', price: SHOP_PRICES.relic, sold: false },
       { kind: 'trinket', id: availableTrinkets.length ? pick(s, availableTrinkets) : '', price: SHOP_PRICES.trinket, sold: false },
       { kind: 'heal', id: '', price: SHOP_PRICES.heal, sold: false },
       { kind: 'remove', id: '', price: SHOP_PRICES.remove, sold: false }
     ];
+    s.shopStock[0].price = skillPrice(s.shopStock[0].id);
     s.mode = 'shop'; note(s, 'The Night Archivist opens the cabinet of almost-useful things.'); return true;
   }
   return beginCombat(s, route);
@@ -407,10 +452,11 @@ export function intentFor(enemy) {
   if (intent.kind === 'split') return { ...intent, label: 'SPLIT · HALF HP' };
   return { ...intent, label: `RECOVER ${intent.amount}` };
 }
-function attackEnemy(s, enemy, amount) {
+function attackEnemy(s, enemy, amount, useMark = true) {
   if (!enemy) return 0;
   const notebookDraw = enemy.weak && s.relics.includes('notebook') && s.notebookTurn !== s.turn;
   amount += s.flow * 2 + s.upgradeDamage;
+  if (useMark && enemy.mark) { amount += 4; enemy.mark--; }
   if (enemy.weak && s.relics.includes('lens')) amount += 3;
   if (s.firstAttack && s.relics.includes('checklist')) amount += 4;
   s.firstAttack = false;
@@ -486,6 +532,15 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'trade': message += ` dealt ${attackEnemy(s, enemy, 11)} at a cost of 3 HP.`; s.hp = Math.max(1, s.hp - 3); break;
     case 'quiet': s.burnout = Math.max(0, s.burnout - 2); gainBlock(s, 6); message += ' cleared Burnout and raised Block.'; break;
     case 'launch': { const burnout = s.burnout; message += ` dealt ${attackEnemy(s, enemy, 12 + burnout * 5)} and cleared ${burnout} Burnout.`; s.burnout = 0; break; }
+    case 'reserve': gainBlock(s, 3); s.reserveBlock = Math.min(12, s.reserveBlock + 2); message += ' raised Block and banked 2.'; break;
+    case 'riskmatrix': gainBlock(s, 5); s.nextSp++; message += ' raised Block and planned +1 SP next turn.'; break;
+    case 'probe': message += ` dealt ${attackEnemy(s, enemy, 4)} and marked ${enemy.name}.`; enemy.mark = Math.min(3, (enemy.mark || 0) + 2); break;
+    case 'exploit': { const marks = enemy.mark || 0; message += ` dealt ${attackEnemy(s, enemy, 7 + marks * 5, false)} from ${marks} Mark.`; enemy.mark = 0; break; }
+    case 'burnrate': message += ` dealt ${attackEnemy(s, enemy, 7 + s.burnout * 3)}. Burnout +1.`; addSelfBurnout(s, 1); break;
+    case 'weekend': heal(s, 7); s.burnout = Math.max(0, s.burnout - 3); gainBlock(s, 5); message += ' healed, cleared Burnout, and raised Block.'; break;
+    case 'hardstop': gainBlock(s, 7); s.burnout = Math.max(0, s.burnout - 1); message += ' raised Block and cleared 1 Burnout.'; break;
+    case 'retro': drawOne(s); drawOne(s); if (s.hp * 2 < s.maxHp) heal(s, 3); message += ' drew 2 and recovered when needed.'; break;
+    case 'warroom': gainBlock(s, 6); for (const foe of s.enemies) foe.weak++; drawOne(s); message += ' raised Block, weakened all foes, and drew 1.'; break;
   }
   s.upgradeDamage = 0;
   if (id.endsWith('+') && card.type === 'skill') { gainBlock(s, 3, false); message += ' Upgrade: +3 Block.'; }
@@ -596,9 +651,9 @@ export function endTurn(s) {
   s.block = Math.min(15, s.reserveBlock + (s.relics.includes('grid') ? Math.min(3, s.block) : 0));
   s.reserveBlock = 0;
   s.turn++;
-  s.sp = Math.max(1, s.maxSp - s.burnout - s.spTax);
+  s.sp = Math.max(1, s.maxSp - s.burnout - s.spTax + s.nextSp);
   s.burnout = 0;
-  s.spTax = 0; s.firstSkillTurn = true;
+  s.spTax = 0; s.nextSp = 0; s.firstSkillTurn = true;
   s.flow = 0;
   s.itemUsedThisTurn = false;
   drawHand(s);
@@ -617,8 +672,8 @@ function makeRewards(s, boss) {
   }
   const pools = rewardCardPools(s);
   return [
-    { type: 'card', id: pick(s, pools.role) },
-    { type: 'card', id: pick(s, pools.neutral) },
+    { type: 'card', id: pickSkillOffer(s, pools.role) },
+    { type: 'card', id: pickSkillOffer(s, pools.neutral) },
     { type: 'heal', amount: 11 },
     { type: 'tune' }
   ];

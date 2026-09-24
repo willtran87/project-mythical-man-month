@@ -5,6 +5,7 @@ const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
 const W = 1200, H = 800;
 const ink = '#173241', cream = '#fff7e8', gold = '#eebd5d', coral = '#e96a55', teal = '#2e8d8b';
+const rarityColors = { basic: '#9ca8a4', common: '#5f9a92', uncommon: '#467eaa', rare: '#c3933d' };
 const artPaths = {
   cabinet: '/assets/artifact-cabinet.png',
   scope: '/assets/scope-creep.png', bug: '/assets/clockwork-bug.png', handoff: '/assets/handoff-hydra.png',
@@ -230,7 +231,9 @@ function shopOffer(offer, i) {
   rect(x, y, w, 238, offer.sold ? '#e2e2d8' : '#f6ecda', 14, '#cbb99c', 2);
   const name = offer.kind === 'card' ? cardInfo(offer.id).name : offer.kind === 'item' ? ITEMS[offer.id].name : offer.id ? RELICS[offer.id].name : 'Sold out';
   const detail = offer.kind === 'card' ? cardInfo(offer.id).detail : offer.kind === 'item' ? ITEMS[offer.id].detail : offer.id ? RELICS[offer.id].detail : 'No more relics remain.';
-  label(offer.kind.toUpperCase(), x + 15, y + 22, 12, teal, 'bold', 'left', 'Arial');
+  const offeredCard = offer.kind === 'card' ? cardInfo(offer.id) : null;
+  label(offeredCard ? offeredCard.rarity.toUpperCase() : offer.kind.toUpperCase(), x + 15, y + 22, 12, offeredCard ? rarityColors[offeredCard.rarity] : teal, 'bold', 'left', 'Arial');
+  if (offeredCard) label(`PWR ${offeredCard.power}`, x + w - 15, y + 22, 12, rarityColors[offeredCard.rarity], 'bold', 'right', 'Arial');
   if (offer.kind === 'card') {
     rect(x + 13, y + 39, w - 26, 79, '#263e48', 8);
     imageCover(cardArt[CARDS[offer.id].art], x + 16, y + 42, w - 32, 73, 6);
@@ -280,20 +283,26 @@ function combatEnemyCard(enemy, i, x, w) {
   rect(x + 13, y + 44, w - 26, 171, '#263e48', 11);
   const bob = reducedMotion ? 0 : Math.sin(clock * 2 + i) * 3;
   imageContain(art[enemy.art], x + 22, y + 48 + bob, w - 44, 162);
-  const ailments = [enemy.weak && ['WEAK', enemy.weak, teal], enemy.vulnerable && ['VULN', enemy.vulnerable, coral]].filter(Boolean);
-  ailments.forEach(([name, count, color], j) => statusPill(`${name} ${count}`, x + 22 + j * 88, y + 184, 82, true, color));
+  if (enemy.mark && !reducedMotion) {
+    ctx.save(); ctx.strokeStyle = `rgba(82,200,205,${.45 + Math.sin(clock * 3) * .15})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x + w / 2, y + 129, 77, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+  const ailments = [enemy.weak && ['WEAK', enemy.weak, teal], enemy.vulnerable && ['VULN', enemy.vulnerable, coral], enemy.mark && ['MARK', enemy.mark, '#497fa9']].filter(Boolean);
+  const pillWidth = Math.min(82, (w - 50) / Math.max(1, ailments.length) - 4);
+  ailments.forEach(([name, count, color], j) => statusPill(`${name} ${count}`, x + 22 + j * (pillWidth + 4), y + 184, pillWidth, true, color));
   label(enemy.name, x + w / 2, y + 239, 18, ink, 'bold', 'center');
   meter(x + 18, y + 263, w - 36, 11, enemy.hp, enemy.maxHp, coral);
-  label(`${enemy.hp}/${enemy.maxHp} HP   ·   ${enemy.block} BLOCK${enemy.weak ? `   ·   ${enemy.weak} WEAK` : ''}${enemy.vulnerable ? `   ·   ${enemy.vulnerable} VULN` : ''}`, x + w / 2, y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial');
+  label(`${enemy.hp}/${enemy.maxHp} HP   ·   ${enemy.block} BLOCK${enemy.weak ? `   ·   ${enemy.weak} WEAK` : ''}${enemy.vulnerable ? `   ·   ${enemy.vulnerable} VULN` : ''}${enemy.mark ? `   ·   ${enemy.mark} MARK` : ''}`, x + w / 2, y + 290, 13, '#5f6f74', 'bold', 'center', 'Arial', w - 20);
   hitboxes.push({ x, y, w, h, action: () => selectTarget(state, i) });
 }
 function playFromUI(index) {
   if (state.mode !== 'combat') return;
+  const playedId = state.hand[index]?.replace('+', '');
   const before = state.enemies.map(e => e.hp);
   const ok = playCard(state, index, state.target);
   if (ok) {
     const hit = before.some((hp, i) => state.enemies[i]?.hp < hp || state.mode !== 'combat');
-    effect = { kind: hit ? 'attack' : 'support', at: clock, target: state.target };
+    effect = { kind: playedId === 'probe' ? 'mark' : hit ? 'attack' : 'support', at: clock, target: state.target };
   }
 }
 function itemFromUI(index) {
@@ -326,9 +335,12 @@ function combatPulse() {
   const x = effect.kind === 'enemy' || effect.kind === 'support' ? 179 : targetX;
   const y = 319;
   ctx.save();
-  ctx.strokeStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${(1 - progress) * .8})` : `rgba(238,189,93,${(1 - progress) * .85})`;
+  ctx.strokeStyle = effect.kind === 'enemy' ? `rgba(233,106,85,${(1 - progress) * .8})` : effect.kind === 'mark' ? `rgba(70,171,186,${(1 - progress) * .9})` : `rgba(238,189,93,${(1 - progress) * .85})`;
   ctx.lineWidth = 5 - progress * 3;
   ctx.beginPath(); ctx.ellipse(x, y, 62 + progress * 67, 68 + progress * 56, 0, 0, Math.PI * 2); ctx.stroke();
+  if (effect.kind === 'mark') {
+    ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x + 15, y); ctx.moveTo(x, y - 15); ctx.lineTo(x, y + 15); ctx.stroke();
+  }
   ctx.restore();
 }
 function combat() {
@@ -340,7 +352,7 @@ function combat() {
   for (let i = 0; i < 3; i++) icon('relic', 253 + i * 16, 202, 12, i < state.flow ? gold : '#b7c7c2');
   imageContain(roleArt[state.role], 64, 213, 220, 195);
   label(`${state.hp}/${state.maxHp} HP`, 62, 420, 17, ink, 'bold', 'left', 'Arial');
-  label(`BANK ${state.reserveBlock}`, 296, 420, 12, teal, 'bold', 'right', 'Arial');
+  label(`BANK ${state.reserveBlock}${state.nextSp ? ` · NEXT SP +${state.nextSp}` : ''}`, 296, 420, 12, teal, 'bold', 'right', 'Arial', 150);
   meter(62, 436, 235, 12, state.hp, state.maxHp, coral);
   statusPill(`BLK ${state.block}`, 53, 455, 79, state.block > 0, teal);
   statusPill(`VULN ${state.vulnerable}`, 137, 455, 79, state.vulnerable > 0, coral);
@@ -362,7 +374,7 @@ function combat() {
     const hot = pointer.x >= x && pointer.x <= x + 180 && pointer.y >= y && pointer.y <= y + 160;
     const top = y - (hot ? 6 : 0), color = card.type === 'attack' ? coral : teal;
     rect(x, y + 4, 180, 160, ink, 12);
-    rect(x, top, 180, 160, available ? '#fff6e5' : '#d7dad4', 12, card.rarity === 'rare' ? gold : color, card.rarity === 'rare' ? 3 : 2);
+    rect(x, top, 180, 160, available ? '#fff6e5' : '#d7dad4', 12, rarityColors[card.rarity], card.rarity === 'rare' ? 4 : 2);
     rect(x + 6, top + 6, 168, 82, '#263e48', 8);
     imageCover(cardArt[card.art], x + 8, top + 8, 164, 78, 6);
     if (!available) rect(x + 8, top + 8, 164, 78, 'rgba(221,227,220,.5)', 6);
@@ -370,6 +382,8 @@ function combat() {
     label(card.cost, x + 27, top + 27, 17, cream, 'bold', 'center', 'Arial');
     rect(x + 138, top + 12, 30, 30, 'rgba(18,45,57,.88)', 15);
     icon(card.type === 'attack' ? 'sword' : 'shield', x + 153, top + 27, 18, cream);
+    rect(x + 45, top + 13, 89, 20, 'rgba(18,45,57,.88)', 6);
+    label(`${card.rarity.toUpperCase()} · P${card.power}`, x + 89, top + 23, 10, card.rarity === 'rare' ? gold : cream, 'bold', 'center', 'Arial', 83);
     label(`${i + 1}. ${card.name}`, x + 12, top + 107, 15, available ? ink : '#788985', 'bold', 'left', 'Arial', 156);
     wrap(card.detail, x + 12, top + 124, 156, card.detail.length > 43 ? 12 : 13, available ? '#5d6c72' : '#899692', 14, 'Arial');
     if (available) hitboxes.push({ x, y: y - 6, w: 180, h: 166, action: () => playFromUI(i) });
@@ -401,8 +415,10 @@ function reward() {
   label(`+${state.lastPayout} credits${state.lastPerfect ? ' · includes a 5-credit no-hit bonus' : ''}  ·  Choose one.`, 600, 258, 17, teal, 'normal', 'center');
   state.rewardChoices.forEach((choice, i) => {
     const x = 88 + i * 258, y = 311, w = 245;
-    rect(x, y, w, 328, '#f6ecdc', 16, choice.type === 'relic' ? gold : '#cdbba1', 2);
-    label(choice.type === 'card' ? 'NEW SKILL' : choice.type === 'relic' ? 'PERMANENT RELIC' : choice.type === 'heal' ? 'RECOVERY' : 'WORKSHOP', x + w / 2, y + 27, 13, choice.type === 'relic' ? coral : teal, 'bold', 'center', 'Arial');
+    const rewardCard = choice.type === 'card' ? cardInfo(choice.id) : null;
+    rect(x, y, w, 328, '#f6ecdc', 16, rewardCard ? rarityColors[rewardCard.rarity] : choice.type === 'relic' ? gold : '#cdbba1', rewardCard?.rarity === 'rare' ? 4 : 2);
+    label(rewardCard ? rewardCard.rarity.toUpperCase() : choice.type === 'relic' ? 'PERMANENT RELIC' : choice.type === 'heal' ? 'RECOVERY' : 'WORKSHOP', rewardCard ? x + 18 : x + w / 2, y + 27, 13, rewardCard ? rarityColors[rewardCard.rarity] : choice.type === 'relic' ? coral : teal, 'bold', rewardCard ? 'left' : 'center', 'Arial');
+    if (rewardCard) label(`PWR ${rewardCard.power}`, x + w - 18, y + 27, 13, rarityColors[rewardCard.rarity], 'bold', 'right', 'Arial');
     const name = choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook';
     const detail = choice.type === 'card' ? `${cardInfo(choice.id).cost} SP · ${cardInfo(choice.id).detail}` : choice.type === 'relic' ? RELICS[choice.id].detail : choice.type === 'heal' ? `Recover ${choice.amount} HP now.` : 'Upgrade one skill or remove a basic card.';
     rect(x + 20, y + 53, w - 40, 155, '#263e48', 13);
@@ -432,6 +448,7 @@ function tune() {
     label(choice.type === 'upgrade' ? `${card.name} → ${card.name}+` : card.name, x + w / 2, y + 235, 19, ink, 'bold', 'center', 'Georgia', w - 20);
     const detail = choice.type === 'upgrade' ? `Same ${card.cost} SP cost. ${card.type === 'attack' ? '+3 damage' : '+3 Block'} each play.` : 'Remove this basic skill. Draw your stronger cards more often.';
     wrap(detail, x + 24, y + 259, w - 48, 15, '#607078', 20, 'Arial');
+    label(`${card.rarity.toUpperCase()}  ·  PWR ${card.power}${choice.type === 'upgrade' ? ` → ${Math.min(5, card.power + 1)}` : ''}`, x + w / 2, y + 313, 12, rarityColors[card.rarity], 'bold', 'center', 'Arial');
     button(choice.type === 'upgrade' ? 'UPGRADE' : 'RETIRE CARD', x + 47, 660, 201, 53, () => chooseTune(state, i), { size: 16, fill: choice.type === 'upgrade' ? gold : '#edb1a1' });
   });
 }
@@ -447,6 +464,8 @@ function loadout() {
   label(ROLES[state.role].name.toUpperCase(), 540, 149, 17, teal, 'bold', 'left', 'Arial');
   label(`${state.deck.length} skills · ${state.relics.length} relics · ${state.trinkets.length}/2 trinkets`, 540, 188, 20, ink, 'bold');
   wrap(`${ROLES[state.role].ability}: ${ROLES[state.role].abilityDetail} Trinkets refresh each battle. Support skills build Flow for stronger attacks.`, 540, 221, 500, 17, '#53676a', 24);
+  label('POWER 1–5 = BASELINE IMPACT  ·  RARITY SHAPES OFFERS', 540, 338, 12, teal, 'bold', 'left', 'Arial');
+  label('MARK: NEXT ATTACK +4 DAMAGE, THEN SPEND 1 MARK', 540, 355, 11, '#647779', 'bold', 'left', 'Arial');
   rect(126, 370, 948, 2, '#d3bd9a');
   label('DECK', 137, 402, 17, teal, 'bold', 'left', 'Arial');
   label('RELICS', 455, 402, 17, teal, 'bold', 'left', 'Arial');
@@ -455,7 +474,9 @@ function loadout() {
   [...counts].slice(0, 12).forEach(([id, count], i) => {
     const card = cardInfo(id);
     icon(card.type === 'attack' ? 'sword' : 'shield', 146, 433 + i * 22, 14, card.type === 'attack' ? coral : teal);
-    label(`${count}× ${card.name}`, 164, 433 + i * 22, 14, ink, 'normal', 'left', 'Arial');
+    label(`${count}× ${card.name}`, 164, 433 + i * 22, 14, ink, 'normal', 'left', 'Arial', 231);
+    rect(403, 426 + i * 22, 7, 7, rarityColors[card.rarity], 4);
+    label(`P${card.power}`, 416, 433 + i * 22, 11, teal, 'bold', 'left', 'Arial');
   });
   if (counts.size > 12) label(`+ ${counts.size - 12} more skills`, 145, 710, 13, teal, 'bold', 'left', 'Arial');
   state.relics.slice(0, 6).forEach((id, i) => {
@@ -566,20 +587,20 @@ window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); }
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
   mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout,
-  hp: state.hp, maxHp: state.maxHp, sp: state.sp, maxSp: state.maxSp, block: state.block, reserveBlock: state.reserveBlock, flow: state.flow, credits: state.credits,
+  hp: state.hp, maxHp: state.maxHp, sp: state.sp, maxSp: state.maxSp, nextSp: state.nextSp, block: state.block, reserveBlock: state.reserveBlock, flow: state.flow, credits: state.credits,
   ability: { name: ROLES[state.role].ability, detail: ROLES[state.role].abilityDetail, ready: state.mode === 'combat' && !state.abilityUsed && (state.role !== 'architect' || (state.block > 0 && state.reserveBlock < 12)) },
   vulnerable: state.vulnerable, burnout: state.burnout, turn: state.turn,
   routeChoices: state.mode === 'route' ? state.routeChoices.map(c => ({ label: c.label, kind: c.kind || 'combat', foes: c.ids.map(id => ENEMIES[id].name), elite: c.elite, boss: c.boss })) : [],
   event: state.mode === 'event' ? { title: EVENTS[state.eventId].title, speaker: EVENTS[state.eventId].speaker, text: EVENTS[state.eventId].text, choices: EVENTS[state.eventId].choices.map((c, i) => ({ label: c.label, detail: c.detail, available: canChooseEvent(state, i) })) } : null,
-  shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, sold: o.sold, available: canBuyShop(state, i) })) : [],
-  enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, intent: intentFor(enemy).label, boss: enemy.boss })) : [],
+  shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, rarity: o.kind === 'card' ? cardInfo(o.id).rarity : null, power: o.kind === 'card' ? cardInfo(o.id).power : null, sold: o.sold, available: canBuyShop(state, i) })) : [],
+  enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, boss: enemy.boss })) : [],
   selectedTarget: state.target,
-  hand: state.mode === 'combat' ? state.hand.map((id, i) => ({ index: i, id, name: cardInfo(id).name, cost: cardInfo(id).cost, detail: cardInfo(id).detail, playable: state.sp >= cardInfo(id).cost })) : [],
+  hand: state.mode === 'combat' ? state.hand.map((id, i) => ({ index: i, id, name: cardInfo(id).name, cost: cardInfo(id).cost, detail: cardInfo(id).detail, rarity: cardInfo(id).rarity, power: cardInfo(id).power, playable: state.sp >= cardInfo(id).cost })) : [],
   deckSize: state.deck.length, drawSize: state.drawPile.length, discardSize: state.discardPile.length,
   inventory: state.inventory.map(id => ({ id, name: ITEMS[id].name, detail: ITEMS[id].detail })), itemUsedThisTurn: state.itemUsedThisTurn,
   trinkets: state.trinkets.map((id, i) => ({ index: i, id, name: TRINKETS[id].name, detail: TRINKETS[id].detail, ready: !state.usedTrinkets.includes(id) })),
   relics: state.relics.map(id => RELICS[id].name),
-  rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook' })) : [],
+  rewards: state.mode === 'reward' ? state.rewardChoices.map(choice => ({ type: choice.type, name: choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook', rarity: choice.type === 'card' ? cardInfo(choice.id).rarity : null, power: choice.type === 'card' ? cardInfo(choice.id).power : null })) : [],
   tuneChoices: state.mode === 'tune' ? state.tuneChoices.map(choice => ({ type: choice.type, name: cardInfo(choice.id).name, detail: choice.type === 'upgrade' ? `+3 ${cardInfo(choice.id).type === 'attack' ? 'damage' : 'Block'}` : 'Remove one basic card' })) : [],
   bossesDefeated: state.defeatedBosses, log: state.log, ending: state.ending, lastPayout: state.lastPayout, lastPerfect: state.lastPerfect
 });
