@@ -117,6 +117,10 @@ assert.equal((await state()).block, 7);
 await canvas.screenshot({ path: `${out}/status-block.png` });
 await page.keyboard.press('z');
 assert.equal((await state()).block, 7, 'trinket must not activate twice in one fight');
+await page.keyboard.press('a');
+assert.equal((await state()).reserveBlock, 7, 'Architect ability banks current Block');
+assert.equal((await state()).ability.ready, false);
+await canvas.screenshot({ path: `${out}/ability-bank.png` });
 const attack = s.hand.find(card => card.name === 'Patch');
 assert.ok(attack);
 const hpBefore = s.enemies[0].hp;
@@ -180,6 +184,12 @@ for (let turn = 0; turn < 60 && (await state()).mode === 'combat'; turn++) {
   else await page.keyboard.press('Space');
 }
 assert.equal((await state()).mode, 'reward', 'first incident should lead to a reward');
+await page.keyboard.press('4');
+assert.equal((await state()).mode, 'tune');
+await canvas.screenshot({ path: `${out}/workshop.png` });
+await page.keyboard.press('Escape');
+assert.equal((await state()).mode, 'reward');
+await page.keyboard.press('4');
 await page.keyboard.press('1');
 assert.equal((await state()).mode, 'route');
 await page.keyboard.press('3');
