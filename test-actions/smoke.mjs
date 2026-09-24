@@ -55,6 +55,10 @@ async function autopilot(seed, shots = false) {
         choice = Math.max(0, names.indexOf(preferred));
       }
       await page.keyboard.press(String(choice + 1));
+      if (shots && rewardShots === 1 && s.rewards[choice].type === 'card') {
+        assert.equal((await state()).rewardToast?.name, s.rewards[choice].name);
+        await canvas.screenshot({ path: `${out}/reward-acquired.png` });
+      }
       continue;
     }
     if (shots) for (const enemy of s.enemies) {
@@ -106,6 +110,20 @@ assert.equal(s.mode, 'combat');
 assert.equal(s.enemies.length, 1);
 assert.equal(s.hand.length, 5);
 await canvas.screenshot({ path: `${out}/first-battle.png` });
+const inspectIndex = s.hand.findIndex(card => card.name === 'Patch');
+assert.ok(inspectIndex >= 0);
+await click(26 + inspectIndex * 190 + 153, 643);
+assert.equal((await state()).cardPreview?.name, 'Patch');
+assert.equal((await state()).sp, 3, 'inspecting a card must not play it');
+await canvas.screenshot({ path: `${out}/card-inspect.png` });
+await page.keyboard.press('Escape');
+assert.equal((await state()).cardPreview, null);
+await page.keyboard.press('Shift+Digit1');
+assert.equal((await state()).cardPreview?.index, 0, 'keyboard inspect should open the first card');
+await page.keyboard.press('Escape');
+const cardBounds = await canvas.boundingBox();
+await page.mouse.move(cardBounds.x + (26 + inspectIndex * 190 + 85) * cardBounds.width / 1200, cardBounds.y + 660 * cardBounds.height / 800);
+await canvas.screenshot({ path: `${out}/card-hover.png` });
 await page.keyboard.press('c');
 assert.equal((await state()).loadoutOpen, true);
 await canvas.screenshot({ path: `${out}/loadout.png` });
@@ -139,6 +157,15 @@ assert.equal(s.inventory.length, 1);
 await page.keyboard.press('q');
 await canvas.screenshot({ path: `${out}/status-vulnerable.png` });
 assert.equal((await state()).inventory.length, 1, 'second tool use in one turn should be blocked');
+const modalCandidate = (await state()).hand.find(card => card.playable);
+if (modalCandidate) {
+  const logBeforePreviewPlay = (await state()).log[0];
+  await click(26 + modalCandidate.index * 190 + 153, 643);
+  assert.equal((await state()).cardPreview?.index, modalCandidate.index);
+  await click(720, 648);
+  assert.equal((await state()).cardPreview, null);
+  assert.notEqual((await state()).log[0], logBeforePreviewPlay, 'preview play button should use the selected skill');
+}
 
 const win = await autopilot(3, true);
 assert.equal(win.ending, 'win', JSON.stringify(win));

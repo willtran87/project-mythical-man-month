@@ -27,7 +27,7 @@ Story detours have event-specific illustrations, and both run endings have dedic
 
 All relics and trinkets have individual collectible art in rewards, shops, the combat bar, and the loadout view. The three playable leads have separate portraits; each act and boss has its own backdrop. Combat uses labeled status badges, Flow markers, and short action pulses, with pulses disabled for reduced-motion settings. The collectible, role, and backdrop prompts are in `public/assets/collectibles-and-scenes-prompts.md`.
 
-The title has a dedicated project-crisis illustration, and the Night Market has illustrated healing and card-retirement services. Combat uses a duel sigil, a larger boss presentation, and short action bursts; the Playbook displays card art and collectible slots. These effects respect reduced-motion settings. The three new illustration prompts are in `public/assets/ui/aesthetic-pass-prompts.md`.
+Route cards use separate visual treatments for steady fights, risky fights, story detours, market stops, and bosses, with clear consequence labels. Skill cards have larger hover and tap-to-inspect views; rare rewards and relics receive special frames and an acquisition toast. The title has a dedicated project-crisis illustration, and the Night Market has illustrated healing and card-retirement services. Combat uses a duel sigil, a larger boss presentation, and short action bursts; the Playbook displays card art and collectible slots. These effects respect reduced-motion settings. The three new illustration prompts are in `public/assets/ui/aesthetic-pass-prompts.md`.
 
 Every skill card has illustrated artwork in combat, the Night Market, and reward choices. Eight original scenes, six earlier role scenes, six rarity expansion scenes, and nine new scenes cover related skill families; the card name, cost, rarity, Power, and effect remain live game text. The role relics and enemies have their own art. Prompts are in `public/assets/cards/prompts.md`, `public/assets/role-expansion-prompts.md`, `public/assets/rarity-expansion-prompts.md`, and `public/assets/build-expansion-prompts.md`.
 
@@ -40,6 +40,9 @@ Every skill card has illustrated artwork in combat, the Night Market, and reward
 | 1–3 | Choose a role, route, event response, or workshop choice |
 | 1–4 | Choose a battle reward |
 | 1–5 | Play a card in combat |
+| Hover a card or tap its lens | Preview its art and full effect |
+| Shift+1–5 | Inspect a hand card |
+| Enter / Escape in card preview | Play the inspected card / close the preview |
 | 1–6 | Buy a numbered shop offer |
 | Tab | Cycle enemy targets |
 | Q / W / E | Use the corresponding carried tool |

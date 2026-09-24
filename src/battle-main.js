@@ -50,7 +50,7 @@ const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
 let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false;
-let clock = 0, lastFrame = 0, effect = null;
+let clock = 0, lastFrame = 0, effect = null, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rect(x, y, w, h, fill, radius = 0, stroke = null, line = 1) {
@@ -196,15 +196,24 @@ function route() {
   const choices = state.routeChoices;
   choices.forEach((choice, i) => {
     const w = choices.length === 1 ? 510 : 337, x = choices.length === 1 ? 345 : 79 + i * 354;
-    rect(x, 285, w, 370, '#f6ecda', 17, choice.boss ? coral : '#cfbda1', choice.boss ? 4 : 2);
-    label(`${i + 1}. ${choice.label.toUpperCase()}`, x + w / 2, 319, 18, choice.boss ? coral : ink, 'bold', 'center', 'Arial');
-    rect(x + 25, 346, w - 50, 210, '#263e48', 13);
+    const detour = choice.kind === 'event' || choice.kind === 'shop';
+    const accent = choice.boss ? coral : choice.elite ? '#c7804f' : detour ? teal : '#5f8792';
+    const fill = choice.boss ? '#fff0e3' : choice.elite ? '#fff1dd' : detour ? '#eaf3e9' : '#f2eee2';
+    const badge = choice.boss ? 'BOSS · RELIC REWARD' : choice.elite ? 'HIGHER RISK · EXTRA TOOL' : choice.kind === 'event' ? 'STORY · REINFORCED FOE' : choice.kind === 'shop' ? 'MARKET · REINFORCED FOE' : 'STEADY FIGHT · SKILL REWARD';
+    rect(x, 285, w, 370, fill, 17, accent, choice.boss || choice.elite ? 3 : 2);
+    rect(x + 13, 293, w - 26, 4, accent, 2);
+    rect(x + 18, 304, 32, 32, accent, 16);
+    label(i + 1, x + 34, 321, 17, cream, 'bold', 'center', 'Arial');
+    label(choice.label.toUpperCase(), x + w / 2 + 12, 320, 17, ink, 'bold', 'center', 'Arial', w - 70);
+    rect(x + 25, 346, w - 50, 210, '#263e48', 13, accent, 2);
     if (choice.kind === 'event') imageContain(art.archive, x + 32, 352, w - 64, 198);
     else if (choice.kind === 'shop') imageContain(art.archivist, x + 32, 352, w - 64, 198);
     else choiceArtwork(choice.ids, x + 33, 352, w - 66, 198);
     const names = choice.ids.map(id => ENEMIES[id].name).join(' + ');
     label(choice.kind === 'event' ? 'Unknown story · then ' + names : choice.kind === 'shop' ? 'Shop · then ' + names : names, x + w / 2, 579, 15, ink, 'bold', 'center', 'Arial');
     label(choice.detail, x + w / 2, 610, 14, '#617179', 'normal', 'center', 'Arial');
+    rect(x + 25, 628, w - 50, 25, accent, 7);
+    label(badge, x + w / 2, 641, 12, cream, 'bold', 'center', 'Arial', w - 58);
     button(choice.kind === 'event' ? 'EXPLORE' : choice.kind === 'shop' ? 'VISIT SHOP' : 'ENTER BATTLE', x + (w - 230) / 2, 667, 230, 51, () => chooseRoute(state, i), { fill: choice.boss ? coral : gold, size: 17 });
   });
 }
@@ -312,6 +321,7 @@ function combatEnemyCard(enemy, i, x, w) {
 }
 function playFromUI(index) {
   if (state.mode !== 'combat') return;
+  previewCardIndex = null; hoverPreviewEnabled = false;
   const playedId = state.hand[index]?.replace('+', '');
   const before = state.enemies.map(e => e.hp);
   const ok = playCard(state, index, state.target);
@@ -415,11 +425,14 @@ function combat() {
     label(card.cost, x + 27, top + 27, 17, cream, 'bold', 'center', 'Arial');
     rect(x + 138, top + 12, 30, 30, 'rgba(18,45,57,.88)', 15);
     icon(card.type === 'attack' ? 'sword' : 'shield', x + 153, top + 27, 18, cream);
+    rect(x + 138, top + 51, 30, 30, 'rgba(18,45,57,.9)', 15, cream, 1);
+    icon('lens', x + 153, top + 66, 17, cream);
     rect(x + 45, top + 13, 89, 20, 'rgba(18,45,57,.88)', 6);
     label(`${card.rarity.toUpperCase()} · P${card.power}`, x + 89, top + 23, 10, card.rarity === 'rare' ? gold : cream, 'bold', 'center', 'Arial', 83);
     label(`${i + 1}. ${card.name}`, x + 12, top + 107, 15, available ? ink : '#788985', 'bold', 'left', 'Arial', 156);
     wrap(card.detail, x + 12, top + 124, 156, card.detail.length > 43 ? 12 : 13, available ? '#5d6c72' : '#899692', 14, 'Arial');
     if (available) hitboxes.push({ x, y: y - 6, w: 180, h: 166, action: () => playFromUI(i) });
+    hitboxes.push({ x: x + 137, y: top + 50, w: 32, h: 32, action: () => { previewCardIndex = i; } });
   });
   button('END TURN  SPACE', 993, 612, 181, 111, () => endFromUI(), { fill: coral, size: 18 });
   rect(25, 749, 1150, 40, 'rgba(19,47,58,.96)', 10);
@@ -441,6 +454,60 @@ function combat() {
     if (!used) hitboxes.push({ x, y: 754, w: 199, h: 30, action: () => trinketFromUI(i) });
   });
 }
+function hoveredCardIndex() {
+  if (!hoverPreviewEnabled || state.mode !== 'combat') return -1;
+  return state.hand.findIndex((_, i) => pointer.x >= 26 + i * 190 && pointer.x <= 206 + i * 190 && pointer.y >= 577 && pointer.y <= 743);
+}
+function cardPreview(index, modal = false) {
+  const id = state.hand[index]; if (!id) return;
+  const card = cardInfo(id), x = modal ? 338 : clamp(26 + index * 190 - 65, 30, 860);
+  const y = modal ? 100 : 217, w = modal ? 524 : 310, h = modal ? 592 : 341;
+  if (modal) rect(0, 0, W, H, 'rgba(10,29,39,.8)');
+  rect(x, y, w, h, '#fff8e9', 16, rarityColors[card.rarity], card.rarity === 'rare' ? 5 : 3);
+  rect(x + 13, y + 13, w - 26, 4, rarityColors[card.rarity], 2);
+  label(`${card.rarity.toUpperCase()} · POWER ${card.power}`, x + 21, y + (modal ? 37 : 33), modal ? 14 : 12, rarityColors[card.rarity], 'bold', 'left', 'Arial');
+  label(`${card.cost} SP`, x + w - 20, y + (modal ? 37 : 33), modal ? 16 : 13, card.type === 'attack' ? coral : teal, 'bold', 'right', 'Arial');
+  const artY = y + (modal ? 84 : 55), artH = modal ? 265 : 150;
+  rect(x + 20, artY, w - 40, artH, '#263e48', 10);
+  imageCover(cardArt[card.art], x + 24, artY + 4, w - 48, artH - 8, 7);
+  label(card.name, x + w / 2, artY + artH + (modal ? 32 : 26), modal ? 28 : 21, ink, 'bold', 'center', 'Georgia', w - 40);
+  wrap(card.detail, x + 25, artY + artH + (modal ? 62 : 49), w - 50, modal ? 19 : 15, '#53676d', modal ? 28 : 21, 'Arial');
+  if (modal) {
+    label(`${card.type.toUpperCase()} · ${card.family.toUpperCase()} FAMILY`, x + w / 2, y + 499, 13, teal, 'bold', 'center', 'Arial');
+    button('CLOSE  ·  ESC', x + 26, y + 524, 215, 49, () => { previewCardIndex = null; }, { size: 15, fill: '#dfd8c5' });
+    button('PLAY THIS CARD', x + 271, y + 524, 226, 49, () => playFromUI(index), { size: 15, disabled: state.sp < card.cost });
+  } else label('Tap the lens to inspect · click card to play', x + w / 2, y + h - 22, 11, teal, 'bold', 'center', 'Arial');
+}
+function takeRewardFromUI(index) {
+  const choice = state.rewardChoices[index];
+  if (!choice || !chooseReward(state, index) || choice.type === 'tune') return;
+  const card = choice.type === 'card' ? cardInfo(choice.id) : null;
+  const toast = {
+    type: choice.type,
+    name: card ? card.name : choice.type === 'relic' ? RELICS[choice.id].name : 'Rest the Team',
+    detail: card ? `${card.rarity.toUpperCase()} SKILL · ADDED TO PLAYBOOK` : choice.type === 'relic' ? 'RELIC ACTIVE · ADDED TO PLAYBOOK' : 'HEALTH RESTORED',
+    image: card ? cardArt[card.art] : choice.type === 'relic' ? relicArt[choice.id] : art.pizza,
+    accent: choice.type === 'relic' || card?.rarity === 'rare' ? gold : teal,
+    startedAt: performance.now()
+  };
+  rewardToast = toast;
+  setTimeout(() => { if (rewardToast === toast) { rewardToast = null; render(); } }, 2200);
+}
+function drawRewardToast() {
+  if (!rewardToast) return;
+  const toast = rewardToast, elapsed = performance.now() - toast.startedAt;
+  if (elapsed >= 2200) { rewardToast = null; return; }
+  ctx.save();
+  if (!reducedMotion) ctx.globalAlpha = Math.min(1, (2200 - elapsed) / 320);
+  rect(348, 151, 504, 106, '#193946', 13, toast.accent, 3);
+  rect(360, 163, 82, 82, '#263e48', 8);
+  if (toast.type === 'heal') imageContain(toast.image, 365, 168, 72, 72);
+  else imageCover(toast.image, 365, 168, 72, 72, 5);
+  label(toast.detail, 461, 179, 12, toast.accent, 'bold', 'left', 'Arial', 371);
+  label(toast.name, 461, 216, 24, cream, 'bold', 'left', 'Georgia', 365);
+  icon('relic', 818, 205, 15, toast.accent);
+  ctx.restore();
+}
 function reward() {
   background(); runHeader();
   rect(70, 165, 1060, 579, 'rgba(255,247,232,.98)', 20, ink, 3);
@@ -449,7 +516,13 @@ function reward() {
   state.rewardChoices.forEach((choice, i) => {
     const x = 88 + i * 258, y = 311, w = 245;
     const rewardCard = choice.type === 'card' ? cardInfo(choice.id) : null;
-    rect(x, y, w, 328, '#f6ecdc', 16, rewardCard ? rarityColors[rewardCard.rarity] : choice.type === 'relic' ? gold : '#cdbba1', rewardCard?.rarity === 'rare' ? 4 : 2);
+    const premium = choice.type === 'relic' || rewardCard?.rarity === 'rare';
+    rect(x, y, w, 328, premium ? '#fff0d8' : '#f6ecdc', 16, premium ? gold : rewardCard ? rarityColors[rewardCard.rarity] : '#cdbba1', premium ? 4 : 2);
+    if (premium) {
+      rect(x + 8, y + 8, w - 16, 3, gold, 2);
+      icon('relic', x + 15, y + 312, 11, gold);
+      icon('relic', x + w - 15, y + 312, 11, gold);
+    }
     label(rewardCard ? rewardCard.rarity.toUpperCase() : choice.type === 'relic' ? 'PERMANENT RELIC' : choice.type === 'heal' ? 'RECOVERY' : 'WORKSHOP', rewardCard ? x + 18 : x + w / 2, y + 27, 13, rewardCard ? rarityColors[rewardCard.rarity] : choice.type === 'relic' ? coral : teal, 'bold', rewardCard ? 'left' : 'center', 'Arial');
     if (rewardCard) label(`PWR ${rewardCard.power}`, x + w - 18, y + 27, 13, rarityColors[rewardCard.rarity], 'bold', 'right', 'Arial');
     const name = choice.type === 'card' ? cardInfo(choice.id).name : choice.type === 'relic' ? RELICS[choice.id].name : choice.type === 'heal' ? 'Rest the Team' : 'Tune the Playbook';
@@ -464,7 +537,7 @@ function reward() {
     label(name, x + w / 2, y + 235, 18, ink, 'bold', 'center', 'Georgia', w - 20);
     wrap(detail, x + 19, y + 260, w - 38, 14, '#607078', 18, 'Arial');
     if (choice.source === 'build') label(choice.fit >= 3 ? `BUILD FIT · ${choice.family.toUpperCase()}` : 'FLEX PICK', x + w / 2, y + 308, 11, teal, 'bold', 'center', 'Arial');
-    button(choice.type === 'tune' ? 'OPEN WORKSHOP' : 'TAKE REWARD', x + 27, 662, w - 54, 52, () => chooseReward(state, i), { size: 15 });
+    button(choice.type === 'tune' ? 'OPEN WORKSHOP' : 'TAKE REWARD', x + 27, 662, w - 54, 52, () => takeRewardFromUI(i), { size: 15 });
   });
 }
 function tune() {
@@ -585,7 +658,10 @@ function render() {
   else if (state.mode === 'reward') reward();
   else if (state.mode === 'tune') tune();
   else ending();
+  if (rewardToast && state.mode === 'route') drawRewardToast();
   if (showLoadout) { hitboxes = []; loadout(); }
+  else if (previewCardIndex !== null && state.mode === 'combat') { hitboxes = []; cardPreview(previewCardIndex, true); }
+  else if (state.mode === 'combat') { const hovered = hoveredCardIndex(); if (hovered >= 0) cardPreview(hovered); }
 }
 function resize() {
   const scale = Math.min(innerWidth / W, innerHeight / H), dpr = Math.min(devicePixelRatio || 1, 2);
@@ -600,15 +676,20 @@ function animationLoop(now) {
   else if (now - lastFrame >= 1000 / 30) { clock += Math.min(now - lastFrame, 100) / 1000; lastFrame = now; render(); }
   requestAnimationFrame(animationLoop);
 }
-canvas.addEventListener('pointermove', e => { pointer = position(e); render(); });
-canvas.addEventListener('pointerleave', () => { pointer = { x: -1, y: -1 }; render(); });
+canvas.addEventListener('pointermove', e => { pointer = position(e); hoverPreviewEnabled = e.pointerType === 'mouse'; render(); });
+canvas.addEventListener('pointerleave', () => { pointer = { x: -1, y: -1 }; hoverPreviewEnabled = false; render(); });
 canvas.addEventListener('pointerdown', e => {
-  e.preventDefault(); pointer = position(e);
+  e.preventDefault(); pointer = position(e); hoverPreviewEnabled = false;
   const hit = [...hitboxes].reverse().find(b => pointer.x >= b.x && pointer.x <= b.x + b.w && pointer.y >= b.y && pointer.y <= b.y + b.h);
   if (hit) { hit.action(); render(); }
 });
 window.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
+  if (previewCardIndex !== null) {
+    if (key === 'escape') previewCardIndex = null;
+    else if (e.key === 'Enter' && state.sp >= cardInfo(state.hand[previewCardIndex]).cost) playFromUI(previewCardIndex);
+    render(); return;
+  }
   if (key === 'c' && state.mode !== 'intro') { showLoadout = !showLoadout; render(); return; }
   if (showLoadout) { if (key === 'escape') { showLoadout = false; render(); } return; }
   if (key === 'f') { if (document.fullscreenElement) document.exitFullscreen?.(); else canvas.requestFullscreen?.(); }
@@ -618,10 +699,15 @@ window.addEventListener('keydown', e => {
   else if (state.mode === 'event' && ['1', '2', '3'].includes(e.key)) chooseEvent(state, Number(e.key) - 1);
   else if (state.mode === 'shop' && ['1', '2', '3', '4', '5', '6'].includes(e.key)) buyShop(state, Number(e.key) - 1);
   else if (state.mode === 'shop' && e.key === 'Enter') leaveShop(state);
-  else if (state.mode === 'reward' && ['1', '2', '3', '4'].includes(e.key)) chooseReward(state, Number(e.key) - 1);
+  else if (state.mode === 'reward' && ['1', '2', '3', '4'].includes(e.key)) takeRewardFromUI(Number(e.key) - 1);
   else if (state.mode === 'tune' && ['1', '2', '3'].includes(e.key)) chooseTune(state, Number(e.key) - 1);
   else if (state.mode === 'tune' && key === 'escape') cancelTune(state);
   else if (state.mode === 'combat') {
+    if (e.shiftKey && /^Digit[1-5]$/.test(e.code)) {
+      const index = Number(e.code.slice(-1)) - 1;
+      if (state.hand[index]) previewCardIndex = index;
+      render(); return;
+    }
     if (key === 'a') abilityFromUI();
     if (['1', '2', '3', '4', '5'].includes(e.key)) playFromUI(Number(e.key) - 1);
     if (e.code === 'Space') { e.preventDefault(); endFromUI(); }
@@ -639,6 +725,8 @@ window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); }
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
   mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, loadoutOpen: showLoadout,
+  cardPreview: previewCardIndex !== null && state.mode === 'combat' ? { index: previewCardIndex, name: cardInfo(state.hand[previewCardIndex]).name } : null,
+  rewardToast: rewardToast ? { type: rewardToast.type, name: rewardToast.name, detail: rewardToast.detail } : null,
   hp: state.hp, maxHp: state.maxHp, sp: state.sp, maxSp: state.maxSp, nextSp: state.nextSp, block: state.block, reserveBlock: state.reserveBlock, flow: state.flow, credits: state.credits,
   ability: { name: ROLES[state.role].ability, detail: ROLES[state.role].abilityDetail, ready: state.mode === 'combat' && !state.abilityUsed && (state.role !== 'architect' || (state.block > 0 && state.reserveBlock < 12)) },
   vulnerable: state.vulnerable, burnout: state.burnout, turn: state.turn,
