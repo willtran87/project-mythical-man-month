@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { newGame, startGame, chooseRoute, openHiring, hireSpecialist, specialistPrice, useSpecialist, useRoleAbility, useTrinket, playCard, intentFor, chooseReward, chooseTune, chooseUpgrade, debtTier, cardInfo } from '../src/battle-game.js';
+import { newGame, startGame, chooseRoute, choosePractice, openHiring, hireSpecialist, specialistPrice, useSpecialist, useRoleAbility, useTrinket, playCard, intentFor, chooseReward, chooseTune, chooseUpgrade, debtTier, cardInfo } from '../src/battle-game.js';
 
 const team = newGame(42); startGame(team);
 assert.equal(openHiring(team), true);
@@ -48,6 +48,7 @@ const audit = debt.tuneChoices.findIndex(c => c.type === 'audit');
 assert.ok(audit >= 0);
 chooseTune(debt, audit);
 assert.equal(debt.projectDebt, 4);
+if (debt.mode === 'practice') choosePractice(debt, 'cohesion');
 assert.equal(debt.mode, 'route');
 
 const upgrade = newGame(19); startGame(upgrade); chooseRoute(upgrade, 0);
@@ -61,6 +62,7 @@ assert.equal(upgrade.mode, 'upgrade');
 chooseUpgrade(upgrade, 'flex');
 assert.ok(upgrade.deck.includes(`${id}*`));
 assert.equal(cardInfo(`${id}*`).branch, 'flex');
+if (upgrade.mode === 'practice') choosePractice(upgrade, 'cohesion');
 assert.equal(upgrade.mode, 'route');
 const flexAttack = newGame(27); startGame(flexAttack); chooseRoute(flexAttack, 0);
 flexAttack.hand = ['patch*']; flexAttack.sp = 3;

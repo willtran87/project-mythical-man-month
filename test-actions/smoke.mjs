@@ -73,6 +73,12 @@ async function autopilot(seed, shots = false) {
       }
       continue;
     }
+    if (s.pendingChoice) {
+      const option = s.pendingChoice.kind === 'releasegate' && s.sp < 1 ? 2 : s.pendingChoice.kind === 'defect' && s.evidence >= 2 && s.projectDebt >= 2 ? 3 : 1;
+      await page.keyboard.press(String(option));
+      continue;
+    }
+    if (s.initiatives.some(plan => plan.id === 'releasegate' && plan.canAct)) { await page.keyboard.press('g'); continue; }
     if (shots) for (const enemy of s.enemies) {
       if (enemy.boss && enemy.phase > 1 && !capturedPhases.has(`${enemy.name}-${enemy.phase}`)) {
         capturedPhases.add(`${enemy.name}-${enemy.phase}`);

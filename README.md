@@ -23,9 +23,11 @@ Play up to five cards from your hand against the selected foe. Cards cost skill 
 
 Each battle now has an optional Sprint Brief. Completing it earns eight credits and pays down one Project Debt. Shortcut cards add Debt on their first use each fight; at four Debt, regular enemies gain health, and at eight they gain more health and attack power. A workshop Technical Audit pays down four Debt. Bosses change phase at 65% and 30% health, immediately telegraphing their new next intent.
 
-Debt also shuffles one or two temporary Open Defect cards into combat at its pressure thresholds. Playing a Defect spends SP to fix it, removes one Debt, and draws a replacement card; fixed Defects leave the fight. Intent-control skills can advance an enemy plan, mitigate its next attack, redirect it, or cancel it at a Debt cost. Test Pipeline, Handoff Protocol, and Staged Rollout are multi-turn initiatives that pay off after their visible countdowns.
+Debt also shuffles one or two temporary Open Defect cards into combat at its pressure thresholds. Playing a Defect spends 1 SP, then opens a triage choice: fix it for Debt reduction and a card, defer it for a refunded SP at the cost of more Debt, or spend 2 Evidence to automate a larger cleanup. Deferred Defects return to the discard. Intent-control skills can advance an enemy plan, mitigate its next attack, redirect it, or cancel it at a Debt cost. Test Pipeline, Handoff Protocol, and Staged Rollout are multi-turn initiatives that pay off after their visible countdowns.
 
 Twelve additional skills make the turn-to-turn decisions more involved. Decision Record and Release Cut spend Flow for defense or damage. Change Freeze and Pager Duty arm a response to a chosen foe's next intent. Backlog Grooming lets you save a selected hand card for next turn; Archive Ticket removes a hand card for the rest of the fight. Migration Plan and Handoff Gate reward playing the right card types before their two-turn deadlines and penalize missed plans. Scope Decision opens a safe-or-risky combat choice. Each lead also gets a new build payoff: Architect spends banked Block with Load-Bearing Fix, Debugger converts Mark into cards and SP with Evidence Chain, and Producer borrows SP through Sprint Commitment while promising attacks. Six of these skills have distinct Force and Flex upgrades. Five new illustrated scenes cover these mechanics; prompts are in `public/assets/cards/skill-depth-prompts.md`.
+
+Twelve more reward skills connect five tactical systems. **Coupling:** Decouple and Interface Audit can sever the power link in a Coupled Systems encounter without first defeating a foe. **Evidence:** Trace Ledger and Watchpoint gather up to three Evidence, revealing each foe's following intent; Case File spends it on damage and Forensic Brief spends it on defense and draw. **Release Gates:** Release Gate starts a three-stage plan. Once each turn, press G or its combat button to test for Block, rush for Debt, or abort for a partial refund; Gate Check advances it with Block or gathers Evidence when no gate is active. Completing a gate hits every foe, while missing its deadline adds Debt. **Defect Triage:** Bug Budget borrows SP now and adds a Defect and Debt to clean up later. **Deck Recovery:** One-Off Prototype is a strong exhausted attack, Salvage Plan topdecks a discard, and Reclaim Work returns an exhausted card. Five new image-generated card scenes cover these families, and five skills have tailored Force and Flex upgrades; prompts are in `public/assets/cards/systems-depth-prompts.md`.
 
 Each non-boss route now carries a visible crisis condition: Legacy System adds an Open Defect, Executive Demo powers up foes from turn three, and Build Blackout cuts opening SP. Each pays bonus credits. Playing attacks raises Release Readiness by one and skills by two. Once Readiness reaches six and the team has survived a turn, it may ship the incident early. Shipping awards half the normal credits, adds one Debt per unresolved foe, forfeits the Sprint Brief and perfect defense bonus, and lowers the final score. Bosses still require a fight to the finish.
 
@@ -53,7 +55,7 @@ The Run Archive now tracks mastery for each lead. A win unlocks an alternate sta
 
 ## Performance
 
-Illustrations load when their screen needs them. The route screen preloads the current deck and combat effect art so the next fight starts with its assets ready. The older multi-megabyte PNG illustrations have display-sized WebP copies; the original PNGs remain in `public/assets/` as source art. The build removes superseded PNG copies from `dist/`, reducing the published package by about 79 MB. Combat uses an opaque canvas and skips a redundant full-canvas clear. Slow idle motion redraws at roughly 30 fps, while actions, particles, card travel, reward toasts, and pointer activity redraw at the display's full cadence. Reduced-motion mode still avoids the animation loop.
+Illustrations load when their screen needs them. The route screen preloads the current deck and combat effect art so the next fight starts with its assets ready. The large PNG illustrations have display-sized WebP copies; the original PNGs remain in `public/assets/` as source art. The build removes 42 superseded PNG copies from `dist/`, reducing the published package by about 92 MB. Combat uses an opaque canvas and skips a redundant full-canvas clear. Slow idle motion redraws at roughly 30 fps, while actions, particles, card travel, reward toasts, and pointer activity redraw at the display's full cadence. Reduced-motion mode still avoids the animation loop.
 
 On the seed-42 local art check, the title requested 5 images totaling 0.64 MB, the route reached 28 images and 2.63 MB, and the first fight reached 31 images and 3.03 MB. These are diagnostic local transfer figures; a browser cache can make later visits cheaper.
 
@@ -71,11 +73,13 @@ On the seed-42 local art check, the title requested 5 images totaling 0.64 MB, t
 | Y | Toggle an unlocked mastery kit on the title screen |
 | D / J | Cycle unlocked Escalation tiers / open the Run Archive on the title screen |
 | B | Resolve a boss phase problem for 2 SP or stabilize a handoff mission for 1 SP |
+| G | Open an active Release Gate's test, rush, or abort decision |
 | I | Open or close Battle Details to review current goals and modifiers |
 | R | Ship a ready non-boss incident early; on the ending screen, replay the same lead and format |
 | 1–2 | Choose Force or Flex after selecting a workshop upgrade |
 | 1–4 | Choose a battle reward |
 | 1–5 | Play a card in combat; choose an option when a skill opens a decision |
+| Left / Right | Page through a Salvage or Reclaim card choice |
 | Hover a card or tap its lens | Preview its art and full effect |
 | Shift+1–5 | Inspect a hand card |
 | Enter / Escape in card preview | Play the inspected card / close the preview |
@@ -100,6 +104,8 @@ node test-actions/asset-profile.mjs
 node test-actions/render-cadence.mjs
 node test-actions/skill-depth.mjs
 node test-actions/skill-depth-browser.mjs
+node test-actions/mechanics-expansion.mjs
+node test-actions/systems-depth-browser.mjs
 node test-actions/maturity.mjs
 node test-actions/role-depth.mjs
 node test-actions/build-depth.mjs

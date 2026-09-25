@@ -58,7 +58,7 @@ export const PRACTICES = {
 };
 export const MISSIONS = {
   handoff: { name: 'Unstable Handoff', detail: 'Spend 1 SP to stabilize before the third enemy turn, or gain 1 Project Debt.' },
-  coupled: { name: 'Coupled Systems', detail: 'Both foes have +1 power while together. Defeat either to break the link.' },
+  coupled: { name: 'Coupled Systems', detail: 'Both foes have +1 power while linked. Defeat either or sever their interface.' },
   audit: { name: 'Compliance Audit', detail: 'End a turn with at least 1 unspent SP. Each miss adds 1 Debt; two clean turns earn bonus credits.' }
 };
 export const BOSS_PROBLEMS = {
@@ -137,9 +137,21 @@ export const CARDS = {
   loadbearing: { name: 'Load-Bearing Fix', cost: 1, type: 'attack', detail: 'Spend up to 6 banked Block. Deal 5 +2 each.', rarity: 'uncommon', role: 'architect', art: 'buffer.webp' },
   evidence: { name: 'Evidence Chain', cost: 1, type: 'skill', detail: 'Spend up to 2 Mark: draw 1 each; at 2, +1 SP.', rarity: 'uncommon', role: 'debugger', art: 'probe.webp' },
   sprintcommit: { name: 'Sprint Commitment', cost: 0, type: 'skill', detail: '+2 SP. Play 2 attacks this turn or +1 Debt per miss.', rarity: 'rare', role: 'producer', art: 'borrow.webp' },
-  defect: { name: 'Open Defect', cost: 1, type: 'skill', detail: 'Fix: pay 1 SP to remove 1 Debt and draw 1.', rarity: 'basic', art: 'risk.webp' }
+  decouple: { name: 'Decouple', cost: 1, type: 'attack', detail: 'Deal 8. Sever linked foes; if linked, gain 5 Block.', rarity: 'uncommon', art: 'coupling.webp' },
+  interfaceaudit: { name: 'Interface Audit', cost: 1, type: 'skill', detail: 'Gain 7 Block. Sever links; +3 Block per freed foe.', rarity: 'common', art: 'coupling.webp' },
+  traceledger: { name: 'Trace Ledger', cost: 1, type: 'skill', detail: '1 Evidence, 1 Weak. Evidence reveals next intents.', rarity: 'common', art: 'evidence-ledger.webp' },
+  watchpoint: { name: 'Watchpoint', cost: 1, type: 'skill', detail: 'Arm foe: gain 2 Evidence if it attacks, else 1.', rarity: 'uncommon', art: 'evidence-ledger.webp' },
+  casefile: { name: 'Case File', cost: 1, type: 'attack', detail: 'Deal 7 +5 per Evidence. Spend all Evidence.', rarity: 'uncommon', art: 'evidence-ledger.webp' },
+  forensicbrief: { name: 'Forensic Brief', cost: 1, type: 'skill', detail: 'Gain 5 Block. Spend 1 Evidence for +4 Block and draw 1.', rarity: 'uncommon', art: 'evidence-ledger.webp' },
+  releasegate: { name: 'Release Gate', cost: 2, type: 'skill', detail: 'Complete 3 steps: 18 to ALL. Miss: Debt.', rarity: 'rare', art: 'release-gate.webp' },
+  gatecheck: { name: 'Gate Check', cost: 1, type: 'skill', detail: '7 Block. Gate +1; if no Gate, Evidence +1.', rarity: 'uncommon', art: 'release-gate.webp' },
+  bugbudget: { name: 'Bug Budget', cost: 0, type: 'skill', detail: 'Gain 2 SP. Add an Open Defect to discard. Debt +1.', rarity: 'rare', art: 'defect-triage.webp' },
+  prototype: { name: 'One-Off Prototype', cost: 0, type: 'attack', detail: 'Deal 10. Exhaust this fight.', rarity: 'uncommon', art: 'deck-recovery.webp' },
+  salvage: { name: 'Salvage Plan', cost: 1, type: 'skill', detail: 'Gain 5 Block. Choose a discard card to topdeck. Exhaust.', rarity: 'common', art: 'deck-recovery.webp' },
+  reclaim: { name: 'Reclaim Work', cost: 1, type: 'skill', detail: 'Return an exhausted card to hand, or gain 7 Block. Exhaust.', rarity: 'rare', art: 'deck-recovery.webp' },
+  defect: { name: 'Open Defect', cost: 1, type: 'skill', detail: 'Choose: fix, defer, or automate with 2 Evidence.', rarity: 'basic', art: 'defect-triage.webp' }
 };
-export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'pipeline', 'protocol', 'rollout', 'decisionrecord', 'releasecut', 'changefreeze', 'pagerduty', 'grooming', 'archiveticket', 'migration', 'handoffgate', 'scopechoice', 'loadbearing', 'evidence', 'sprintcommit'];
+export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'pipeline', 'protocol', 'rollout', 'decisionrecord', 'releasecut', 'changefreeze', 'pagerduty', 'grooming', 'archiveticket', 'migration', 'handoffgate', 'scopechoice', 'loadbearing', 'evidence', 'sprintcommit', 'decouple', 'interfaceaudit', 'traceledger', 'watchpoint', 'casefile', 'forensicbrief', 'releasegate', 'gatecheck', 'bugbudget', 'prototype', 'salvage', 'reclaim'];
 export const CARD_POWER = {
   patch: 2, review: 2, panic: 1, pair: 3, refactor: 3, memo: 3, sweep: 3, guardrail: 4,
   rollback: 4, critical: 4, overclock: 4, blueprint: 5, rootcause: 4, scopelock: 4,
@@ -150,7 +162,8 @@ export const CARD_POWER = {
   hardstop: 3, retro: 3, warroom: 4, bufferexchange: 3, contingency: 5,
   triangulate: 4, tracesweep: 4, borrow: 4, reallocate: 4,
   reprioritize: 3, escalate: 5, mitigate: 3, redirect: 5, pipeline: 4, protocol: 5, rollout: 4,
-  decisionrecord: 4, releasecut: 4, changefreeze: 4, pagerduty: 3, grooming: 3, archiveticket: 4, migration: 5, handoffgate: 4, scopechoice: 3, loadbearing: 4, evidence: 4, sprintcommit: 5, defect: 1
+  decisionrecord: 4, releasecut: 4, changefreeze: 4, pagerduty: 3, grooming: 3, archiveticket: 4, migration: 5, handoffgate: 4, scopechoice: 3, loadbearing: 4, evidence: 4, sprintcommit: 5,
+  decouple: 4, interfaceaudit: 3, traceledger: 3, watchpoint: 3, casefile: 4, forensicbrief: 4, releasegate: 5, gatecheck: 3, bugbudget: 4, prototype: 4, salvage: 3, reclaim: 4, defect: 1
 };
 export const CARD_FAMILY = {
   patch: 'strike', review: 'block', panic: 'burnout', pair: 'draw', refactor: 'weak', memo: 'draw',
@@ -165,7 +178,8 @@ export const CARD_FAMILY = {
   triangulate: 'mark', tracesweep: 'mark', borrow: 'burnout', reallocate: 'burnout',
   reprioritize: 'tempo', escalate: 'tempo', mitigate: 'block', redirect: 'weak',
   pipeline: 'initiative', protocol: 'initiative', rollout: 'initiative',
-  decisionrecord: 'flow', releasecut: 'flow', changefreeze: 'reaction', pagerduty: 'reaction', grooming: 'control', archiveticket: 'control', migration: 'initiative', handoffgate: 'initiative', scopechoice: 'choice', loadbearing: 'bank', evidence: 'mark', sprintcommit: 'burnout', defect: 'debt'
+  decisionrecord: 'flow', releasecut: 'flow', changefreeze: 'reaction', pagerduty: 'reaction', grooming: 'control', archiveticket: 'control', migration: 'initiative', handoffgate: 'initiative', scopechoice: 'choice', loadbearing: 'bank', evidence: 'mark', sprintcommit: 'burnout',
+  decouple: 'coupling', interfaceaudit: 'coupling', traceledger: 'evidence', watchpoint: 'evidence', casefile: 'evidence', forensicbrief: 'evidence', releasegate: 'initiative', gatecheck: 'initiative', bugbudget: 'debt', prototype: 'recovery', salvage: 'recovery', reclaim: 'recovery', defect: 'debt'
 };
 export const SPECIAL_UPGRADES = {
   decisionrecord: { force: 'Spend up to 3 Flow; +5 Block per Flow.', flex: 'Draw 1 after spending any Flow.' },
@@ -173,7 +187,12 @@ export const SPECIAL_UPGRADES = {
   grooming: { force: 'Draw 3 before setting a card aside.', flex: 'Gain 4 Block after setting a card aside.' },
   migration: { force: 'Only 1 more skill needed to complete.', flex: 'Failure adds no Debt; completion grants 10 Block.' },
   scopechoice: { force: 'Risky choice deals 16 damage.', flex: 'Safe choice grants 15 Block.' },
-  sprintcommit: { force: 'Gain 3 SP; still requires 2 attacks.', flex: 'Requires only 1 attack this turn.' }
+  sprintcommit: { force: 'Gain 3 SP; still requires 2 attacks.', flex: 'Requires only 1 attack this turn.' },
+  decouple: { force: 'Deal 11 before severing a link.', flex: 'Gain 8 Block when a link is severed.' },
+  traceledger: { force: 'Gain 2 Evidence instead of 1.', flex: 'Draw 1 after recording Evidence.' },
+  casefile: { force: '+7 damage per Evidence instead of +5.', flex: 'Keep 1 Evidence after spending it.' },
+  releasegate: { force: 'Start the gate with 1 progress.', flex: 'Recover 1 SP when starting the gate.' },
+  salvage: { force: 'Gain 8 Block before choosing a card.', flex: 'Draw the chosen card if your hand has room.' }
 };
 const SPECIAL_CARD_DETAIL = {
   decisionrecord: { force: '4 Block. Spend up to 3 Flow: +5 each. At 2, draw 1.', flex: '4 Block. Spend up to 2 Flow: +4 each. Draw 1 if any spent.' },
@@ -181,7 +200,12 @@ const SPECIAL_CARD_DETAIL = {
   grooming: { force: 'Draw 3. Set aside 1 hand card for next turn.', flex: 'Draw 2. Set aside 1 hand card for next turn. +4 Block.' },
   migration: { force: '1 skill/2 turns: 16 ALL, 6 Block. Miss: 1 Debt.', flex: '2 skills/2 turns: 16 ALL, 10 Block. Miss: no Debt.' },
   scopechoice: { force: 'Choose: 10 Block OR 16 damage and +1 Debt.', flex: 'Choose: 15 Block OR 11 damage and +1 Debt.' },
-  sprintcommit: { force: '+3 SP. Play 2 attacks this turn or +1 Debt per miss.', flex: '+2 SP. Play 1 attack this turn or +1 Debt.' }
+  sprintcommit: { force: '+3 SP. Play 2 attacks this turn or +1 Debt per miss.', flex: '+2 SP. Play 1 attack this turn or +1 Debt.' },
+  decouple: { force: 'Deal 11. Sever linked foes; if linked, gain 5 Block.', flex: 'Deal 8. Sever linked foes; if linked, gain 8 Block.' },
+  traceledger: { force: 'Gain 2 Evidence. Apply 1 Weak. Reveal next intents.', flex: 'Gain 1 Evidence. Apply 1 Weak. Draw 1.' },
+  casefile: { force: 'Deal 7 +7 per Evidence. Spend all Evidence.', flex: 'Deal 7 +5 per Evidence. Keep 1 Evidence.' },
+  releasegate: { force: 'Start at 1/3. Finish: 18 to ALL; miss: Debt.', flex: 'Start Gate, regain 1 SP. Finish: 18 to ALL.' },
+  salvage: { force: 'Gain 8 Block. Choose a discard card to topdeck. Exhaust.', flex: 'Gain 5 Block. Topdeck, then draw if room. Exhaust.' }
 };
 export function upgradeBranchDetail(id, branch) {
   const base = cardBase(id), card = CARDS[base];
@@ -326,7 +350,7 @@ export function newGame(seed = randomSeed()) {
   seed = Number(seed) >>> 0;
   const s = {
     mode: 'intro', seed, rng: seed || 0x9e3779b9, floor: 0, turn: 0,
-    hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, spTax: 0, nextSp: 0,
+    hp: 72, maxHp: 72, sp: 3, maxSp: 3, block: 0, vulnerable: 0, burnout: 0, flow: 0, evidence: 0, spTax: 0, nextSp: 0,
     deck: ['patch', 'patch', 'patch', 'patch', 'review', 'review', 'review', 'pair', 'refactor', 'panic'],
     drawPile: [], discardPile: [], hand: [], setAside: [], exhausted: [], pendingChoice: null, sprintCommit: 0,
     inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', masteryKit: false, specialist: '', specialistUsed: false, onboardingPending: 0, projectDebt: 0, itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
@@ -562,7 +586,7 @@ function beginCombat(s, route) {
   if (s.crisis === 'blackout') s.sp = Math.max(1, s.sp - 1);
   if (s.practice === 'triage') s.sp = Math.max(1, s.sp - 1);
   if (s.onboardingPending) { s.sp = Math.max(1, s.sp - s.onboardingPending); s.onboardingPending = 0; }
-  s.itemUsedThisTurn = false; s.firstAttack = true; s.firstAttackTurn = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0;
+  s.itemUsedThisTurn = false; s.firstAttack = true; s.firstAttackTurn = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0; s.evidence = 0;
   s.spTax = 0; s.nextSp = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
   s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = []; s.initiatives = []; s.activeInitiatives = []; s.readiness = 0; s.shippedEarly = false; s.skillChain = 0; s.teamworkUsed = false; s.practiceRefunded = false; s.practiceStrikeUsed = false;
   s.setAside = []; s.exhausted = []; s.pendingChoice = null; s.sprintCommit = 0;
@@ -718,6 +742,11 @@ export function intentFor(enemy) {
   if (intent.kind === 'split') return { ...intent, label: 'SPLIT · HALF HP' };
   return { ...intent, label: `RECOVER ${intent.amount}` };
 }
+export function nextIntentFor(enemy) {
+  const current = intentFor(enemy), attacks = ['attack', 'erode', 'audit'].includes(current.kind);
+  return intentFor({ ...enemy, stalled: false, redirected: false, step: enemy.step + 1,
+    weak: Math.max(0, enemy.weak - (attacks ? 1 : 0)), intentPenalty: attacks ? 0 : enemy.intentPenalty });
+}
 function attackEnemy(s, enemy, amount, useMark = true) {
   if (!enemy) return 0;
   if (s.objective?.id === 'flow' && s.flow >= 2) completeObjective(s);
@@ -757,13 +786,28 @@ function addSelfBurnout(s, amount) {
 }
 function heal(s, amount) { s.hp = Math.min(s.maxHp, s.hp + amount); }
 function applyMark(s, enemy, amount) { enemy.mark = Math.min(3, (enemy.mark || 0) + amount + (s.architecture === 'observatory' ? 1 : 0)); }
+function gainEvidence(s, amount) { s.evidence = Math.min(3, (s.evidence || 0) + amount); }
+function breakCoupling(s) {
+  const linked = s.enemies.filter(enemy => enemy.linkedPower);
+  for (const enemy of linked) { enemy.power = Math.max(0, enemy.power - 1); enemy.linkedPower = false; }
+  if (linked.length && s.mission?.id === 'coupled' && !s.mission.resolved) s.mission.resolved = true;
+  if (linked.length) note(s, 'The coupled interface was severed. Linked foes lost 1 power.');
+  return linked.length;
+}
+function releaseGate(s) { return s.initiatives.find(project => project.id === 'releasegate'); }
+function advanceReleaseGate(s, amount) {
+  const gate = releaseGate(s);
+  if (!gate) return false;
+  gate.progress = Math.min(3, (gate.progress || 0) + amount);
+  if (gate.progress < 3) return false;
+  s.initiatives.splice(s.initiatives.indexOf(gate), 1);
+  for (const foe of s.enemies) attackEnemy(s, foe, 18);
+  note(s, 'Release Gate cleared: 18 damage to every foe.');
+  return true;
+}
 function afterDamage(s) {
   s.enemies = s.enemies.filter(enemy => enemy.hp > 0);
-  if (s.mission?.id === 'coupled' && s.enemies.length <= 1 && !s.mission.resolved) {
-    s.mission.resolved = true;
-    for (const enemy of s.enemies) if (enemy.linkedPower) { enemy.power--; enemy.linkedPower = false; }
-    note(s, 'The coupled systems broke apart. Remaining foe loses 1 power.');
-  }
+  if (s.mission?.id === 'coupled' && s.enemies.length <= 1 && !s.mission.resolved) breakCoupling(s);
   s.target = clamp(s.target, 0, Math.max(0, s.enemies.length - 1));
   if (!s.enemies.length) finishFight(s);
 }
@@ -789,9 +833,12 @@ export function playCard(s, handIndex, targetIndex = s.target) {
   const id = s.hand[handIndex], baseId = cardBase(id), card = cardInfo(id);
   if (s.sp < card.cost) return false;
   if (baseId === 'escalate' && s.projectDebt > 10) return false;
-  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice'].includes(baseId)) && !s.enemies[targetIndex]) return false;
+  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice', 'traceledger', 'watchpoint'].includes(baseId)) && !s.enemies[targetIndex]) return false;
   s.sp -= card.cost;
-  s.hand.splice(handIndex, 1); if (baseId !== 'defect') s.discardPile.push(id); s.cardsPlayed++;
+  s.hand.splice(handIndex, 1);
+  if (['prototype', 'salvage'].includes(baseId)) s.exhausted.push(id);
+  else if (baseId !== 'defect' && baseId !== 'reclaim') s.discardPile.push(id);
+  s.cardsPlayed++;
   if (baseId !== 'defect') s.readiness = Math.min(6, s.readiness + (card.type === 'skill' ? 2 : 1));
   if (card.type === 'skill') {
     const roleFamily = card.family === ROLE_FAMILY[s.role];
@@ -804,7 +851,8 @@ export function playCard(s, handIndex, targetIndex = s.target) {
   }
   const enemy = s.enemies[targetIndex];
   let message = card.name;
-  s.upgradeDamage = id.endsWith('+') && card.type === 'attack' ? 3 : 0;
+  let gateDamage = false;
+  s.upgradeDamage = id.endsWith('+') && card.type === 'attack' && !SPECIAL_UPGRADES[baseId] ? 3 : 0;
   switch (baseId) {
     case 'patch': message += ` dealt ${attackEnemy(s, enemy, 7)}.`; break;
     case 'pair': message += ` dealt ${attackEnemy(s, enemy, 5)} and drew a card.`; drawOne(s); break;
@@ -899,7 +947,19 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'loadbearing': { const spent = Math.min(6, s.reserveBlock); s.reserveBlock -= spent; message += ` spent ${spent} banked Block and dealt ${attackEnemy(s, enemy, 5 + spent * 2)}.`; break; }
     case 'evidence': { const spent = Math.min(2, enemy.mark || 0); enemy.mark -= spent; for (let i = 0; i < spent; i++) drawOne(s); if (spent === 2) s.sp++; message += ` spent ${spent} Mark for ${spent} cards${spent === 2 ? ' and 1 SP' : ''}.`; break; }
     case 'sprintcommit': s.sp += id.endsWith('+') ? 3 : 2; s.sprintCommit += id.endsWith('*') ? 1 : 2; message += ' borrowed capacity; play the promised attacks or gain Debt.'; break;
-    case 'defect': addDebt(s, -1); drawOne(s); message += ' was fixed: Debt -1 and draw 1.'; break;
+    case 'decouple': { const linked = s.enemies.some(foe => foe.linkedPower); message += ` dealt ${attackEnemy(s, enemy, id.endsWith('+') ? 11 : 8)}.`; if (linked) { breakCoupling(s); const block = id.endsWith('*') ? 8 : 5; gainBlock(s, block); message += ` Severed the interface and gained ${block} Block.`; } break; }
+    case 'interfaceaudit': { gainBlock(s, 7); const freed = breakCoupling(s); if (freed) gainBlock(s, freed * 3); message += ` gained ${7 + freed * 3} Block${freed ? ' and severed the link' : ''}.`; break; }
+    case 'traceledger': { const amount = id.endsWith('+') ? 2 : 1; gainEvidence(s, amount); enemy.weak++; if (id.endsWith('*')) drawOne(s); message += ` logged ${enemy.name}'s behavior: Evidence +${amount}, Weak +1${id.endsWith('*') ? ', draw 1' : ''}.`; break; }
+    case 'watchpoint': (enemy.reactions ||= []).push({ kind: 'watch' }); message += ` armed a watchpoint on ${enemy.name}.`; break;
+    case 'casefile': { const spent = s.evidence || 0; s.evidence = id.endsWith('*') && spent ? 1 : 0; message += ` spent ${spent} Evidence and dealt ${attackEnemy(s, enemy, 7 + spent * (id.endsWith('+') ? 7 : 5))}${s.evidence ? ', keeping 1 Evidence' : ''}.`; break; }
+    case 'forensicbrief': { gainBlock(s, 5); if (s.evidence) { s.evidence--; gainBlock(s, 4); drawOne(s); message += ' spent 1 Evidence for 9 Block and a card.'; } else message += ' gained 5 Block without Evidence.'; break; }
+    case 'releasegate': s.initiatives.push({ id: 'releasegate', remaining: s.practice === 'automation' ? 2 : 3, progress: id.endsWith('+') ? 1 : 0, goal: 3, actedTurn: 0 }); if (id.endsWith('*')) s.sp++; message += ' started a Release Gate. Choose Test, Rush, or Abort once each turn.'; break;
+    case 'gatecheck': { const hadGate = !!releaseGate(s); gainBlock(s, 7); gateDamage = advanceReleaseGate(s, 1); if (!hadGate) gainEvidence(s, 1); message += gateDamage ? ' gained 7 Block and cleared the Release Gate.' : hadGate ? ' gained 7 Block and advanced the Release Gate.' : ' gained 7 Block and 1 Evidence.'; break; }
+    case 'bugbudget': s.sp += 2; s.discardPile.push('defect'); addDebt(s, 1); message += ' borrowed 2 SP, added an Open Defect, and raised Debt by 1.'; break;
+    case 'prototype': message += ` dealt ${attackEnemy(s, enemy, 10)} and exhausted.`; break;
+    case 'salvage': { const block = id.endsWith('+') ? 8 : 5; gainBlock(s, block); if (s.discardPile.length) s.pendingChoice = { kind: 'salvage', flex: id.endsWith('*') }; message += s.pendingChoice ? ` gained ${block} Block; choose a discard card to ${id.endsWith('*') ? 'draw' : 'topdeck'}.` : ` gained ${block} Block; the discard was empty.`; break; }
+    case 'reclaim': if (s.exhausted.length) { s.pendingChoice = { kind: 'reclaim', selfId: id }; message += ' opened the archive; choose an exhausted card to recover.'; } else { gainBlock(s, 7); s.exhausted.push(id); message += ' found nothing to reclaim; gained 7 Block and exhausted.'; } break;
+    case 'defect': s.pendingChoice = { kind: 'defect' }; message += ' opened triage: fix, defer, or automate.'; break;
   }
   s.upgradeDamage = 0;
   if (id.endsWith('+') && card.type === 'skill' && !SPECIAL_UPGRADES[baseId]) { gainBlock(s, 3, false); message += ' Upgrade: +3 Block.'; }
@@ -910,12 +970,37 @@ export function playCard(s, handIndex, targetIndex = s.target) {
   if (card.type === 'attack' && s.sprintCommit > 0) s.sprintCommit--;
   const projectDamage = !s.pendingChoice && advanceCardProjects(s, card.type, baseId);
   note(s, message);
-  if (card.type === 'attack' || baseId === 'contingency' || projectDamage) afterDamage(s);
+  if (card.type === 'attack' || baseId === 'contingency' || projectDamage || gateDamage) afterDamage(s);
   return true;
 }
 export function chooseCombatOption(s, index) {
   if (s.mode !== 'combat' || !s.pendingChoice || !Number.isInteger(index)) return false;
   const choice = s.pendingChoice;
+  if (choice.kind === 'releasegate') {
+    const gate = releaseGate(s);
+    if (!gate || index < 0 || index > 2 || gate.actedTurn === s.turn || (index === 0 && s.sp < 1)) return false;
+    s.pendingChoice = null;
+    gate.actedTurn = s.turn;
+    if (index === 2) {
+      s.initiatives.splice(s.initiatives.indexOf(gate), 1);
+      s.sp++; gainBlock(s, 4, false);
+      note(s, 'Release Gate aborted: recovered 1 SP and 4 Block.');
+    } else {
+      if (index === 0) { s.sp--; gainBlock(s, 4, false); note(s, 'Release Gate tested: +1 progress and 4 Block.'); }
+      else { addDebt(s, 1); note(s, 'Release Gate rushed: +2 progress, Debt +1.'); }
+      if (advanceReleaseGate(s, index === 0 ? 1 : 2)) afterDamage(s);
+    }
+    return true;
+  }
+  if (choice.kind === 'defect') {
+    if (index < 0 || index > 2 || (index === 2 && (s.evidence || 0) < 2)) return false;
+    s.pendingChoice = null;
+    if (index === 0) { addDebt(s, -1); drawOne(s); note(s, 'Open Defect fixed: Debt -1, draw 1.'); }
+    else if (index === 1) { s.sp++; addDebt(s, 1); s.discardPile.push('defect'); note(s, 'Open Defect deferred: recovered 1 SP, Debt +1; it will return.'); }
+    else { s.evidence -= 2; addDebt(s, -2); drawOne(s); note(s, 'Open Defect automated: spent 2 Evidence, Debt -2, draw 1.'); }
+    if (advanceCardProjects(s, 'skill', 'defect')) afterDamage(s);
+    return true;
+  }
   if (choice.kind === 'scopechoice') {
     if (index < 0 || index > 1) return false;
     const foe = s.enemies[choice.target];
@@ -925,6 +1010,22 @@ export function chooseCombatOption(s, index) {
     else { const damage = attackEnemy(s, foe, choice.id.endsWith('+') ? 16 : 11); addDebt(s, 1); note(s, `Scope Decision cut through ${foe.name} for ${damage}; Debt +1.`); }
     const projectDamage = advanceCardProjects(s, 'skill', 'scopechoice');
     if (index === 1 || projectDamage) afterDamage(s);
+    return true;
+  }
+  if (choice.kind === 'salvage' || choice.kind === 'reclaim') {
+    const pile = choice.kind === 'salvage' ? s.discardPile : s.exhausted;
+    if (index < 0 || index >= pile.length) return false;
+    const id = pile.splice(index, 1)[0];
+    s.pendingChoice = null;
+    if (choice.kind === 'salvage') { const draw = choice.flex && s.hand.length < handLimit(s); s.drawPile.push(id); if (draw) drawOne(s); note(s, `${cardInfo(id).name} was ${draw ? 'drawn from the discard' : 'moved to the top of the draw pile'}.`); }
+    else {
+      const toHand = s.hand.length < handLimit(s);
+      if (toHand) s.hand.push(id);
+      else s.drawPile.push(id);
+      s.exhausted.push(choice.selfId);
+      note(s, `${cardInfo(id).name} was reclaimed${toHand ? ' into hand' : ' onto the draw pile'}.`);
+    }
+    if (advanceCardProjects(s, 'skill', choice.kind)) afterDamage(s);
     return true;
   }
   if (index < 0 || index >= s.hand.length) return false;
@@ -941,6 +1042,12 @@ export function chooseCombatOption(s, index) {
     note(s, `${cardInfo(id).name} was archived for this fight.`);
   } else { s.hand.splice(index, 0, id); return false; }
   if (advanceCardProjects(s, 'skill', choice.kind)) afterDamage(s);
+  return true;
+}
+export function openReleaseGate(s) {
+  const gate = s.mode === 'combat' && !s.pendingChoice ? releaseGate(s) : null;
+  if (!gate || gate.actedTurn === s.turn) return false;
+  s.pendingChoice = { kind: 'releasegate' };
   return true;
 }
 export function useRoleAbility(s, targetIndex = s.target) {
@@ -1099,6 +1206,7 @@ export function endTurn(s) {
         else s.nextSp += reaction.missSp;
         note(s, hostile ? `Change Freeze braced for ${enemy.name}.` : `Change Freeze found a quiet window: next SP +${reaction.missSp}.`);
       } else if (reaction.kind === 'pager' && hostile) { enemy.weak += 2; s.nextSp++; note(s, `Pager Duty caught ${enemy.name}: 2 Weak and next SP +1.`); }
+      else if (reaction.kind === 'watch') { const gained = hostile ? 2 : 1; gainEvidence(s, gained); note(s, `Watchpoint observed ${enemy.name}: Evidence +${gained}.`); }
     }
     enemy.reactions = [];
     intent = intentFor(enemy);
@@ -1174,6 +1282,9 @@ export function endTurn(s) {
       for (const foe of s.enemies) attackEnemy(s, foe, 14);
       note(s, 'Staged Rollout landed: 14 damage to every foe.');
       afterDamage(s); if (s.mode !== 'combat') return true;
+    } else if (initiative.id === 'releasegate') {
+      addDebt(s, 1);
+      note(s, 'Release Gate missed its window: Debt +1.');
     } else if (initiative.id === 'migration') {
       if (!initiative.flex) addDebt(s, 1);
       note(s, initiative.flex ? 'Migration Plan expired safely.' : 'Migration Plan missed its deadline: Debt +1.');

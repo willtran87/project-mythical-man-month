@@ -2,15 +2,19 @@
 
 from pathlib import Path
 import re
+import sys
 
 from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / "src/battle-main.js").read_text(encoding="utf-8")
-paths = {(ROOT / "public" / match.lstrip("/")).with_suffix(".png") for match in re.findall(r"/assets/[^'\"]+\.(?:png|webp)", source)}
-paths = {path for path in paths if path.is_file()}
-paths.update((ROOT / "public/assets/cards").glob("*.png"))
+if len(sys.argv) > 1:
+    paths = {ROOT / name for name in sys.argv[1:]}
+else:
+    paths = {(ROOT / "public" / match.lstrip("/")).with_suffix(".png") for match in re.findall(r"/assets/[^'\"]+\.(?:png|webp)", source)}
+    paths = {path for path in paths if path.is_file()}
+    paths.update((ROOT / "public/assets/cards").glob("*.png"))
 
 for path in sorted(paths):
     if not path.is_file():

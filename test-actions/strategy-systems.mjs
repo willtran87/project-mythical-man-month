@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   newGame, selectRole, startGame, chooseRoute, openCharter, chooseCharter,
-  openContract, chooseContract, openChallenge, chooseChallenge, playCard,
+  openContract, chooseContract, openChallenge, chooseChallenge, playCard, chooseCombatOption,
   useSpecialist, endTurn, intentFor, debtTier, runScore
 } from '../src/battle-game.js';
 
@@ -80,6 +80,8 @@ assert.equal(debtTier(debt), 2);
 assert.equal([...debt.hand, ...debt.drawPile].filter(id => id === 'defect').length, 2);
 const size = debt.deck.length;
 put(debt, 'defect');
+assert.equal(debt.pendingChoice.kind, 'defect');
+chooseCombatOption(debt, 0);
 assert.equal(debt.projectDebt, 7);
 assert.equal(debt.discardPile.includes('defect'), false, 'fixed defect exhausts');
 assert.equal(debt.deck.length, size, 'temporary defects never enter the permanent deck');

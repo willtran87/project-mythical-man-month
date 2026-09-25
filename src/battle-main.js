@@ -1,7 +1,7 @@
 import './style.css';
 import { BattleFx } from './battle-fx.js';
 import { BattleAudio } from './battle-audio.js';
-import { ACTS, ACT_LORE, ROLES, MASTERY_KITS, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, PRACTICES, MISSIONS, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, upgradeBranchDetail, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, setEscalation, chooseArchitecture, choosePractice, resolveBossProblem, resolveMission, projectEndTurn, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, chooseCombatOption, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
+import { ACTS, ACT_LORE, ROLES, MASTERY_KITS, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, PRACTICES, MISSIONS, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, upgradeBranchDetail, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, setEscalation, chooseArchitecture, choosePractice, resolveBossProblem, resolveMission, projectEndTurn, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, nextIntentFor, playCard, chooseCombatOption, openReleaseGate, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -101,7 +101,7 @@ function persistRun() {
 function continueRun() {
   if (!validSavedRun(savedRun)) return false;
   state = JSON.parse(JSON.stringify(savedRun.state));
-  state.setAside ||= []; state.exhausted ||= []; state.pendingChoice ||= null; state.sprintCommit ||= 0;
+  state.setAside ||= []; state.exhausted ||= []; state.pendingChoice ||= null; state.sprintCommit ||= 0; state.evidence ||= 0;
   showLoadout = showArchive = showMenuConfirm = showBattleNotes = false;
   forecastDirty = true;
   return true;
@@ -555,7 +555,11 @@ function combatEnemyCard(enemy, i, x, w) {
     ctx.save(); ctx.strokeStyle = `rgba(82,200,205,${.45 + Math.sin(clock * 3) * .15})`; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(x + w / 2, portraitY + portraitH / 2, enemy.boss ? 95 : 77, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
-  const ailments = [enemy.weak && ['WEAK', enemy.weak, teal], enemy.vulnerable && ['VULN', enemy.vulnerable, coral], enemy.mark && ['MARK', enemy.mark, '#497fa9']].filter(Boolean);
+  if ((state.evidence || 0) > 0) {
+    rect(x + 20, portraitY + portraitH - 58, w - 40, 24, 'rgba(18,45,57,.9)', 6, '#80cddd', 1);
+    label(`NEXT · ${nextIntentFor(enemy).label}`, x + w / 2, portraitY + portraitH - 45, 11, '#b7edf0', 'bold', 'center', 'Arial', w - 54);
+  }
+  const ailments = [enemy.weak && ['WEAK', enemy.weak, teal], enemy.vulnerable && ['VULN', enemy.vulnerable, coral], enemy.mark && ['MARK', enemy.mark, '#497fa9'], enemy.linkedPower && ['LINK', 1, '#806c99']].filter(Boolean);
   const pillWidth = Math.min(82, (w - 50) / Math.max(1, ailments.length) - 4);
   ailments.forEach(([name, count, color], j) => statusPill(`${name} ${count}`, x + 22 + j * (pillWidth + 4), enemy.boss ? y + 214 : y + 184, pillWidth, true, color));
   label(enemy.name, x + w / 2, enemy.boss ? y + 258 : y + 239, enemy.boss ? 24 : 18, ink, 'bold', 'center');
@@ -615,10 +619,10 @@ function enemyAnchor(enemies, index) {
 }
 function fxSnapshot() {
   return {
-    hp: state.hp, block: state.block, sp: state.sp, vulnerable: state.vulnerable, burnout: state.burnout, debt: state.projectDebt, hand: state.hand.length,
+    hp: state.hp, block: state.block, sp: state.sp, vulnerable: state.vulnerable, burnout: state.burnout, debt: state.projectDebt, evidence: state.evidence || 0, hand: state.hand.length,
     firstAttack: state.firstAttack, firstSkillTurn: state.firstSkillTurn, redlineUsed: state.redlineUsed, notebookTurn: state.notebookTurn, flow: state.flow, reserveBlock: state.reserveBlock,
     teamwork: state.teamworkUsed, initiatives: state.initiatives.length, active: state.activeInitiatives.length,
-    enemies: state.enemies.map(enemy => ({ ref: enemy, hp: enemy.hp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark, phase: enemy.phase, intent: intentFor(enemy), redirected: enemy.redirected, stalled: enemy.stalled, reactions: (enemy.reactions || []).map(reaction => reaction.kind) }))
+    enemies: state.enemies.map(enemy => ({ ref: enemy, hp: enemy.hp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark, linked: !!enemy.linkedPower, phase: enemy.phase, intent: intentFor(enemy), redirected: enemy.redirected, stalled: enemy.stalled, reactions: (enemy.reactions || []).map(reaction => reaction.kind) }))
   };
 }
 function emitActionFx(before, id = '', playedCard = false) {
@@ -631,6 +635,7 @@ function emitActionFx(before, id = '', playedCard = false) {
     if (foe.block > enemy.block) emit('shield', at);
     if (foe.hp > enemy.hp) emit('heal', at);
     if (foe.mark > enemy.mark) emit('mark', at);
+    if (enemy.linked && !foe.linkedPower) emit('interrupt', at);
     if (foe.weak > enemy.weak) emit('weak', at);
     if (foe.vulnerable > enemy.vulnerable) emit('expose', at);
     if (foe.phase > enemy.phase) emit('phase', at, undefined, `boss-${foe.id}`);
@@ -640,11 +645,12 @@ function emitActionFx(before, id = '', playedCard = false) {
   if (state.burnout > before.burnout) emit('burnout', { x: 225, y: 306 });
   if (state.projectDebt > before.debt) emit('debt', { x: 240, y: 355 });
   if (state.sp > before.sp) emit('tempo', { x: 135, y: 306 });
+  if ((state.evidence || 0) > before.evidence) emit('mark', { x: 190, y: 276 });
   if (state.hand.length > before.hand - Number(playedCard)) { emit('draw', { x: 340, y: 385 }); cueDraw(Math.max(0, before.hand - Number(playedCard))); }
   if (state.initiatives.length > before.initiatives || state.activeInitiatives.length > before.active) emit('plan', heroAnchor);
   if (state.teamworkUsed && !before.teamwork) emit('teamwork', heroAnchor);
   if (['reprioritize', 'escalate', 'mitigate', 'redirect'].includes(id)) emit('interrupt', enemyAnchor(before.enemies.map(entry => entry.ref), state.target));
-  if (['pipeline', 'protocol', 'rollout', 'map', 'handoffmap', 'blueprint'].includes(id)) emit('plan', heroAnchor);
+  if (['pipeline', 'protocol', 'rollout', 'releasegate', 'gatecheck', 'map', 'handoffmap', 'blueprint'].includes(id)) emit('plan', heroAnchor);
   if (id === 'defect') emit('interrupt', heroAnchor);
   if (id === 'architect' && state.reserveBlock) emit('plan', heroAnchor);
   if (before.firstAttack && !state.firstAttack) emitRelic('checklist');
@@ -666,7 +672,7 @@ function playFromUI(index) {
   if (playCard(state, index, state.target)) {
     if (state.mode === 'combat') {
       emitActionFx(before, id, true);
-      const targeted = card.type === 'attack' || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice'].includes(id);
+      const targeted = card.type === 'attack' || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice', 'traceledger', 'watchpoint'].includes(id);
       cueCard(card, index, targeted ? target : heroAnchor);
     }
   }
@@ -674,13 +680,16 @@ function playFromUI(index) {
 function choiceFromUI(index) {
   if (state.mode !== 'combat' || !state.pendingChoice) return;
   const kind = state.pendingChoice.kind;
+  if (['salvage', 'reclaim'].includes(kind)) index += (state.pendingChoice.page || 0) * 5;
   const before = fxSnapshot();
   if (chooseCombatOption(state, index) && state.mode === 'combat') {
     emitActionFx(before);
     if (kind === 'grooming') battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
     if (kind === 'archiveticket') battleFx.emit('interrupt', heroAnchor.x, heroAnchor.y, clock);
+    if (['salvage', 'reclaim', 'releasegate', 'defect'].includes(kind)) battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock);
   }
 }
+function gateFromUI() { if (openReleaseGate(state)) battleFx.emit('plan', heroAnchor.x, heroAnchor.y, clock); }
 function itemFromUI(index) {
   if (state.mode !== 'combat') return;
   const id = state.inventory[index];
@@ -731,6 +740,7 @@ function endFromUI() {
   if (playerHit && !emittedHit) battleFx.emit('enemy', heroAnchor.x, heroAnchor.y, clock);
   if (before.enemies.some(enemy => enemy.intent.kind === 'attack' && enemy.intent.burnout && !enemy.redirected && !enemy.stalled)) battleFx.emit('burnout', 225, 306, clock);
   if (state.projectDebt > before.debt) battleFx.emit('debt', 240, 355, clock);
+  if ((state.evidence || 0) > before.evidence) battleFx.emit('mark', 190, 276, clock);
   if (before.enemies.some(enemy => enemy.intent.kind === 'attack' && enemy.intent.vulnerable && !enemy.redirected && !enemy.stalled)) battleFx.emit('expose', heroAnchor.x, heroAnchor.y, clock);
   before.enemies.forEach((enemy, index) => {
     const at = enemyAnchor(before.enemies.map(entry => entry.ref), index);
@@ -764,6 +774,7 @@ function combat() {
   label('FLOW', 213, 202, 11, teal, 'bold', 'left', 'Arial');
   for (let i = 0; i < 3; i++) icon('relic', 253 + i * 16, 202, 12, i < state.flow ? gold : '#b7c7c2');
   drawHeroPortrait();
+  if (state.evidence) statusPill(`EVID ${state.evidence}/3`, 58, 217, 94, true, '#4b7894');
   label(`${state.hp}/${state.maxHp} HP`, 62, 420, 17, ink, 'bold', 'left', 'Arial');
   label(`BANK ${state.reserveBlock}${state.nextSp ? ` · NEXT SP +${state.nextSp}` : ''}`, 296, 420, 12, teal, 'bold', 'right', 'Arial', 150);
   meter(62, 436, 235, 12, state.hp, state.maxHp, coral);
@@ -782,11 +793,13 @@ function combat() {
   const brief = state.objective;
   label(brief ? `SPRINT BRIEF · ${OBJECTIVES[brief.id].name}: ${brief.done ? 'COMPLETE' : brief.failed ? 'MISSED' : OBJECTIVES[brief.id].detail}` : 'BATTLE LOG', 43, 518, 12, brief?.done ? '#9de0c7' : brief?.failed ? '#e9a394' : gold, 'bold', 'left', 'Arial', 640);
   const bossProblem = state.enemies.find(enemy => enemy.boss && !enemy.problemResolved);
-  const firstPlan = state.initiatives[0];
+  const firstPlan = state.initiatives.find(plan => plan.id === 'releasegate') || state.initiatives[0];
   const liveNote = bossProblem ? `BOSS PROBLEM · ${BOSS_PROBLEMS[bossProblem.id].name}` : state.sprintCommit ? `PROMISE · PLAY ${state.sprintCommit} MORE ATTACK${state.sprintCommit === 1 ? '' : 'S'} THIS TURN` : firstPlan ? `PLAN · ${CARDS[firstPlan.id].name}${firstPlan.goal ? ` ${firstPlan.progress}/${firstPlan.goal}` : ''} · ${firstPlan.remaining}T` : state.setAside?.length ? `SET ASIDE · ${state.setAside.map(id => cardInfo(id).name).join(', ')}` : state.mission && !state.mission.resolved && !state.mission.failed ? `MISSION · ${MISSIONS[state.mission.id].name}${state.mission.id === 'handoff' ? ` ${state.mission.countdown}T` : ''}` : state.crisis ? `CRISIS · ${CRISES[state.crisis].name}` : '';
   label(`READINESS ${state.readiness}/6${liveNote ? `   ·   ${liveNote}` : ''}`, 43, 536, 11, '#a9ddd2', 'bold', 'left', 'Arial', 625);
   label(state.log[0] || '', 43, 554, 14, cream, 'normal', 'left', 'Georgia', 645);
   button('I · DETAILS', 704, 506, 120, 22, () => { showBattleNotes = true; }, { size: 11, fill: '#d8e6da' });
+  const gate = state.initiatives.find(plan => plan.id === 'releasegate');
+  if (gate) button(`G · GATE ${gate.progress}/3${gate.actedTurn === state.turn ? ' · USED' : ''}`, 831, 506, 134, 22, () => gateFromUI(), { size: 10, disabled: gate.actedTurn === state.turn, fill: '#b8e2db' });
   label(`TURN ${state.turn}  ·  TARGET: ${state.enemies[state.target]?.name || 'NONE'}`, 1156, 523, 13, '#d9e9dd', 'bold', 'right', 'Arial');
   const abilityReady = !state.abilityUsed && (state.role !== 'architect' || (state.block > 0 && state.reserveBlock < 12));
   button(`A · ${ROLES[state.role].ability.toUpperCase()}${state.abilityUsed ? ' · USED' : abilityReady ? '' : ' · NEED BLOCK'}`, 711, 536, 211, 29, () => abilityFromUI(), { disabled: !abilityReady, size: 11, fill: '#a9ddd2' });
@@ -853,6 +866,7 @@ function battleNotes() {
     ['SPRINT BRIEF', brief ? `${OBJECTIVES[brief.id].name}: ${brief.done ? 'Complete' : brief.failed ? 'Missed' : OBJECTIVES[brief.id].detail}` : 'No active brief.'],
     ...(state.mission ? [['INCIDENT MISSION', `${MISSIONS[state.mission.id].name}: ${MISSIONS[state.mission.id].detail}${state.mission.failed ? ' · Failed' : state.mission.resolved ? ' · Resolved' : ''}`]] : []),
     ['END TURN PREVIEW', projected ? `HP ${projected.hp} (-${projected.damage}); Block used ${projected.blockAbsorbed}${projected.blockShredded ? ` + ${projected.blockShredded} shredded` : ''}. Debt ${projected.debt}${projected.nextSp !== null ? `; next SP ${projected.nextSp}` : ''}${projected.missionFailed ? ' · Handoff fails' : ''}${projected.incomingFoes ? ` · +${projected.incomingFoes} foe` : ''}${projected.lethal ? ' · LETHAL' : ''}.` : 'No combat preview.'],
+    ...((state.evidence || 0) ? [['EVIDENCE', `${state.evidence}/3. Each foe's NEXT intent appears on its portrait. Spend Evidence with Case File, Forensic Brief, or Defect automation.`]] : []),
     ['RELEASE READINESS', state.enemies.some(enemy => enemy.boss) ? `${state.readiness}/6. Boss fights require a full victory; spend 2 SP to solve the active problem.` : `${state.readiness}/6. After surviving a turn, ship early for half pay and one Debt per unresolved foe.`],
     ...(state.crisis ? [['CRISIS CONDITION', `${CRISES[state.crisis].name}: ${CRISES[state.crisis].detail}`]] : []),
     ...(state.contract ? [['CLIENT CONTRACT', `${CONTRACTS[state.contract.id].name}: ${CONTRACTS[state.contract.id].detail}${state.contract.failed ? ' · Missed' : ''}`]] : []),
@@ -863,7 +877,7 @@ function battleNotes() {
     ...(state.setAside?.length || state.exhausted?.length || state.sprintCommit ? [['HAND PLAN', `${state.setAside?.length ? `Set aside: ${state.setAside.map(id => cardInfo(id).name).join(', ')}. ` : ''}${state.exhausted?.length ? `${state.exhausted.length} card(s) archived this fight. ` : ''}${state.sprintCommit ? `${state.sprintCommit} promised attack(s) remain this turn.` : ''}`]] : []),
     ['PROJECT DEBT', `${state.projectDebt}/12 · Pressure tier ${debtTier(state)}. Debt at 4 and 8 adds defects and tougher foes.`]
   ];
-  const rows = Math.ceil(Math.min(10, notes.length) / 2), panelHeight = 223 + (rows - 1) * 102, top = (H - panelHeight) / 2;
+  const rows = Math.ceil(Math.min(12, notes.length) / 2), panelHeight = 223 + (rows - 1) * 102, top = (H - panelHeight) / 2;
   rect(0, 0, W, H, 'rgba(10,29,39,.8)');
   rect(178, top, 844, panelHeight, '#fff8e9', 20, gold, 3);
   label('BATTLE DETAILS', 210, top + 46, 31, ink, 'bold');
@@ -874,7 +888,7 @@ function battleNotes() {
     label(title, x + 16, y + 22, 12, teal, 'bold', 'left', 'Arial');
     wrap(detail, x + 16, y + 41, 359, 13, ink, 17, 'Arial');
   };
-  notes.slice(0, 10).forEach((entry, i) => note(i % 2 ? 607 : 202, top + 107 + Math.floor(i / 2) * 102, entry));
+  notes.slice(0, 12).forEach((entry, i) => note(i % 2 ? 607 : 202, top + 107 + Math.floor(i / 2) * 102, entry));
 }
 function hoveredCardIndex() {
   if (!hoverPreviewEnabled || state.mode !== 'combat') return -1;
@@ -905,8 +919,17 @@ function combatChoice() {
   if (!choice) return;
   rect(0, 0, W, H, 'rgba(10,29,39,.82)');
   rect(116, 166, 968, 450, '#fff8e9', 20, gold, 3);
-  const title = choice.kind === 'scopechoice' ? 'CHOOSE THE SCOPE' : choice.kind === 'grooming' ? 'SET ASIDE A SKILL' : 'ARCHIVE A SKILL';
-  const subtitle = choice.kind === 'scopechoice' ? `Make the call against ${state.enemies[choice.target]?.name || 'the target'}.` : choice.kind === 'grooming' ? 'The chosen card returns to your hand next turn.' : 'The chosen card leaves this fight. A costly card refunds 1 SP; a Defect also clears 1 Debt.';
+  const titles = { scopechoice: 'CHOOSE THE SCOPE', grooming: 'SET ASIDE A SKILL', archiveticket: 'ARCHIVE A SKILL', releasegate: 'RELEASE GATE', defect: 'TRIAGE THE DEFECT', salvage: 'SALVAGE A CARD', reclaim: 'RECLAIM WORK' };
+  const subtitles = {
+    scopechoice: `Make the call against ${state.enemies[choice.target]?.name || 'the target'}.`,
+    grooming: 'The chosen card returns to your hand next turn.',
+    archiveticket: 'The chosen card leaves this fight. A costly card refunds 1 SP; a Defect clears 1 Debt.',
+    releasegate: 'Choose one gate action this turn. Reach 3 progress before the deadline.',
+    defect: 'The 1 SP cost is paid. Choose what happens to this Open Defect.',
+    salvage: 'Move a discarded card to the top of your draw pile.',
+    reclaim: 'Return an exhausted card to hand, or topdeck it if your hand is full.'
+  };
+  const title = titles[choice.kind] || 'CHOOSE A CARD', subtitle = subtitles[choice.kind] || '';
   label(title, 600, 211, 33, ink, 'bold', 'center');
   label(subtitle, 600, 251, 15, teal, 'normal', 'center', 'Arial', 885);
   if (choice.kind === 'scopechoice') {
@@ -925,8 +948,33 @@ function combatChoice() {
       label(option.detail, x + 190, 502, 14, '#52676a', 'normal', 'center', 'Arial', 345);
       button(`${i + 1} · CHOOSE`, x + 85, 526, 211, 42, () => choiceFromUI(i), { size: 15, fill: i ? coral : '#b6ddd0' });
     });
+  } else if (choice.kind === 'releasegate' || choice.kind === 'defect') {
+    const gate = state.initiatives.find(plan => plan.id === 'releasegate');
+    const options = choice.kind === 'releasegate' ? [
+      { name: 'TEST', detail: 'Spend 1 SP · +1 progress · +4 Block', color: teal, symbol: 'shield', available: state.sp >= 1 },
+      { name: 'RUSH', detail: '+2 progress · +1 Project Debt', color: coral, symbol: 'bolt', available: true },
+      { name: 'ABORT', detail: 'End the gate · recover 1 SP and 4 Block', color: '#8c7c68', symbol: 'branch', available: true }
+    ] : [
+      { name: 'FIX', detail: 'Project Debt -1 · draw 1', color: teal, symbol: 'shield', available: true },
+      { name: 'DEFER', detail: '+1 SP · +1 Debt · Defect returns', color: coral, symbol: 'bolt', available: true },
+      { name: 'AUTOMATE', detail: 'Spend 2 Evidence · Debt -2 · draw 1', color: '#497fa9', symbol: 'branch', available: (state.evidence || 0) >= 2 }
+    ];
+    options.forEach((option, i) => {
+      const x = 138 + i * 308;
+      rect(x, 285, 282, 290, '#f6ecdc', 13, option.color, 3);
+      rect(x + 12, 298, 258, 143, '#263e48', 9);
+      imageCover(cardArt[choice.kind === 'releasegate' ? CARDS.releasegate.art : CARDS.defect.art], x + 17, 303, 248, 133, 6);
+      rect(x + 19, 312, 39, 39, option.color, 20, cream, 1);
+      icon(option.symbol, x + 38, 332, 22, cream);
+      label(option.name, x + 141, 466, 19, ink, 'bold', 'center', 'Arial');
+      wrap(option.detail, x + 18, 489, 246, 13, '#52676a', 18, 'Arial');
+      button(`${i + 1} · CHOOSE`, x + 36, 530, 210, 38, () => choiceFromUI(i), { size: 14, disabled: !option.available, fill: option.color });
+    });
+    if (gate) label(`PROGRESS ${gate.progress}/3 · ${gate.remaining} TURN${gate.remaining === 1 ? '' : 'S'} LEFT`, 600, 602, 12, teal, 'bold', 'center', 'Arial');
   } else {
-    const cards = state.hand, width = 166, gap = 12, left = (W - cards.length * width - (cards.length - 1) * gap) / 2;
+    const pile = choice.kind === 'salvage' ? state.discardPile : choice.kind === 'reclaim' ? state.exhausted : state.hand;
+    const page = choice.page || 0, cards = ['salvage', 'reclaim'].includes(choice.kind) ? pile.slice(page * 5, page * 5 + 5) : pile;
+    const width = 166, gap = 12, left = (W - cards.length * width - (cards.length - 1) * gap) / 2;
     cards.forEach((id, i) => {
       const card = cardInfo(id), x = left + i * (width + gap);
       rect(x, 296, width, 274, '#f6ecdc', 11, rarityColors[card.rarity], 2);
@@ -934,10 +982,16 @@ function combatChoice() {
       imageCover(cardArt[card.art], x + 11, 307, width - 22, 119, 5);
       label(card.name, x + width / 2, 454, 15, ink, 'bold', 'center', 'Arial', width - 12);
       label(`${card.cost} SP · ${card.rarity.toUpperCase()}`, x + width / 2, 482, 11, teal, 'bold', 'center', 'Arial');
-      button(`${i + 1} · ${choice.kind === 'grooming' ? 'SET ASIDE' : 'ARCHIVE'}`, x + 8, 520, width - 16, 39, () => choiceFromUI(i), { size: 12, fill: choice.kind === 'grooming' ? '#b6ddd0' : gold });
+      const action = { grooming: 'SET ASIDE', archiveticket: 'ARCHIVE', salvage: 'TOPDECK', reclaim: 'RECLAIM' }[choice.kind] || 'CHOOSE';
+      button(`${i + 1} · ${action}`, x + 8, 520, width - 16, 39, () => choiceFromUI(i), { size: 12, fill: choice.kind === 'grooming' || choice.kind === 'reclaim' ? '#b6ddd0' : gold });
     });
+    if (pile.length > 5) {
+      button('← PREV', 132, 580, 115, 25, () => { choice.page = Math.max(0, page - 1); }, { size: 11, disabled: page === 0, fill: '#d8e6da' });
+      button('NEXT →', 953, 580, 115, 25, () => { choice.page = Math.min(Math.ceil(pile.length / 5) - 1, page + 1); }, { size: 11, disabled: (page + 1) * 5 >= pile.length, fill: '#d8e6da' });
+      label(`PAGE ${page + 1}/${Math.ceil(pile.length / 5)}`, 600, 592, 12, teal, 'bold', 'center', 'Arial');
+    }
   }
-  label('Select a numbered option to continue the turn', 600, 590, 12, '#6b7d7d', 'normal', 'center', 'Arial');
+  if (choice.kind !== 'releasegate' && !(['salvage', 'reclaim'].includes(choice.kind) && (choice.kind === 'salvage' ? state.discardPile : state.exhausted).length > 5)) label('Select a numbered option to continue the turn', 600, 603, 12, '#6b7d7d', 'normal', 'center', 'Arial');
 }
 function takeRewardFromUI(index) {
   const choice = state.rewardChoices[index];
@@ -1281,6 +1335,10 @@ window.addEventListener('keydown', e => {
   }
   if (state.mode === 'combat' && state.pendingChoice) {
     if (['1', '2', '3', '4', '5'].includes(e.key)) choiceFromUI(Number(e.key) - 1);
+    if (['salvage', 'reclaim'].includes(state.pendingChoice?.kind) && ['arrowleft', 'arrowright'].includes(key)) {
+      const pile = state.pendingChoice.kind === 'salvage' ? state.discardPile : state.exhausted;
+      state.pendingChoice.page = Math.max(0, Math.min(Math.ceil(pile.length / 5) - 1, (state.pendingChoice.page || 0) + (key === 'arrowright' ? 1 : -1)));
+    }
     persistRun(); render(); return;
   }
   if (showBattleNotes) {
@@ -1332,6 +1390,7 @@ window.addEventListener('keydown', e => {
     if (key === 'a') abilityFromUI();
     if (key === 's') specialistFromUI();
     if (key === 'b') { if (state.enemies.some(enemy => enemy.boss && !enemy.problemResolved)) solveFromUI(); else resolveMission(state); }
+    if (key === 'g') gateFromUI();
     if (key === 'r') shipRelease(state);
     if (['1', '2', '3', '4', '5'].includes(e.key)) playFromUI(Number(e.key) - 1);
     if (e.code === 'Space') { e.preventDefault(); endFromUI(); }
@@ -1348,6 +1407,15 @@ window.addEventListener('pagehide', persistRun);
 window.addEventListener('resize', resize);
 document.addEventListener('fullscreenchange', resize);
 window.advanceTime = ms => { if (!reducedMotion) clock += ms / 1000; render(); };
+function activeChoiceOptions() {
+  const choice = state.pendingChoice;
+  if (!choice || state.mode !== 'combat') return [];
+  if (choice.kind === 'scopechoice') return ['Protect the Team', 'Cut Through'].map((name, index) => ({ index, name, available: true }));
+  if (choice.kind === 'releasegate') return ['Test', 'Rush', 'Abort'].map((name, index) => ({ index, name, available: index !== 0 || state.sp >= 1 }));
+  if (choice.kind === 'defect') return ['Fix', 'Defer', 'Automate'].map((name, index) => ({ index, name, available: index !== 2 || (state.evidence || 0) >= 2 }));
+  const pile = choice.kind === 'salvage' ? state.discardPile : choice.kind === 'reclaim' ? state.exhausted : state.hand;
+  return pile.slice((choice.page || 0) * 5, (choice.page || 0) * 5 + 5).map((id, index) => ({ index, name: cardInfo(id).name, available: true }));
+}
 window.render_game_to_text = () => JSON.stringify({
   coordinateSystem: 'Canvas 1200x800; origin top-left, x right, y down.',
   mode: state.mode, seed: state.seed, act: ACTS[actIndex(state)], encounter: encounterNumber(state), role: state.role, masteryKit: state.masteryKit, savedRunAvailable: !!savedRun, loadoutOpen: showLoadout, battleNotesOpen: showBattleNotes, archiveOpen: showArchive, archivePage, menuConfirmOpen: showMenuConfirm, soundEnabled: battleAudio.enabled,
@@ -1362,7 +1430,7 @@ window.render_game_to_text = () => JSON.stringify({
   contractsCompleted: state.contractsCompleted, briefsCompleted: state.briefsCompleted,
   cardPreview: previewCardIndex !== null && state.mode === 'combat' ? { index: previewCardIndex, name: cardInfo(state.hand[previewCardIndex]).name } : null,
   rewardToast: rewardToast ? { type: rewardToast.type, name: rewardToast.name, detail: rewardToast.detail } : null,
-  hp: state.hp, maxHp: state.maxHp, sp: state.sp, maxSp: state.maxSp, nextSp: state.nextSp, block: state.block, reserveBlock: state.reserveBlock, flow: state.flow, credits: state.credits, projectDebt: state.projectDebt, debtPressure: debtTier(state),
+  hp: state.hp, maxHp: state.maxHp, sp: state.sp, maxSp: state.maxSp, nextSp: state.nextSp, block: state.block, reserveBlock: state.reserveBlock, flow: state.flow, evidence: state.evidence || 0, credits: state.credits, projectDebt: state.projectDebt, debtPressure: debtTier(state),
   specialist: state.specialist ? { id: state.specialist, name: SPECIALISTS[state.specialist].name, action: SPECIALISTS[state.specialist].action, detail: SPECIALISTS[state.specialist].detail, teamwork: TEAMWORK[state.specialist][state.role], ready: state.mode === 'combat' && !state.specialistUsed } : null,
   hiring: state.mode === 'hire' ? { price: specialistPrice(state), onboardingSp: state.floor >= 6 ? 2 : state.floor >= 3 ? 1 : 0, choices: Object.entries(SPECIALISTS).map(([id, spec]) => ({ id, name: spec.name, detail: spec.detail, available: state.credits >= specialistPrice(state) && state.specialist !== id })) } : null,
   objective: state.mode === 'combat' && state.objective ? { ...state.objective, name: OBJECTIVES[state.objective.id].name, detail: OBJECTIVES[state.objective.id].detail } : null,
@@ -1372,13 +1440,14 @@ window.render_game_to_text = () => JSON.stringify({
   routeForecast: state.mode === 'route' ? state.routeForecast || [] : [],
   event: state.mode === 'event' ? { title: EVENTS[state.eventId].title, speaker: EVENTS[state.eventId].speaker, text: EVENTS[state.eventId].text, choices: EVENTS[state.eventId].choices.map((c, i) => ({ label: c.label, detail: c.detail, available: canChooseEvent(state, i) })) } : null,
   shop: state.mode === 'shop' ? state.shopStock.map((o, i) => ({ kind: o.kind, name: o.kind === 'card' ? cardInfo(o.id).name : o.kind === 'item' ? ITEMS[o.id].name : o.kind === 'relic' ? RELICS[o.id]?.name || 'Sold out' : o.kind === 'trinket' ? TRINKETS[o.id]?.name || 'Sold out' : o.kind === 'heal' ? 'Quiet Break' : 'Retire a Basic', price: o.price, rarity: o.kind === 'card' ? cardInfo(o.id).rarity : null, power: o.kind === 'card' ? cardInfo(o.id).power : null, sold: o.sold, available: canBuyShop(state, i) })) : [],
-  enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, intent: intentFor(enemy).label, reactions: enemy.reactions || [], boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
+  enemies: state.mode === 'combat' ? state.enemies.map((enemy, i) => ({ index: i, name: enemy.name, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, weak: enemy.weak, vulnerable: enemy.vulnerable, mark: enemy.mark || 0, linked: !!enemy.linkedPower, intent: intentFor(enemy).label, nextIntent: state.evidence ? nextIntentFor(enemy).label : null, reactions: enemy.reactions || [], boss: enemy.boss, phase: enemy.boss ? enemy.phase : null, phaseName: enemy.boss ? ENEMIES[enemy.id].phaseNames[enemy.phase - 1] : null, problem: enemy.boss ? { name: BOSS_PROBLEMS[enemy.id].name, detail: BOSS_PROBLEMS[enemy.id].detail, resolved: enemy.problemResolved, clock: enemy.problemClock } : null })) : [],
   crisis: state.mode === 'combat' ? state.crisis || null : null, mission: state.mode === 'combat' ? state.mission : null, endTurnPreview: state.mode === 'combat' ? currentForecast() : null, readiness: state.mode === 'combat' ? state.readiness : null, canShip: state.mode === 'combat' && state.readiness >= 6 && state.turn >= 2 && !state.enemies.some(enemy => enemy.boss), teamworkUsed: state.mode === 'combat' ? state.teamworkUsed : null,
   fx: state.mode === 'combat' ? battleFx.active(clock) : [],
   motion: state.mode === 'combat' && !reducedMotion ? { hero: battleMotion.hero && clock - battleMotion.hero.at < .38 ? battleMotion.hero.kind : null, enemyPreparing: endTurnHovered() && state.enemies.some(enemy => ['attack', 'erode', 'audit'].includes(intentFor(enemy).kind) && !enemy.redirected && !enemy.stalled), enemyLunges: battleMotion.enemies.filter(entry => entry.kind === 'lunge' && clock - entry.at < .2).length, cardsInFlight: battleMotion.cards.filter(card => clock - card.at < .24).length, drawingHand: !!battleMotion.draw && clock - battleMotion.draw.at < .19 } : null,
-  initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining, progress: p.progress || 0, needed: p.goal || null })) : [],
+  initiatives: state.mode === 'combat' ? state.initiatives.map(p => ({ id: p.id, name: CARDS[p.id].name, turns: p.remaining, progress: p.progress || 0, needed: p.goal || null, canAct: p.id === 'releasegate' && p.actedTurn !== state.turn })) : [],
   activeInitiatives: state.mode === 'combat' ? state.activeInitiatives.map(id => CARDS[id].name) : [],
   pendingChoice: state.mode === 'combat' ? state.pendingChoice : null,
+  choiceOptions: activeChoiceOptions(),
   setAside: state.mode === 'combat' ? state.setAside.map(id => cardInfo(id).name) : [],
   exhausted: state.mode === 'combat' ? state.exhausted.map(id => cardInfo(id).name) : [],
   sprintCommit: state.mode === 'combat' ? state.sprintCommit : 0,
