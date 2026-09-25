@@ -45,12 +45,13 @@ try {
   assert.ok(titleAssets >= 4 && titleAssets <= 8, `title should load only visible art, got ${titleAssets} assets`);
   await page.keyboard.press('Enter');
   assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'route');
-  await page.waitForFunction(() => performance.getEntriesByType('resource').some(asset => asset.name.endsWith('/assets/cards/patch.webp')));
+  await page.waitForFunction(() => performance.getEntriesByType('resource').filter(asset => asset.name.includes('/assets/')).length >= 20);
   assert.ok(artwork.size >= 20 && artwork.size <= 40, `route should load its deck and effect art, got ${artwork.size} assets`);
   assert.equal([...artwork].filter(asset => /\/assets\/story\//.test(asset)).length, 0, 'unvisited story art should remain deferred');
   assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.png$/.test(asset)).length, 0, 'legacy card PNGs should not be requested');
   await page.keyboard.press('1');
   await page.waitForFunction(() => performance.getEntriesByType('resource').some(asset => asset.name.endsWith('/assets/debug-duck.webp')));
+  await page.waitForLoadState('networkidle');
   assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'combat');
   assert.deepEqual(errors, []);
   fs.mkdirSync('output/pages-preview', { recursive: true });
