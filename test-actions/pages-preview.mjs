@@ -41,21 +41,21 @@ try {
   assert.equal(response.status(), 200);
   await page.waitForFunction(() => typeof window.render_game_to_text === 'function', null, { timeout: 10000 });
   assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'intro');
+  const titleAssets = artwork.size;
+  assert.ok(titleAssets >= 4 && titleAssets <= 8, `title should load only visible art, got ${titleAssets} assets`);
   await page.keyboard.press('Enter');
   assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'route');
-  assert.ok(artwork.size >= 25, `expected generated artwork to load, got ${artwork.size} assets`);
-  assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.png$/.test(asset)).length, 8, 'all eight skill illustrations should load');
-  assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.webp$/.test(asset)).length, 26, 'all twenty-six expanded skill illustrations should load');
-  assert.equal([...artwork].filter(asset => /\/assets\/ui\/[^/]+\.webp$/.test(asset)).length, 3, 'title and Night Market service art should load');
-  assert.equal([...artwork].filter(asset => /\/assets\/story\/[^/]+\.png$/.test(asset)).length, 7, 'all seven story illustrations should load');
-  for (const [folder, count] of [['relics', 14], ['trinkets', 5], ['roles', 3], ['scenes', 6]]) {
-    assert.equal([...artwork].filter(asset => asset.includes(`/assets/${folder}/`) && asset.endsWith('.webp')).length, count, `all ${folder} art should load`);
-  }
-  assert.equal([...artwork].filter(asset => /\/assets\/enemies\/(shredder|collector)\.webp$/.test(asset)).length, 2, 'both new enemy portraits should load');
+  await page.waitForFunction(() => performance.getEntriesByType('resource').some(asset => asset.name.endsWith('/assets/cards/patch.webp')));
+  assert.ok(artwork.size >= 20 && artwork.size <= 40, `route should load its deck and effect art, got ${artwork.size} assets`);
+  assert.equal([...artwork].filter(asset => /\/assets\/story\//.test(asset)).length, 0, 'unvisited story art should remain deferred');
+  assert.equal([...artwork].filter(asset => /\/assets\/cards\/[^/]+\.png$/.test(asset)).length, 0, 'legacy card PNGs should not be requested');
+  await page.keyboard.press('1');
+  await page.waitForFunction(() => performance.getEntriesByType('resource').some(asset => asset.name.endsWith('/assets/debug-duck.webp')));
+  assert.equal(JSON.parse(await page.evaluate(() => window.render_game_to_text())).mode, 'combat');
   assert.deepEqual(errors, []);
   fs.mkdirSync('output/pages-preview', { recursive: true });
-  await page.locator('#game').screenshot({ path: 'output/pages-preview/route.png' });
-  console.log(`Pages preview passed: ${artwork.size} assets loaded from ${url}`);
+  await page.locator('#game').screenshot({ path: 'output/pages-preview/combat.png' });
+  console.log(`Pages preview passed: ${titleAssets} title assets, ${artwork.size} combat assets loaded from ${url}`);
 } catch (error) {
   console.error(errors);
   throw error;

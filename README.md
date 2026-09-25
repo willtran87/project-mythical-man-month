@@ -51,6 +51,12 @@ Combat displays the projected outcome of ending the current turn, including heal
 
 The Run Archive now tracks mastery for each lead. A win unlocks an alternate starting kit that swaps one starter skill, six completed briefs unlock an emblem, and five completed missions add a Veteran title. Its Run Insights tab records local route choices, card offers and picks, and final threats from completed runs as clues for balancing. These records stay on the device.
 
+## Performance
+
+Illustrations load when their screen needs them. The route screen preloads the current deck and combat effect art so the next fight starts with its assets ready. The older multi-megabyte PNG illustrations have display-sized WebP copies; the original PNGs remain in `public/assets/` as source art. The build removes superseded PNG copies from `dist/`, reducing the published package by about 79 MB. Combat uses an opaque canvas and skips a redundant full-canvas clear. Slow idle motion redraws at roughly 30 fps, while actions, particles, card travel, reward toasts, and pointer activity redraw at the display's full cadence. Reduced-motion mode still avoids the animation loop.
+
+On the seed-42 local art check, the title requested 5 images totaling 0.64 MB, the route reached 28 images and 2.63 MB, and the first fight reached 31 images and 3.03 MB. These are diagnostic local transfer figures; a browser cache can make later visits cheaper.
+
 ## Controls
 
 | Input | Action |
@@ -90,6 +96,8 @@ The Run Archive now tracks mastery for each lead. A win unlocks an alternate sta
 ```powershell
 npm run build
 node test-actions/battle-balance.mjs
+node test-actions/asset-profile.mjs
+node test-actions/render-cadence.mjs
 node test-actions/skill-depth.mjs
 node test-actions/skill-depth-browser.mjs
 node test-actions/maturity.mjs

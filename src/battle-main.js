@@ -4,41 +4,43 @@ import { BattleAudio } from './battle-audio.js';
 import { ACTS, ACT_LORE, ROLES, MASTERY_KITS, SPECIALISTS, TEAMWORK, CHARTERS, CONTRACTS, CHALLENGES, CRISES, ARCHITECTURES, PRACTICES, MISSIONS, BOSS_PROBLEMS, OBJECTIVES, EVENTS, TOTAL_FIGHTS, CARDS, ITEMS, TRINKETS, RELICS, ENEMIES, cardInfo, cardBase, upgradeBranchDetail, debtTier, specialistPrice, runScore, newGame, actIndex, encounterNumber, selectRole, startGame, chooseRoute, openHiring, cancelHiring, hireSpecialist, openCharter, cancelCharter, chooseCharter, openContract, cancelContract, setEscalation, chooseArchitecture, choosePractice, resolveBossProblem, resolveMission, projectEndTurn, shipRelease, openChallenge, cancelChallenge, chooseChallenge, canChooseEvent, chooseEvent, canBuyShop, buyShop, leaveShop, selectTarget, intentFor, playCard, chooseCombatOption, useRoleAbility, useSpecialist, useItem, useTrinket, endTurn, chooseReward, chooseTune, cancelTune, chooseUpgrade, cancelUpgrade } from './battle-game.js';
 
 const canvas = document.querySelector('#game');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 const W = 1200, H = 800;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ink = '#173241', cream = '#fff7e8', gold = '#eebd5d', coral = '#e96a55', teal = '#2e8d8b';
 const rarityColors = { basic: '#9ca8a4', common: '#5f9a92', uncommon: '#467eaa', rare: '#c3933d' };
 const artPaths = {
-  cabinet: '/assets/artifact-cabinet.png',
+  cabinet: '/assets/artifact-cabinet.webp',
   titleHero: '/assets/ui/title-hero.webp', quietBreak: '/assets/ui/quiet-break.webp', retireBasic: '/assets/ui/retire-basic.webp',
-  scope: '/assets/scope-creep.png', bug: '/assets/clockwork-bug.png', handoff: '/assets/handoff-hydra.png',
-  debt: '/assets/technical-debt.png', vendor: '/assets/vendor.png', goblin: '/assets/budget-goblin.png',
-  kraken: '/assets/merge-kraken.png', dragon: '/assets/deadline-dragon.png',
-  mimic: '/assets/meeting-mimic.png', wraith: '/assets/burnout-wraith.png',
-  auditor: '/assets/process-auditor.png', spider: '/assets/dependency-spider.png', siren: '/assets/metrics-siren.png',
-  chimera: '/assets/approval-chimera.png', slime: '/assets/regression-slime.png', swarm: '/assets/notification-swarm.png',
+  scope: '/assets/scope-creep.webp', bug: '/assets/clockwork-bug.webp', handoff: '/assets/handoff-hydra.webp',
+  debt: '/assets/technical-debt.webp', vendor: '/assets/vendor.webp', goblin: '/assets/budget-goblin.webp',
+  kraken: '/assets/merge-kraken.webp', dragon: '/assets/deadline-dragon.webp',
+  mimic: '/assets/meeting-mimic.webp', wraith: '/assets/burnout-wraith.webp',
+  auditor: '/assets/process-auditor.webp', spider: '/assets/dependency-spider.webp', siren: '/assets/metrics-siren.webp',
+  chimera: '/assets/approval-chimera.webp', slime: '/assets/regression-slime.webp', swarm: '/assets/notification-swarm.webp',
   shredder: '/assets/enemies/shredder.webp', collector: '/assets/enemies/collector.webp',
-  archivist: '/assets/night-archivist.png', archive: '/assets/after-hours-archive.png',
-  duck: '/assets/debug-duck.png', pizza: '/assets/emergency-pizza.png', blueprint: '/assets/one-page-blueprint.png',
-  storyCouncil: '/assets/story/architecture-council.png', storyMidnight: '/assets/story/midnight-deploy.png',
-  storyRetro: '/assets/story/blameless-postmortem.png', storySponsor: '/assets/story/executive-sponsor.png',
-  storyLostFound: '/assets/story/lost-and-found.png', victory: '/assets/story/release-victory.png',
-  defeat: '/assets/story/project-defeat.png'
+  archivist: '/assets/night-archivist.webp', archive: '/assets/after-hours-archive.webp',
+  duck: '/assets/debug-duck.webp', pizza: '/assets/emergency-pizza.webp', blueprint: '/assets/one-page-blueprint.webp',
+  storyCouncil: '/assets/story/architecture-council.webp', storyMidnight: '/assets/story/midnight-deploy.webp',
+  storyRetro: '/assets/story/blameless-postmortem.webp', storySponsor: '/assets/story/executive-sponsor.webp',
+  storyLostFound: '/assets/story/lost-and-found.webp', victory: '/assets/story/release-victory.webp',
+  defeat: '/assets/story/project-defeat.webp'
 };
-const art = {};
-for (const [id, path] of Object.entries(artPaths)) {
-  const img = new Image(); img.src = `${import.meta.env.BASE_URL}${path.slice(1)}`; img.onload = () => render(); art[id] = img;
-}
-function loadCollection(folder, ids) {
+function lazyImages(paths) {
   const images = {};
-  for (const id of ids) {
-    const img = new Image();
-    img.src = `${import.meta.env.BASE_URL}assets/${folder}/${id}.webp`;
-    img.onload = () => render();
-    images[id] = img;
+  for (const [id, path] of Object.entries(paths)) {
+    const image = new Image(); let requested = false;
+    image.onload = () => render();
+    Object.defineProperty(images, id, { enumerable: true, get() {
+      if (!requested) { requested = true; image.src = `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`; }
+      return image;
+    } });
   }
   return images;
+}
+const art = lazyImages(artPaths);
+function loadCollection(folder, ids) {
+  return lazyImages(Object.fromEntries(ids.map(id => [id, `assets/${folder}/${id}.webp`])));
 }
 const relicArt = loadCollection('relics', Object.keys(RELICS));
 const trinketArt = loadCollection('trinkets', Object.keys(TRINKETS));
@@ -46,18 +48,24 @@ const roleArt = loadCollection('roles', Object.keys(ROLES));
 const specialistArt = loadCollection('specialists', Object.keys(SPECIALISTS));
 const charterArt = loadCollection('charters', Object.keys(CHARTERS));
 const sceneArt = loadCollection('scenes', ['requirements', 'integration', 'release', 'goblin', 'kraken', 'dragon']);
-const fxArt = reducedMotion ? {} : loadCollection('fx', ['strike', 'enemy', 'shield', 'heal', 'draw', 'plan', 'mark', 'weak', 'expose', 'burnout', 'debt', 'boss-goblin', 'boss-kraken', 'boss-dragon']);
-for (const [id, image] of Object.entries(relicArt)) fxArt[`relic-${id}`] = image;
-for (const [id, image] of Object.entries(trinketArt)) fxArt[`trinket-${id}`] = image;
-const cardArt = {};
-for (const key of new Set(Object.values(CARDS).map(card => card.art))) {
-  const img = new Image(); img.src = `${import.meta.env.BASE_URL}assets/cards/${key.includes('.') ? key : `${key}.png`}`; img.onload = () => render(); cardArt[key] = img;
+const fxIds = ['strike', 'enemy', 'shield', 'heal', 'draw', 'plan', 'mark', 'weak', 'expose', 'burnout', 'debt', 'boss-goblin', 'boss-kraken', 'boss-dragon'];
+const fxArt = reducedMotion ? {} : loadCollection('fx', fxIds);
+for (const id of Object.keys(relicArt)) Object.defineProperty(fxArt, `relic-${id}`, { get: () => relicArt[id] });
+for (const id of Object.keys(trinketArt)) Object.defineProperty(fxArt, `trinket-${id}`, { get: () => trinketArt[id] });
+const cardArt = lazyImages(Object.fromEntries([...new Set(Object.values(CARDS).map(card => card.art))].map(key => [key, `assets/cards/${key.includes('.') ? key : `${key}.webp`}`])));
+function preloadCombatArt(run) {
+  for (const id of run.deck || []) {
+    const key = cardInfo(id)?.art;
+    if (key) cardArt[key];
+  }
+  if (!reducedMotion) for (const id of fxIds) fxArt[id];
 }
 const seedParam = new URLSearchParams(location.search).get('seed');
 const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) : null;
 const makeRun = () => newGame(fixedSeed ?? undefined);
 let state = makeRun(), pointer = { x: -1, y: -1 }, hitboxes = [], showLoadout = false, showArchive = false, showMenuConfirm = false, showBattleNotes = false, archivePage = 'runs';
 let clock = 0, lastFrame = 0, lastRenderedMode = null, previewCardIndex = null, hoverPreviewEnabled = false, rewardToast = null;
+let lastPointerMotionAt = -Infinity;
 const battleMotion = { hero: null, enemies: [], cards: [], draw: null };
 let forecastDirty = true, forecast = null;
 const battleAudio = new BattleAudio();
@@ -1199,7 +1207,9 @@ function menuConfirm() {
   button('SAVE & MENU', 615, 458, 248, 64, () => returnToMenu(), { size: 17, fill: coral });
 }
 function render() {
-  hitboxes = []; ctx.clearRect(0, 0, W, H);
+  hitboxes = [];
+  const enteringMode = lastRenderedMode !== state.mode;
+  if (enteringMode && ['route', 'combat'].includes(state.mode)) preloadCombatArt(state);
   if (state.mode !== 'combat') { battleFx.effects.length = 0; clearBattleMotion(); showBattleNotes = false; }
   else if (lastRenderedMode !== 'combat') cueDraw();
   lastRenderedMode = state.mode;
@@ -1235,13 +1245,24 @@ function resize() {
   ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0); render();
 }
 function position(e) { const b = canvas.getBoundingClientRect(); return { x: (e.clientX - b.left) * W / b.width, y: (e.clientY - b.top) * H / b.height }; }
+function fastMotionActive() {
+  if (performance.now() - lastPointerMotionAt < 220) return true;
+  if (rewardToast && performance.now() - rewardToast.startedAt < 2200) return true;
+  if (state.mode !== 'combat') return false;
+  if (battleFx.effects.some(effect => clock - effect.at < effect.life)) return true;
+  if (battleMotion.hero && clock - battleMotion.hero.at < .4) return true;
+  if (battleMotion.enemies.some(entry => clock - entry.at < .3)) return true;
+  if (battleMotion.cards.some(card => clock - card.at < .28)) return true;
+  if (battleMotion.draw && clock - battleMotion.draw.at < .19) return true;
+  return endTurnHovered() && state.enemies.some(enemy => ['attack', 'erode', 'audit'].includes(intentFor(enemy).kind) && !enemy.redirected && !enemy.stalled);
+}
 function animationLoop(now) {
   if (!lastFrame) lastFrame = now;
   if (document.visibilityState !== 'visible') lastFrame = now;
-  else if (now - lastFrame >= 12) { clock += Math.min(now - lastFrame, 250) / 1000; lastFrame = now; render(); }
+  else if (now - lastFrame >= (fastMotionActive() ? 12 : 30)) { clock += Math.min(now - lastFrame, 250) / 1000; lastFrame = now; render(); }
   requestAnimationFrame(animationLoop);
 }
-canvas.addEventListener('pointermove', e => { pointer = position(e); hoverPreviewEnabled = e.pointerType === 'mouse'; if (reducedMotion) render(); });
+canvas.addEventListener('pointermove', e => { pointer = position(e); hoverPreviewEnabled = e.pointerType === 'mouse'; lastPointerMotionAt = performance.now(); if (reducedMotion) render(); });
 canvas.addEventListener('pointerleave', () => { pointer = { x: -1, y: -1 }; hoverPreviewEnabled = false; if (reducedMotion) render(); });
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault(); pointer = position(e); hoverPreviewEnabled = false;

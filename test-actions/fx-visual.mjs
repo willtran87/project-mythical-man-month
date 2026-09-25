@@ -16,6 +16,8 @@ const frame = async (name, ms = 180) => { await page.clock.pauseAt(new Date()); 
 const fresh = async seed => page.goto(`http://127.0.0.1:5173/?seed=${seed}`, { waitUntil: 'networkidle' });
 
 await fresh(41);
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => performance.getEntriesByType('resource').filter(entry => entry.name.includes('/assets/fx/')).length === 14);
 assert.equal(fxResponses.length, 14);
 assert.ok(fxResponses.every(response => response.status() === 200));
 assert.equal((await state()).soundEnabled, true);

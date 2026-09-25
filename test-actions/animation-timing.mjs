@@ -10,9 +10,9 @@ page.on('pageerror', error => errors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
 await page.addInitScript(() => {
   window.__paintTimes = [];
-  const original = CanvasRenderingContext2D.prototype.clearRect;
-  CanvasRenderingContext2D.prototype.clearRect = function (...args) {
-    if (this.canvas.id === 'game') window.__paintTimes.push(performance.now());
+  const original = CanvasRenderingContext2D.prototype.fillRect;
+  CanvasRenderingContext2D.prototype.fillRect = function (...args) {
+    if (this.canvas.id === 'game' && args[0] === 0 && args[1] === 0 && args[2] === 1200 && args[3] === 800 && ['#dac4a5', '#162c39'].includes(this.fillStyle)) window.__paintTimes.push(performance.now());
     return original.apply(this, args);
   };
 });

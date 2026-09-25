@@ -7,10 +7,10 @@ const W = 1200, H = 800;
 const ink = '#173241', cream = '#fff7e8', teal = '#2e8d8b', coral = '#e96a55', gold = '#eebd5d';
 const paths = {
   office: '/assets/office.png', lead: '/assets/project-lead.png',
-  scope: '/assets/scope-creep.png', handoff: '/assets/handoff-hydra.png', bug: '/assets/clockwork-bug.png',
-  debt: '/assets/technical-debt.png', vendor: '/assets/vendor.png', architect: '/assets/architect.png',
-  goblin: '/assets/budget-goblin.png', kraken: '/assets/merge-kraken.png', duck: '/assets/debug-duck.png',
-  pizza: '/assets/emergency-pizza.png', blueprint: '/assets/one-page-blueprint.png'
+  scope: '/assets/scope-creep.webp', handoff: '/assets/handoff-hydra.webp', bug: '/assets/clockwork-bug.webp',
+  debt: '/assets/technical-debt.webp', vendor: '/assets/vendor.webp', architect: '/assets/architect.png',
+  goblin: '/assets/budget-goblin.webp', kraken: '/assets/merge-kraken.webp', duck: '/assets/debug-duck.webp',
+  pizza: '/assets/emergency-pizza.webp', blueprint: '/assets/one-page-blueprint.webp'
 };
 const art = {};
 for (const [id, path] of Object.entries(paths)) {
