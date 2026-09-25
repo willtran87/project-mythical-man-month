@@ -149,9 +149,14 @@ export const CARDS = {
   prototype: { name: 'One-Off Prototype', cost: 0, type: 'attack', detail: 'Deal 10. Exhaust this fight.', rarity: 'uncommon', art: 'deck-recovery.webp' },
   salvage: { name: 'Salvage Plan', cost: 1, type: 'skill', detail: 'Gain 5 Block. Choose a discard card to topdeck. Exhaust.', rarity: 'common', art: 'deck-recovery.webp' },
   reclaim: { name: 'Reclaim Work', cost: 1, type: 'skill', detail: 'Return an exhausted card to hand, or gain 7 Block. Exhaust.', rarity: 'rare', art: 'deck-recovery.webp' },
+  criticalpathcontrol: { name: 'Critical Path Control', cost: 1, type: 'skill', detail: 'Advance a chosen project. If none, gain 7 Block.', shortDetail: 'Advance a project. None: 7 Block.', rarity: 'uncommon', art: 'critical-path-control.webp' },
+  killswitch: { name: 'Kill Switch', cost: 0, type: 'skill', detail: 'Abandon a chosen project: +1 SP, 7 Block, +1 Debt. Exhaust.', shortDetail: 'Abandon project: +1 SP, 7 Block, +1 Debt. Exhaust.', rarity: 'uncommon', art: 'critical-path-control.webp' },
+  precisioncounter: { name: 'Precision Counter', cost: 1, type: 'skill', detail: 'Choose 6 Block or spend 2 Evidence to cancel a foe’s special intent and Mark it.', shortDetail: '6 Block OR 2 Evidence: cancel special, Mark 1.', rarity: 'uncommon', art: 'precision-counter.webp' },
+  hotfixforge: { name: 'Hotfix Forge', cost: 1, type: 'skill', detail: 'Turn a basic or Defect in hand into an exhausting Prototype for this fight. Otherwise 5 Block.', shortDetail: 'Rewrite basic/Defect into a temporary Prototype.', rarity: 'uncommon', art: 'hotfix-forge.webp' },
+  contractor: { name: 'Emergency Contractor', cost: 0, type: 'skill', detail: 'Spend 15 credits: +2 SP, draw 1. Next fight -1 opening SP. Exhaust. Once/fight.', shortDetail: '15 credits: +2 SP, draw 1. Next fight -1 SP.', rarity: 'rare', art: 'emergency-contractor.webp' },
   defect: { name: 'Open Defect', cost: 1, type: 'skill', detail: 'Choose: fix, defer, or automate with 2 Evidence.', rarity: 'basic', art: 'defect-triage.webp' }
 };
-export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'pipeline', 'protocol', 'rollout', 'decisionrecord', 'releasecut', 'changefreeze', 'pagerduty', 'grooming', 'archiveticket', 'migration', 'handoffgate', 'scopechoice', 'loadbearing', 'evidence', 'sprintcommit', 'decouple', 'interfaceaudit', 'traceledger', 'watchpoint', 'casefile', 'forensicbrief', 'releasegate', 'gatecheck', 'bugbudget', 'prototype', 'salvage', 'reclaim'];
+export const REWARD_CARDS = ['pair', 'refactor', 'memo', 'sweep', 'guardrail', 'rollback', 'critical', 'overclock', 'blueprint', 'rootcause', 'scopelock', 'automation', 'handoffmap', 'incident', 'triage', 'signal', 'sprint', 'backlog', 'charter', 'map', 'contract', 'integrity', 'trace', 'repro', 'breakpoint', 'cascade', 'standup', 'trade', 'quiet', 'launch', 'reserve', 'riskmatrix', 'probe', 'exploit', 'burnrate', 'weekend', 'hardstop', 'retro', 'warroom', 'bufferexchange', 'contingency', 'triangulate', 'tracesweep', 'borrow', 'reallocate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'pipeline', 'protocol', 'rollout', 'decisionrecord', 'releasecut', 'changefreeze', 'pagerduty', 'grooming', 'archiveticket', 'migration', 'handoffgate', 'scopechoice', 'loadbearing', 'evidence', 'sprintcommit', 'decouple', 'interfaceaudit', 'traceledger', 'watchpoint', 'casefile', 'forensicbrief', 'releasegate', 'gatecheck', 'bugbudget', 'prototype', 'salvage', 'reclaim', 'criticalpathcontrol', 'killswitch', 'precisioncounter', 'hotfixforge', 'contractor'];
 export const CARD_POWER = {
   patch: 2, review: 2, panic: 1, pair: 3, refactor: 3, memo: 3, sweep: 3, guardrail: 4,
   rollback: 4, critical: 4, overclock: 4, blueprint: 5, rootcause: 4, scopelock: 4,
@@ -163,7 +168,7 @@ export const CARD_POWER = {
   triangulate: 4, tracesweep: 4, borrow: 4, reallocate: 4,
   reprioritize: 3, escalate: 5, mitigate: 3, redirect: 5, pipeline: 4, protocol: 5, rollout: 4,
   decisionrecord: 4, releasecut: 4, changefreeze: 4, pagerduty: 3, grooming: 3, archiveticket: 4, migration: 5, handoffgate: 4, scopechoice: 3, loadbearing: 4, evidence: 4, sprintcommit: 5,
-  decouple: 4, interfaceaudit: 3, traceledger: 3, watchpoint: 3, casefile: 4, forensicbrief: 4, releasegate: 5, gatecheck: 3, bugbudget: 4, prototype: 4, salvage: 3, reclaim: 4, defect: 1
+  decouple: 4, interfaceaudit: 3, traceledger: 3, watchpoint: 3, casefile: 4, forensicbrief: 4, releasegate: 5, gatecheck: 3, bugbudget: 4, prototype: 4, salvage: 3, reclaim: 4, criticalpathcontrol: 4, killswitch: 3, precisioncounter: 4, hotfixforge: 4, contractor: 5, defect: 1
 };
 export const CARD_FAMILY = {
   patch: 'strike', review: 'block', panic: 'burnout', pair: 'draw', refactor: 'weak', memo: 'draw',
@@ -179,7 +184,7 @@ export const CARD_FAMILY = {
   reprioritize: 'tempo', escalate: 'tempo', mitigate: 'block', redirect: 'weak',
   pipeline: 'initiative', protocol: 'initiative', rollout: 'initiative',
   decisionrecord: 'flow', releasecut: 'flow', changefreeze: 'reaction', pagerduty: 'reaction', grooming: 'control', archiveticket: 'control', migration: 'initiative', handoffgate: 'initiative', scopechoice: 'choice', loadbearing: 'bank', evidence: 'mark', sprintcommit: 'burnout',
-  decouple: 'coupling', interfaceaudit: 'coupling', traceledger: 'evidence', watchpoint: 'evidence', casefile: 'evidence', forensicbrief: 'evidence', releasegate: 'initiative', gatecheck: 'initiative', bugbudget: 'debt', prototype: 'recovery', salvage: 'recovery', reclaim: 'recovery', defect: 'debt'
+  decouple: 'coupling', interfaceaudit: 'coupling', traceledger: 'evidence', watchpoint: 'evidence', casefile: 'evidence', forensicbrief: 'evidence', releasegate: 'initiative', gatecheck: 'initiative', bugbudget: 'debt', prototype: 'recovery', salvage: 'recovery', reclaim: 'recovery', criticalpathcontrol: 'initiative', killswitch: 'initiative', precisioncounter: 'evidence', hotfixforge: 'control', contractor: 'tempo', defect: 'debt'
 };
 export const SPECIAL_UPGRADES = {
   decisionrecord: { force: 'Spend up to 3 Flow; +5 Block per Flow.', flex: 'Draw 1 after spending any Flow.' },
@@ -192,7 +197,12 @@ export const SPECIAL_UPGRADES = {
   traceledger: { force: 'Gain 2 Evidence instead of 1.', flex: 'Draw 1 after recording Evidence.' },
   casefile: { force: '+7 damage per Evidence instead of +5.', flex: 'Keep 1 Evidence after spending it.' },
   releasegate: { force: 'Start the gate with 1 progress.', flex: 'Recover 1 SP when starting the gate.' },
-  salvage: { force: 'Gain 8 Block before choosing a card.', flex: 'Draw the chosen card if your hand has room.' }
+  salvage: { force: 'Gain 8 Block before choosing a card.', flex: 'Draw the chosen card if your hand has room.' },
+  criticalpathcontrol: { force: 'Advance the chosen project twice.', flex: 'Draw 1 after advancing a project.' },
+  killswitch: { force: 'Abandon for 2 SP and 7 Block.', flex: 'Abandon without adding Debt.' },
+  precisioncounter: { force: 'Counter costs only 1 Evidence.', flex: 'Counter also grants 6 Block.' },
+  hotfixforge: { force: 'The Prototype deals 13 instead of 10.', flex: 'Gain 5 Block after rewriting.' },
+  contractor: { force: 'Gain 3 SP instead of 2.', flex: 'Spend 10 credits instead of 15.' }
 };
 const SPECIAL_CARD_DETAIL = {
   decisionrecord: { force: '4 Block. Spend up to 3 Flow: +5 each. At 2, draw 1.', flex: '4 Block. Spend up to 2 Flow: +4 each. Draw 1 if any spent.' },
@@ -205,7 +215,19 @@ const SPECIAL_CARD_DETAIL = {
   traceledger: { force: 'Gain 2 Evidence. Apply 1 Weak. Reveal next intents.', flex: 'Gain 1 Evidence. Apply 1 Weak. Draw 1.' },
   casefile: { force: 'Deal 7 +7 per Evidence. Spend all Evidence.', flex: 'Deal 7 +5 per Evidence. Keep 1 Evidence.' },
   releasegate: { force: 'Start at 1/3. Finish: 18 to ALL; miss: Debt.', flex: 'Start Gate, regain 1 SP. Finish: 18 to ALL.' },
-  salvage: { force: 'Gain 8 Block. Choose a discard card to topdeck. Exhaust.', flex: 'Gain 5 Block. Topdeck, then draw if room. Exhaust.' }
+  salvage: { force: 'Gain 8 Block. Choose a discard card to topdeck. Exhaust.', flex: 'Gain 5 Block. Topdeck, then draw if room. Exhaust.' },
+  criticalpathcontrol: { force: 'Advance a chosen project twice. None: 7 Block.', flex: 'Advance a project, then draw 1. None: 7 Block.' },
+  killswitch: { force: 'Abandon project: +2 SP, 7 Block, +1 Debt. Exhaust.', flex: 'Abandon project: +1 SP, 7 Block, no Debt. Exhaust.' },
+  precisioncounter: { force: 'Choose 6 Block or spend 1 Evidence to cancel a special intent and Mark.', flex: 'Choose 6 Block or spend 2 Evidence to cancel a special intent, Mark, and gain 6 Block.' },
+  hotfixforge: { force: 'Rewrite a basic or Defect into an exhausting 13-damage Prototype. Otherwise 5 Block.', flex: 'Rewrite a basic or Defect into an exhausting Prototype and gain 5 Block. Otherwise 5 Block.' },
+  contractor: { force: 'Spend 15 credits: +3 SP, draw 1. Next fight -1 opening SP. Exhaust. Once/fight.', flex: 'Spend 10 credits: +2 SP, draw 1. Next fight -1 opening SP. Exhaust. Once/fight.' }
+};
+const SPECIAL_CARD_SHORT_DETAIL = {
+  criticalpathcontrol: { force: 'Advance one project twice. None: 7 Block.', flex: 'Advance a project, draw 1. None: 7 Block.' },
+  killswitch: { force: 'Abandon project: +2 SP, 7 Block, +1 Debt.', flex: 'Abandon project: +1 SP, 7 Block, no Debt.' },
+  precisioncounter: { force: '6 Block OR 1 Evidence: cancel special, Mark 1.', flex: '2 Evidence: cancel special, Mark 1, 6 Block.' },
+  hotfixforge: { force: 'Rewrite basic/Defect into a 13-damage Prototype.', flex: 'Rewrite basic/Defect into Prototype; +5 Block.' },
+  contractor: { force: '15 credits: +3 SP, draw 1. Next fight -1 SP.', flex: '10 credits: +2 SP, draw 1. Next fight -1 SP.' }
 };
 export function upgradeBranchDetail(id, branch) {
   const base = cardBase(id), card = CARDS[base];
@@ -223,7 +245,7 @@ export function cardInfo(id) {
   const power = Math.min(5, CARD_POWER[base] + (upgraded ? 1 : 0));
   const family = CARD_FAMILY[base];
   if (!upgraded) return { ...card, power, family };
-  return { ...card, name: `${card.name}${branch === 'flex' ? '*' : '+'}`, detail: SPECIAL_CARD_DETAIL[base]?.[branch] || `${card.detail} ${upgradeBranchDetail(base, branch)}`, upgraded: true, branch, power, family };
+  return { ...card, name: `${card.name}${branch === 'flex' ? '*' : '+'}`, detail: SPECIAL_CARD_DETAIL[base]?.[branch] || `${card.detail} ${upgradeBranchDetail(base, branch)}`, shortDetail: SPECIAL_CARD_SHORT_DETAIL[base]?.[branch] || card.shortDetail, upgraded: true, branch, power, family };
 }
 
 export const ITEMS = {
@@ -274,14 +296,15 @@ export const ENEMIES = {
   swarm: { name: 'Notification Swarm', art: 'swarm', hp: 24, pattern: [strike(3, { hits: 2, burnout: 1 }), shield(5), strike(5, { hits: 2 })] },
   shredder: { name: 'Spec Shredder', art: 'shredder', hp: 29, pattern: [strike(5), { kind: 'erode', amount: 5, damage: 6 }, shield(6)] },
   collector: { name: 'Overtime Collector', art: 'collector', hp: 32, pattern: [strike(6, { burnout: 1 }), { kind: 'audit', damage: 5 }, shield(6)] },
+  warden: { name: 'Red Tape Warden', art: 'warden', hp: 33, pattern: [{ kind: 'delay' }, strike(8), shield(7)] },
   goblin: { name: 'Budget Goblin', art: 'goblin', hp: 58, boss: true, phaseNames: ['Budget Review', 'Cost Cutting', 'Emergency Freeze'], pattern: [strike(8), strike(6, { burnout: 1 }), shield(10), strike(12)], phases: [[strike(7, { burnout: 1 }), shield(7), strike(10)], [{ kind: 'tax', amount: 1 }, strike(10), shield(5)]] },
   kraken: { name: 'Merge Kraken', art: 'kraken', hp: 74, boss: true, phaseNames: ['Open Branches', 'Conflict Storm', 'Forced Merge'], pattern: [strike(9), strike(7, { vulnerable: 1 }), summon('bug'), strike(13), shield(11)], phases: [[strike(8, { vulnerable: 1 }), shield(7), strike(10)], [strike(7, { hits: 2 }), shield(6), strike(11)]] },
   dragon: { name: 'Deadline Dragon', art: 'dragon', hp: 100, boss: true, phaseNames: ['Planning', 'Crunch', 'Launch Night'], pattern: [strike(11), strike(8, { vulnerable: 1 }), shield(12), strike(17), summon('scope'), strike(19)], phases: [[strike(10, { burnout: 1 }), shield(9), strike(14)], [strike(11, { vulnerable: 1 }), strike(8, { hits: 2 }), strike(16)]] }
 };
 const REGULARS = [
   ['scope', 'bug', 'handoff', 'mimic', 'auditor', 'swarm', 'shredder'],
-  ['debt', 'mimic', 'vendor', 'wraith', 'bug', 'spider', 'siren', 'slime', 'shredder', 'collector'],
-  ['debt', 'vendor', 'wraith', 'scope', 'handoff', 'auditor', 'spider', 'siren', 'chimera', 'slime', 'swarm', 'shredder', 'collector']
+  ['debt', 'mimic', 'vendor', 'wraith', 'bug', 'spider', 'siren', 'slime', 'shredder', 'collector', 'warden'],
+  ['debt', 'vendor', 'wraith', 'scope', 'handoff', 'auditor', 'spider', 'siren', 'chimera', 'slime', 'swarm', 'shredder', 'collector', 'warden']
 ];
 const BOSSES = ['goblin', 'kraken', 'dragon'];
 const BOSS_LINES = {
@@ -356,7 +379,7 @@ export function newGame(seed = randomSeed()) {
     inventory: ['duck', 'pizza'], trinkets: [], usedTrinkets: [], relics: [], credits: 14, role: 'architect', masteryKit: false, specialist: '', specialistUsed: false, onboardingPending: 0, projectDebt: 0, itemsUsed: 0, trinketUses: 0, cardsPlayed: 0,
     charter: '', charterChosen: false, practice: '', practiceRefunded: false, challenge: 'standard', challengeRule: '', dailyDate: '', escalation: 0, architecture: '', architecturesChosen: [], architecturePending: false, contract: null, contractTakenActs: [], contractsCompleted: 0, briefsCompleted: 0, briefsCompletedAct: 0, lastContract: '', earlyDebtActs: [],
     enemies: [], target: 0, itemUsedThisTurn: false, firstAttack: true, firstSkillTurn: true, damageTakenFight: 0, turnBlockUsed: 0, turnBlockShred: 0, lastPayout: 0, lastPerfect: false,
-    reserveBlock: 0, abilityUsed: false, notebookTurn: 0, redlineUsed: false, upgradeDamage: 0, debtChargedFight: [], charterFlowTurn: 0,
+    reserveBlock: 0, abilityUsed: false, notebookTurn: 0, redlineUsed: false, upgradeDamage: 0, debtChargedFight: [], charterFlowTurn: 0, contractorUsed: false,
     initiatives: [], activeInitiatives: [], crisis: '', mission: null, missionWins: 0, readiness: 0, shippedEarly: false, earlyShips: 0, skillChain: 0, teamworkUsed: false,
     routeChoices: [], rewardChoices: [], tuneChoices: [], upgradePending: null, objective: null, lastObjective: false, defeatedBosses: [], eventId: '', shopStock: [], pendingRoute: null,
     lastFightElite: false, log: ['Your first crisis awaits.'], ending: '', deathCause: '', telemetry: { routes: [], cardOffers: [], cardPicks: [] }
@@ -456,7 +479,7 @@ export function cancelHiring(s) { if (s.mode !== 'hire') return false; s.mode = 
 export function hireSpecialist(s, id) {
   if (s.mode !== 'hire' || !SPECIALISTS[id] || s.specialist === id || s.credits < specialistPrice(s)) return false;
   s.credits -= specialistPrice(s); s.specialist = id;
-  s.onboardingPending = s.floor >= 6 ? 2 : s.floor >= 3 ? 1 : 0;
+  s.onboardingPending = Math.min(3, (s.onboardingPending || 0) + (s.floor >= 6 ? 2 : s.floor >= 3 ? 1 : 0));
   s.mode = 'route'; note(s, `${SPECIALISTS[id].name} joined the team${s.onboardingPending ? `; next fight starts with ${s.onboardingPending} less SP for onboarding` : ''}.`);
   return true;
 }
@@ -588,7 +611,7 @@ function beginCombat(s, route) {
   if (s.onboardingPending) { s.sp = Math.max(1, s.sp - s.onboardingPending); s.onboardingPending = 0; }
   s.itemUsedThisTurn = false; s.firstAttack = true; s.firstAttackTurn = true; s.firstSkillTurn = true; s.vulnerable = 0; s.burnout = 0; s.flow = s.relics.includes('lantern') ? 1 : 0; s.evidence = 0;
   s.spTax = 0; s.nextSp = 0; s.damageTakenFight = 0; s.usedTrinkets = [];
-  s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = []; s.initiatives = []; s.activeInitiatives = []; s.readiness = 0; s.shippedEarly = false; s.skillChain = 0; s.teamworkUsed = false; s.practiceRefunded = false; s.practiceStrikeUsed = false;
+  s.reserveBlock = 0; s.abilityUsed = false; s.specialistUsed = false; s.notebookTurn = 0; s.redlineUsed = false; s.upgradeDamage = 0; s.debtChargedFight = []; s.initiatives = []; s.activeInitiatives = []; s.readiness = 0; s.shippedEarly = false; s.skillChain = 0; s.teamworkUsed = false; s.practiceRefunded = false; s.practiceStrikeUsed = false; s.contractorUsed = false;
   s.setAside = []; s.exhausted = []; s.pendingChoice = null; s.sprintCommit = 0;
   const objectiveIds = s.specialist ? ['shield', 'flow', 'quick', 'team'] : ['shield', 'flow', 'quick'];
   s.objective = { id: objectiveIds[(s.seed + s.floor * 7) % objectiveIds.length], progress: 0, done: false, failed: false };
@@ -740,6 +763,7 @@ export function intentFor(enemy) {
     return { ...intent, damage, label: `AUDIT ${damage} +2/BURN · TAX 1` };
   }
   if (intent.kind === 'split') return { ...intent, label: 'SPLIT · HALF HP' };
+  if (intent.kind === 'delay') return { ...intent, label: 'RED TAPE · DELAY PLAN / TAX 1 SP' };
   return { ...intent, label: `RECOVER ${intent.amount}` };
 }
 export function nextIntentFor(enemy) {
@@ -805,6 +829,40 @@ function advanceReleaseGate(s, amount) {
   note(s, 'Release Gate cleared: 18 damage to every foe.');
   return true;
 }
+function completeCardProject(s, project) {
+  s.initiatives.splice(s.initiatives.indexOf(project), 1);
+  if (project.id === 'migration') {
+    for (const foe of s.enemies) attackEnemy(s, foe, 16);
+    gainBlock(s, project.flex ? 10 : 6, false);
+    note(s, 'Migration Plan finished early: 16 to every foe and Block.');
+    return true;
+  }
+  gainBlock(s, 6, false);
+  s.nextSp += 2;
+  note(s, 'Handoff Gate cleared: 6 Block and +2 SP next turn.');
+  return false;
+}
+function advanceChosenProject(s, project, steps) {
+  let dealtDamage = false;
+  for (let i = 0; i < steps && s.initiatives.includes(project); i++) {
+    if (project.id === 'releasegate') dealtDamage = advanceReleaseGate(s, 1) || dealtDamage;
+    else if (project.id === 'migration' || project.id === 'handoffgate') {
+      project.progress = (project.progress || 0) + 1;
+      if (project.progress >= project.goal) dealtDamage = completeCardProject(s, project) || dealtDamage;
+    } else if (--project.remaining <= 0) {
+      s.initiatives.splice(s.initiatives.indexOf(project), 1);
+      if (project.id === 'rollout') {
+        for (const foe of s.enemies) attackEnemy(s, foe, 14);
+        dealtDamage = true;
+        note(s, 'Staged Rollout landed early: 14 damage to every foe.');
+      } else {
+        s.activeInitiatives.push(project.id);
+        note(s, `${CARDS[project.id].name} launched ahead of schedule.`);
+      }
+    }
+  }
+  return dealtDamage;
+}
 function afterDamage(s) {
   s.enemies = s.enemies.filter(enemy => enemy.hp > 0);
   if (s.mission?.id === 'coupled' && s.enemies.length <= 1 && !s.mission.resolved) breakCoupling(s);
@@ -818,25 +876,26 @@ function advanceCardProjects(s, type, playedId) {
     if (project.id === playedId || (project.id === 'migration' ? type !== 'skill' : type !== 'attack')) continue;
     project.progress = (project.progress || 0) + 1;
     if (project.progress < (project.goal || 2)) continue;
-    s.initiatives.splice(s.initiatives.indexOf(project), 1);
-    if (project.id === 'migration') {
-      for (const foe of s.enemies) attackEnemy(s, foe, 16);
-      gainBlock(s, project.flex ? 10 : 6, false);
-      dealtDamage = true;
-      note(s, 'Migration Plan finished early: 16 to every foe and Block.');
-    } else { gainBlock(s, 6, false); s.nextSp += 2; note(s, 'Handoff Gate cleared: 6 Block and +2 SP next turn.'); }
+    dealtDamage = completeCardProject(s, project) || dealtDamage;
   }
   return dealtDamage;
+}
+export function canPlayCard(s, id) {
+  const card = cardInfo(id);
+  if (s.mode !== 'combat' || s.pendingChoice || !card || s.sp < card.cost) return false;
+  const base = cardBase(id);
+  if (base === 'escalate' && s.projectDebt > 10) return false;
+  if (base === 'contractor' && ((s.credits || 0) < (id.endsWith('*') ? 10 : 15) || s.contractorUsed)) return false;
+  return true;
 }
 export function playCard(s, handIndex, targetIndex = s.target) {
   if (s.mode !== 'combat' || s.pendingChoice || !Number.isInteger(handIndex) || handIndex < 0 || handIndex >= s.hand.length) return false;
   const id = s.hand[handIndex], baseId = cardBase(id), card = cardInfo(id);
-  if (s.sp < card.cost) return false;
-  if (baseId === 'escalate' && s.projectDebt > 10) return false;
-  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice', 'traceledger', 'watchpoint'].includes(baseId)) && !s.enemies[targetIndex]) return false;
+  if (!canPlayCard(s, id)) return false;
+  if (((card.type === 'attack' && !['sweep', 'incident', 'cascade', 'tracesweep'].includes(baseId)) || ['guardrail', 'repro', 'triangulate', 'reprioritize', 'escalate', 'mitigate', 'redirect', 'changefreeze', 'pagerduty', 'evidence', 'scopechoice', 'traceledger', 'watchpoint', 'precisioncounter'].includes(baseId)) && !s.enemies[targetIndex]) return false;
   s.sp -= card.cost;
   s.hand.splice(handIndex, 1);
-  if (['prototype', 'salvage'].includes(baseId)) s.exhausted.push(id);
+  if (['prototype', 'salvage', 'killswitch', 'contractor'].includes(baseId)) s.exhausted.push(id);
   else if (baseId !== 'defect' && baseId !== 'reclaim') s.discardPile.push(id);
   s.cardsPlayed++;
   if (baseId !== 'defect') s.readiness = Math.min(6, s.readiness + (card.type === 'skill' ? 2 : 1));
@@ -959,6 +1018,29 @@ export function playCard(s, handIndex, targetIndex = s.target) {
     case 'prototype': message += ` dealt ${attackEnemy(s, enemy, 10)} and exhausted.`; break;
     case 'salvage': { const block = id.endsWith('+') ? 8 : 5; gainBlock(s, block); if (s.discardPile.length) s.pendingChoice = { kind: 'salvage', flex: id.endsWith('*') }; message += s.pendingChoice ? ` gained ${block} Block; choose a discard card to ${id.endsWith('*') ? 'draw' : 'topdeck'}.` : ` gained ${block} Block; the discard was empty.`; break; }
     case 'reclaim': if (s.exhausted.length) { s.pendingChoice = { kind: 'reclaim', selfId: id }; message += ' opened the archive; choose an exhausted card to recover.'; } else { gainBlock(s, 7); s.exhausted.push(id); message += ' found nothing to reclaim; gained 7 Block and exhausted.'; } break;
+    case 'criticalpathcontrol':
+      if (s.initiatives.length) { s.pendingChoice = { kind: 'projectcontrol', action: 'advance', id, page: 0 }; message += ' opened the critical path; choose a project to accelerate.'; }
+      else { gainBlock(s, 7); message += ' found no active project and gained 7 Block.'; }
+      break;
+    case 'killswitch':
+      if (s.initiatives.length) { s.pendingChoice = { kind: 'projectcontrol', action: 'abort', id, page: 0 }; message += ' opened the kill switch; choose a project to abandon.'; }
+      else { gainBlock(s, 4); message += ' found no active project and gained 4 Block.'; }
+      break;
+    case 'precisioncounter': s.pendingChoice = { kind: 'precisioncounter', target: targetIndex, id }; message += ` prepared a counter for ${enemy.name}; choose to guard or spend Evidence.`; break;
+    case 'hotfixforge': {
+      const eligible = s.hand.map((held, index) => ['patch', 'review', 'defect'].includes(cardBase(held)) ? index : -1).filter(index => index >= 0);
+      if (eligible.length) { s.pendingChoice = { kind: 'hotfixforge', eligible, id }; message += ' opened the forge; choose a basic or Defect to rewrite.'; }
+      else { gainBlock(s, 5); message += ' found no card to rewrite and gained 5 Block.'; }
+      break;
+    }
+    case 'contractor': {
+      const price = id.endsWith('*') ? 10 : 15;
+      s.credits -= price; s.sp += id.endsWith('+') ? 3 : 2; drawOne(s);
+      s.onboardingPending = Math.min(3, (s.onboardingPending || 0) + 1);
+      s.contractorUsed = true;
+      message += ` spent ${price} credits on a contractor: gained ${id.endsWith('+') ? 3 : 2} SP and drew 1. Next fight starts with 1 less SP.`;
+      break;
+    }
     case 'defect': s.pendingChoice = { kind: 'defect' }; message += ' opened triage: fix, defer, or automate.'; break;
   }
   s.upgradeDamage = 0;
@@ -1010,6 +1092,51 @@ export function chooseCombatOption(s, index) {
     else { const damage = attackEnemy(s, foe, choice.id.endsWith('+') ? 16 : 11); addDebt(s, 1); note(s, `Scope Decision cut through ${foe.name} for ${damage}; Debt +1.`); }
     const projectDamage = advanceCardProjects(s, 'skill', 'scopechoice');
     if (index === 1 || projectDamage) afterDamage(s);
+    return true;
+  }
+  if (choice.kind === 'projectcontrol') {
+    const project = s.initiatives[index];
+    if (!project) return false;
+    s.pendingChoice = null;
+    if (choice.action === 'advance') {
+      const damage = advanceChosenProject(s, project, choice.id.endsWith('+') ? 2 : 1);
+      if (choice.id.endsWith('*')) drawOne(s);
+      note(s, `${CARDS[project.id].name} moved along the critical path.`);
+      if (damage) afterDamage(s);
+    } else {
+      s.initiatives.splice(index, 1);
+      s.sp += choice.id.endsWith('+') ? 2 : 1;
+      gainBlock(s, 7, false);
+      if (!choice.id.endsWith('*')) addDebt(s, 1);
+      note(s, `${CARDS[project.id].name} was abandoned for capacity and 7 Block${choice.id.endsWith('*') ? '' : '; Debt +1'}.`);
+    }
+    return true;
+  }
+  if (choice.kind === 'precisioncounter') {
+    const foe = s.enemies[choice.target];
+    if (!foe || index < 0 || index > 1) return false;
+    const special = ['shield', 'heal', 'tax', 'split', 'summon', 'delay'].includes(intentFor(foe).kind);
+    const cost = choice.id.endsWith('+') ? 1 : 2;
+    if (index === 1 && (!special || s.evidence < cost)) return false;
+    s.pendingChoice = null;
+    if (index === 0) { gainBlock(s, 6); note(s, `Precision Counter guarded against ${foe.name}.`); }
+    else {
+      s.evidence -= cost; foe.stalled = true; applyMark(s, foe, 1);
+      if (choice.id.endsWith('*')) gainBlock(s, 6);
+      note(s, `Precision Counter canceled ${foe.name}'s special intent for ${cost} Evidence and applied Mark.`);
+    }
+    if (advanceCardProjects(s, 'skill', 'precisioncounter')) afterDamage(s);
+    return true;
+  }
+  if (choice.kind === 'hotfixforge') {
+    const handIndex = choice.eligible[index];
+    if (handIndex === undefined || !['patch', 'review', 'defect'].includes(cardBase(s.hand[handIndex] || ''))) return false;
+    const replaced = s.hand[handIndex];
+    s.hand[handIndex] = choice.id?.endsWith('+') ? 'prototype+' : 'prototype';
+    s.pendingChoice = null;
+    if (choice.id?.endsWith('*')) gainBlock(s, 5);
+    note(s, `Hotfix Forge rewrote ${cardInfo(replaced).name} into a temporary One-Off Prototype.`);
+    if (advanceCardProjects(s, 'skill', 'hotfixforge')) afterDamage(s);
     return true;
   }
   if (choice.kind === 'salvage' || choice.kind === 'reclaim') {
@@ -1241,6 +1368,11 @@ export function endTurn(s) {
     } else if (intent.kind === 'shield') { enemy.block += intent.amount + enemy.power; note(s, `${enemy.name} gained ${enemy.block} Block.`); }
     else if (intent.kind === 'heal') { enemy.hp = Math.min(enemy.maxHp, enemy.hp + intent.amount); note(s, `${enemy.name} recovered ${intent.amount} HP.`); }
     else if (intent.kind === 'tax') { s.spTax += intent.amount; note(s, `${enemy.name} reserved ${intent.amount} SP from your next turn.`); }
+    else if (intent.kind === 'delay') {
+      const project = s.initiatives.filter(plan => ['pipeline', 'protocol', 'rollout'].includes(plan.id)).sort((a, b) => a.remaining - b.remaining)[0];
+      if (project && project.remaining < 4) { project.remaining++; note(s, `${enemy.name} delayed ${CARDS[project.id].name} by one turn.`); }
+      else { s.spTax++; note(s, `${enemy.name} buried the team in red tape: next turn -1 SP.`); }
+    }
     else if (intent.kind === 'split') {
       if (s.enemies.length < 3) {
         const clone = createEnemy(s, 'slime'); clone.maxHp = Math.max(8, Math.ceil(enemy.maxHp / 2)); clone.hp = clone.maxHp; clone.step = 2;
